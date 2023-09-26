@@ -3,12 +3,23 @@ import Section from "./components/Section";
 import WorkExperience from "./components/WorkExperience";
 import Certification from "./components/Certification";
 import Education from "./components/Education";
+import Profile from "./components/Profile";
 
 const data = {
   name: "Sehal Sein",
   email: "seinsehal@gmail.com",
-  phone: "+91 9876543210",
-  address: "Bangalore, India",
+  phone: "+1 (514) 241 3294",
+  location: "Montreal, Canada",
+  social: [
+    {
+      name: "LinkedIn",
+      url: "https://www.linkedin.com/in/sehalsein/",
+    },
+    {
+      name: "Github",
+      url: "https://www.github.com/sehalsein",
+    },
+  ],
   summary:
     "As a full-stack developer with over 5 years of expertise, I am adept at crafting responsive web applications across various industries",
   skills: [
@@ -117,10 +128,14 @@ const data = {
 export default function Page() {
   return (
     <>
-      <div>
-        <h1 className="text-2xl font-bold">{data.name}</h1>
-        <p>{data.summary}</p>
-      </div>
+      <Profile
+        name={data.name}
+        summary={data.summary}
+        phone={data.phone}
+        email={data.email}
+        social={data.social}
+        location={data.location}
+      />
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-bold">Skills</h2>
         <div className="flex flex-wrap gap-2">
