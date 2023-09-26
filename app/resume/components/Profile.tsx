@@ -26,7 +26,7 @@ export default function Profile({
     <div className="flex flex-col gap-2">
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
         <Image
-          className="h-20 w-20 bg-gray-50 rounded-full "
+          className="h-20 w-20 bg-gray-50 dark:bg-slate-950 rounded-full "
           src=""
           alt="profile-pic"
         />
@@ -60,11 +60,7 @@ export default function Profile({
 
 function Link({ children, href }: PropsWithChildren<{ href: string }>) {
   return (
-    <NextLink
-      target="_blank"
-      href={href}
-      className="text-blue-500 hover:text-blue-700 text-sm"
-    >
+    <NextLink target="_blank" href={href} className="hover:underline text-sm">
       {children}
     </NextLink>
   );
@@ -73,9 +69,13 @@ function Link({ children, href }: PropsWithChildren<{ href: string }>) {
 function getSocialIcon(name: string) {
   switch (name.toLowerCase()) {
     case "linkedin":
-      return <Linkedin className="h-6 w-6 hover:bg-gray-100 rounded p-1" />;
+      return (
+        <Linkedin className="h-6 w-6 hover:bg-gray-100 hover:dark:bg-slate-950 rounded p-1" />
+      );
     case "github":
-      return <Github className="h-6 w-6 hover:bg-gray-100 rounded p-1" />;
+      return (
+        <Github className="h-6 w-6 hover:bg-gray-100 hover:dark:bg-slate-950 rounded p-1" />
+      );
     default:
       return null;
   }
