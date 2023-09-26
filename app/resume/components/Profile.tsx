@@ -5,6 +5,7 @@ import { PropsWithChildren } from "react";
 
 type Props = {
   name: string;
+  photo: string;
   summary: string;
   phone: string;
   email: string;
@@ -17,6 +18,7 @@ type Props = {
 
 export default function Profile({
   name,
+  photo,
   summary,
   social,
   email,
@@ -27,7 +29,9 @@ export default function Profile({
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
         <Image
           className="h-20 w-20 bg-gray-50 dark:bg-slate-950 rounded-full "
-          src=""
+          src={photo}
+          width={80}
+          height={80}
           alt="profile-pic"
         />
         <div className="flex flex-col gap-0.5 ">
