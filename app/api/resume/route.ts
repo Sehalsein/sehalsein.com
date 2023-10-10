@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { type } from "os";
 
 const RESUME_DATA = {
   name: "Sehal Sein",

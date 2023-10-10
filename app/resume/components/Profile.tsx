@@ -27,13 +27,17 @@ export default function Profile({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-        <Image
-          className="h-20 w-20 bg-gray-50 dark:bg-slate-950 rounded-full "
-          src={photo}
-          width={80}
-          height={80}
-          alt="profile-pic"
-        />
+        <div className="h-28 w-20 overflow-hidden rounded-full">
+          <Image
+            className="bg-gray-50 dark:bg-slate-950 rounded-full "
+            src={photo}
+            width={80}
+            height={80}
+            alt="profile-pic"
+            fill={false}
+            objectFit="cover"
+          />
+        </div>
         <div className="flex flex-col gap-0.5 ">
           <h1 className="text-3xl font-bold">{name}</h1>
           <div className="flex flex-wrap items-center gap-2">
