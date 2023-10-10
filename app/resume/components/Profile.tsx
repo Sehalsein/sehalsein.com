@@ -27,7 +27,7 @@ export default function Profile({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-        <div className="h-28 w-20 overflow-hidden rounded-full">
+        <div className="h-28 w-20 overflow-hidden rounded-full flex-none">
           <Image
             className="bg-gray-50 dark:bg-slate-950 rounded-full "
             src={photo}
@@ -59,9 +59,9 @@ export default function Profile({
               </Link>
             ))}
           </div>
+          <p className="text-sm">{summary}</p>
         </div>
       </div>
-      <p className="text-lg">{summary}</p>
     </div>
   );
 }
