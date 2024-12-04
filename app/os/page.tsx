@@ -1,7 +1,7 @@
 import { RESUME_DATA } from "@/data/resume";
 import AppIcon from "./components/AppIcon";
 import Image from "next/image";
-import { Briefcase, Circle, Code } from "lucide-react";
+import { Briefcase, Circle, Code, Github, Linkedin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Page() {
@@ -61,6 +61,30 @@ function AppView() {
               fill="currentColor"
             />
           </svg>
+        }
+        size="sm"
+      />
+      <AppIcon
+        href={`https://www.github.com/sehalsein`}
+        appName="Github"
+        icon={
+          <Github
+            className="lucide lucide-linkedin p-3 bg-black text-white"
+            height={60}
+            width={60}
+          />
+        }
+        size="sm"
+      />
+      <AppIcon
+        href={`https://www.linkedin.com/in/sehalsein/`}
+        appName="LinkedIn"
+        icon={
+          <Linkedin
+            className="lucide lucide-linkedin p-3 bg-[#0A66C2] text-white"
+            height={60}
+            width={60}
+          />
         }
         size="sm"
       />
