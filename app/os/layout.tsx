@@ -13,7 +13,7 @@ import { RESUME_DATA } from "@/data/resume";
 export default function Layout(props: PropsWithChildren) {
   return (
     <div
-      className="h-screen bg-cover bg-center"
+      className="h-screen bg-cover bg-center overflow-y-scroll"
       style={{
         backgroundImage: "url(/iOS18-Azure-Dark.webp)",
       }}
@@ -27,7 +27,7 @@ export default function Layout(props: PropsWithChildren) {
 
 function StatusBar() {
   return (
-    <div className="w-full absolute top-0 pt-5 md:pt-0 lg:bg-gray-900 lg:bg-clip-padding lg:backdrop-filter  lg:backdrop-blur lg:bg-opacity-10 lg:backdrop-saturate-100 lg:backdrop-contrast-100">
+    <div className="w-full absolute top-0 pt-5 md:pt-0 lg:bg-gray-900 lg:bg-clip-padding lg:backdrop-filter z-10 lg:backdrop-blur lg:bg-opacity-10 lg:backdrop-saturate-100 lg:backdrop-contrast-100">
       <div className="h-full w-full pt-5 lg:pt-1 flex justify-between items-center px-8 relative py-1 ">
         <TimeView className="lg:hidden" time="13:13" />
         <svg
@@ -67,7 +67,7 @@ function TimeView(props: { className?: string; time: string }) {
 function TabBar() {
   return (
     <div className="absolute bottom-0 pb-3 h-28 w-full px-3">
-      <div className="h-full w-full max-w-sm mx-auto bg-[#232426] rounded-[40px] flex flex-row gap-8 items-center justify-evenly px-5">
+      <div className="h-full w-full max-w-sm mx-auto bg-[#232426] rounded-[40px] flex flex-row gap-4 md:gap-6 lg:gap-8 items-center justify-evenly px-5">
         <AppIcon
           href={`tel:${RESUME_DATA.phone}`}
           icon={<PhoneAppIcon />}

@@ -15,7 +15,7 @@ export default function Page() {
 
 function MobileView() {
   return (
-    <div className="pt-24 pb-28 h-fit px-8 grid grid-cols-4 md:grid-cols-8 gap-8 lg:hidden">
+    <div className="pt-24 pb-32 h-fit px-8 grid grid-cols-4 md:grid-cols-8 gap-8 lg:hidden">
       <WidgetView />
       <AppView />
     </div>
