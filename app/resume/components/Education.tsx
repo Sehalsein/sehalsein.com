@@ -19,7 +19,7 @@ export default function Education({
       <div className="flex justify-between">
         <div className="flex flex-col">
           <h3 className="text-lg font-bold">{name}</h3>
-          <p className="text-sm font-medium">
+          <p className="text-sm font-medium text-gray-400">
             {institution} {location && `(${location})`}
           </p>
         </div>

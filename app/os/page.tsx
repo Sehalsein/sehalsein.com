@@ -1,35 +1,35 @@
-import { RESUME_DATA } from "@/data/resume";
+import { RESUME_DATA } from "@/src/data/resume";
 import AppIcon from "./components/AppIcon";
-import Image from "next/image";
-import { Briefcase, Circle, Code, Github, Linkedin } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  Briefcase,
+  Circle,
+  Code,
+  Github,
+  Linkedin,
+  LucideFileBadge2,
+  Mail,
+  PhoneIcon,
+} from "lucide-react";
+import { Tilt } from "@/src/components/ui/tilt";
+import { PropsWithChildren } from "react";
 
 export default function Page() {
   return (
     <>
-      <MobileView />
       <DesktopView />
     </>
   );
 }
 
-function MobileView() {
-  return (
-    <div className="pt-24 pb-32 h-fit px-8 grid grid-cols-4 md:grid-cols-8 gap-8 lg:hidden">
-      <WidgetView />
-      <AppView />
-    </div>
-  );
-}
-
 function DesktopView() {
   return (
-    <div className="lg:flex hidden justify-between pt-20 pb-28 px-8">
-      <div className="hidden lg:flex flex-wrap gap-8 max-w-lg">
-        <WidgetView />
-      </div>
-      <div className="hidden lg:flex lg:flex-col gap-8 col-span-1 col-start-8 items-end ">
+    <div className="flex justify-between items-start gap-8 flex-col md:flex-row">
+      <div className="flex flex-wrap md:flex-col gap-4 md:gap-8 items-start">
         <AppView />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <WorkExperienceCard />
+        <TechStackCard />
       </div>
     </div>
   );
@@ -41,6 +41,7 @@ function AppView() {
       <AppIcon
         href={`https://dgymbook.com`}
         appName="Dgymbook"
+        className="max-w-20 w-20"
         icon={
           <svg
             viewBox="0 0 356 242"
@@ -49,7 +50,7 @@ function AppView() {
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             className={
-              "bg-gradient-to-br from-blue-500 to-blue-700 text-white p-2"
+              "bg-linear-to-br from-blue-500 to-blue-700 text-white p-2"
             }
           >
             <path
@@ -62,162 +63,123 @@ function AppView() {
             />
           </svg>
         }
-        size="sm"
+      />
+      <AppIcon
+        href={`https://mock.sehalsein.com`}
+        appName="Mock Api"
+        className="max-w-20 w-20"
+        icon={
+          <Code
+            className="text-neutral-600 dark:text-white bg-radial from-pink-400 from-40% to-fuchsia-700 p-3"
+            size={60}
+          />
+        }
       />
       <AppIcon
         href={`https://www.github.com/sehalsein`}
         appName="Github"
+        className="max-w-20 w-20"
         icon={
-          <Github
-            className="lucide lucide-linkedin p-3 bg-black text-white"
-            height={60}
-            width={60}
-          />
+          <Github className="text-neutral-600 dark:text-white p-3" size={60} />
         }
-        size="sm"
       />
       <AppIcon
         href={`https://www.linkedin.com/in/sehalsein/`}
         appName="LinkedIn"
+        className="max-w-20 w-20"
         icon={
           <Linkedin
-            className="lucide lucide-linkedin p-3 bg-[#0A66C2] text-white"
-            height={60}
-            width={60}
+            className="text-neutral-600 dark:text-white p-3"
+            size={60}
           />
         }
-        size="sm"
       />
-    </>
-  );
-}
 
-function WidgetView() {
-  const experiences = RESUME_DATA.experience.slice(0, 3);
-  return (
-    <>
       <AppIcon
-        className="col-span-2"
-        appName="Photos"
-        size="md"
-        href={"/resume"}
+        href={`tel:${RESUME_DATA.phone}`}
+        appName="Phone"
+        className="max-w-20 w-20 md:hidden"
         icon={
-          <div className="relative w-full h-full">
-            <Image
-              className="bg-gray-50 dark:bg-slate-950 object-cover object-center"
-              src={"/me.jpg"}
-              fill
-              alt="profile-pic"
-            />
-          </div>
+          <PhoneIcon
+            className="text-neutral-600 dark:text-white p-3"
+            size={60}
+          />
         }
       />
       <AppIcon
-        className="col-span-2"
-        appName="Stack"
-        size="md"
         href={"/resume"}
+        appName="resume"
+        className="max-w-20 w-20 md:hidden"
         icon={
-          <div className="relative w-full h-full bg-neutral-900">
-            <div className="flex flex-col gap-4 h-full  px-3  py-4 ">
-              <div className="font-bold text-white flex flex-row gap-2 text-left">
-                <div className="bg-blue-600 p-1 rounded-full w-6 h-6">
-                  <Code className="h-4 w-4" />
-                </div>
-                <h3>Stack</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Tag text="NextJS" />
-                <Tag text="Hono" />
-                <Tag text="Tailwind" />
-                <Tag text="Prisma" />
-                <Tag text="Postgresql" />
-              </div>
-            </div>
-          </div>
+          <LucideFileBadge2
+            className="text-neutral-600 dark:text-white p-3"
+            size={60}
+          />
         }
       />
       <AppIcon
-        href="/resume"
-        className="col-span-4"
-        appName="Work Experience"
-        size="lg"
+        href={`mailto:${RESUME_DATA.email}`}
+        appName="Main"
+        className="max-w-20 w-20 md:hidden"
         icon={
-          <div className="relative w-full h-full bg-neutral-900">
-            <div className="flex flex-row gap-2 h-full  px-3  py-4 ">
-              <div className="font-bold text-white flex justify-between flex-col text-left">
-                <div className="bg-purple-600 p-1 rounded-full w-6 h-6">
-                  <Briefcase className="h-4 w-4" />
-                </div>
-                <h3>
-                  6+ years
-                  <br />
-                  <span className="text-purple-600">Expereince</span>
-                </h3>
-              </div>
-              <ul className="flex flex-col h-full divide-y-2 divide-neutral-800  text-left divide-dotted flex-1">
-                {experiences.map((e, i) => {
-                  const isCurrent = !e.duration.to;
-                  return (
-                    <li
-                      key={i}
-                      className="text-white py-2 text-xs flex items-center"
-                    >
-                      <CheckBox
-                        checked={isCurrent}
-                        className={cn(
-                          "h-4 w-4 mr-2",
-                          isCurrent ? "text-purple-600" : "text-neutral-800"
-                        )}
-                      />
-                      {e.company}
-                      {e.position && (
-                        <span className="italic text-xs">- {e.position}</span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </div>
+          <Mail className="text-neutral-600 dark:text-white p-3" size={60} />
         }
       />
     </>
   );
 }
 
-function CheckBox(props: { checked?: boolean; className?: string }) {
-  if (!props.checked) {
-    return <Circle className={props.className} />;
-  }
+function WorkExperienceCard() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      className={props.className}
-    >
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="4" fill="currentColor" />
-    </svg>
+    <BentoBox>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl dark:text-white">Experience</h1>
+        <div className="aspect-square rounded-2xl bg-gray-200 dark:bg-neutral-800 overflow-hidden h-8 w-8 flex items-center justify-center">
+          <Briefcase size={18} className="text-neutral-600 dark:text-white" />
+        </div>
+      </div>
+      {RESUME_DATA.experience.slice(0, 3).map((exp, idx) => (
+        <div key={idx} className="py-1 dark:text-white">
+          <span>{exp.company}</span>
+          <div className="text-sm dark:text-gray-500">
+            {exp.position} - {exp.duration.from} -{" "}
+            {exp.duration.to || "Present"}
+          </div>
+        </div>
+      ))}
+    </BentoBox>
   );
 }
 
-function Tag(props: { className?: string; text: string }) {
+function TechStackCard() {
   return (
-    <div
-      className={cn(
-        "text-white bg-blue-700 px-1 py-0.5 rounded-md text-xs",
-        props.className
-      )}
-    >
-      <span>{props.text}</span>
-    </div>
+    <BentoBox>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl dark:text-white">Tech Stack</h1>
+        <div className="aspect-square rounded-2xl bg-gray-200 dark:bg-neutral-800 overflow-hidden h-8 w-8 flex items-center justify-center">
+          <Circle size={18} className="text-neutral-600 dark:text-white" />
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {RESUME_DATA.skills.map((skill, idx) => (
+          <span
+            key={idx}
+            className="bg-gray-300 dark:bg-neutral-800 text-black dark:text-gray-200 rounded-full px-2 py-1 text-xs"
+          >
+            {skill.title}
+          </span>
+        ))}
+      </div>
+    </BentoBox>
+  );
+}
+
+function BentoBox(props: PropsWithChildren) {
+  return (
+    <Tilt>
+      <div className="bg-gray-200 dark:bg-neutral-950 w-full rounded-xl border border-gray-300 dark:border-neutral-800 p-4 md:max-w-96">
+        {props.children}
+      </div>
+    </Tilt>
   );
 }

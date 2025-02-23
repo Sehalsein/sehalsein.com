@@ -27,9 +27,9 @@ export default function Profile({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-        <div className="h-28 w-20 overflow-hidden rounded-full flex-none">
+        {/* <div className="h-28 w-20 overflow-hidden rounded-full flex-none">
           <Image
-            className="bg-gray-50 dark:bg-slate-950 rounded-full "
+            className="bg-gray-50 dark:bg-slate-950 rounded-full hidden"
             src={photo}
             width={80}
             height={80}
@@ -37,7 +37,7 @@ export default function Profile({
             fill={false}
             objectFit="cover"
           />
-        </div>
+        </div> */}
         <div className="flex flex-col gap-0.5 ">
           <h1 className="text-3xl font-bold">{name}</h1>
           <div className="flex flex-wrap items-center gap-2">
@@ -78,11 +78,11 @@ function getSocialIcon(name: string) {
   switch (name.toLowerCase()) {
     case "linkedin":
       return (
-        <Linkedin className="h-6 w-6 hover:bg-gray-100 hover:dark:bg-slate-950 rounded p-1" />
+        <Linkedin className="h-6 w-6 hover:bg-gray-100 dark:hover:bg-slate-950 rounded-sm p-1" />
       );
     case "github":
       return (
-        <Github className="h-6 w-6 hover:bg-gray-100 hover:dark:bg-slate-950 rounded p-1" />
+        <Github className="h-6 w-6 hover:bg-gray-100 dark:hover:bg-slate-950 rounded-sm p-1" />
       );
     default:
       return null;

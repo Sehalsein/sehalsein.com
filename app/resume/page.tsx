@@ -1,15 +1,13 @@
-import Tag from "@/components/Tag";
+import Tag from "@/src/components/Tag";
 import Section from "./components/Section";
 import WorkExperience from "./components/WorkExperience";
 import Certification from "./components/Certification";
 import Education from "./components/Education";
 import Profile from "./components/Profile";
-import { ResumeType } from "../api/resume/route";
+import { RESUME_DATA } from "@/src/data/resume";
 
 export default async function Page() {
-  const data: ResumeType = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/resume`
-  ).then((res) => res.json());
+  const data = RESUME_DATA;
 
   return (
     <>
@@ -26,13 +24,14 @@ export default async function Page() {
         <h2 className="text-xl font-bold">Skills</h2>
         <div className="flex flex-wrap gap-2">
           {data.skills.map((skill) => (
-            <Tag key={skill.toLowerCase()}>{skill}</Tag>
+            <Tag key={skill.title.toLowerCase()}>{skill.title}</Tag>
           ))}
         </div>
       </div>
       <Section title="Work Experience">
         {data.experience.map((exp) => (
           <WorkExperience
+            className="py-2"
             key={exp.company}
             company={exp.company}
             position={exp.position}

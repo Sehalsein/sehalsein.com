@@ -1,3 +1,5 @@
+import { cn } from "@/src/lib/utils";
+
 type Props = {
   company: string;
   position?: string;
@@ -7,6 +9,7 @@ type Props = {
     to?: number;
   };
   description: string[];
+  className?: string;
 };
 
 export default function WorkExperience({
@@ -15,13 +18,14 @@ export default function WorkExperience({
   location,
   duration: { to, from },
   description,
+  className,
 }: Props) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className={cn("flex flex-col gap-2", className)}>
       <div className="flex justify-between">
         <div className="flex flex-col">
           <h3 className="text-lg font-bold">{company}</h3>
-          <p className="text-sm font-medium">
+          <p className="text-sm font-medium text-gray-400">
             {position} {location && `(${location})`}
           </p>
         </div>
@@ -31,7 +35,7 @@ export default function WorkExperience({
           </p>
         </div>
       </div>
-      <ul className="list-disc list-inside">
+      <ul className="list-disc list-outside pl-4">
         {description.map((desc) => (
           <li key={desc}>{desc}</li>
         ))}
