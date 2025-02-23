@@ -17,13 +17,12 @@ import {
 } from "./components/Dock";
 import { Mail, PhoneIcon, LucideFileBadge2, Laptop } from "lucide-react";
 import Link from "next/link";
-import Car from "@/src/components/car/Car";
-import EasterEgg from "./components/EasterEgg";
+// import EasterEgg from "./components/EasterEgg";
 
 export default function Layout(props: PropsWithChildren) {
   return (
     <div className="font-mono">
-      <EasterEgg />
+      {/* <EasterEgg /> */}
       <StatusBar />
       <div className="h-screen pt-16 md:pt-12 px-4">{props.children}</div>
       <Dock />
