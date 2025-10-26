@@ -110,7 +110,7 @@ export default function AppIcon({
 					{appName}
 				</p>
 			</motion.button>
-			{children && <SlotRoot id={id}>{children}</SlotRoot>}
+			{children && state.open && <SlotRoot id={id}>{children}</SlotRoot>}
 		</>
 	);
 }
