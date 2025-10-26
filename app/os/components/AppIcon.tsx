@@ -1,32 +1,116 @@
-import { Magnetic } from "@/src/components/ui/magnetic";
-import { cn } from "@/src/lib/utils";
-import Link from "next/link";
-import React from "react";
+"use client";
 
-type Props = {
-  className?: string;
-  appName?: string;
-  icon: React.ReactNode;
-  href: string;
+import type React from "react";
+import { motion } from "motion/react";
+import { create } from "zustand";
+import { cn } from "@/src/lib/utils";
+import { Root as SlotRoot } from "@radix-ui/react-slot";
+import { useWindowStore } from "./Window/store";
+
+type Position = {
+	x: number;
+	y: number;
 };
 
-export default function AppIcon(props: Props) {
-  const target = props.href.startsWith("http") ? "_blank" : undefined;
-  return (
-    <Magnetic>
-      <Link
-        href={props.href}
-        className={cn("flex flex-col items-center", props.className)}
-        target={target}
-      >
-        <div className="aspect-square rounded-2xl bg-gray-200 dark:bg-neutral-800 overflow-hidden">
-          {props.icon}
-        </div>
+type PositionStore = {
+	position: Position;
+	setPosition: (position: Position) => void;
+};
 
-        <span className="w-fit whitespace-pre px-2 py-0.5 text-xs text-neutral-700 dark:text-white">
-          {props.appName}
-        </span>
-      </Link>
-    </Magnetic>
-  );
+// Store cache to prevent creating multiple stores for the same ID
+const storeCache = new Map<
+	string,
+	ReturnType<ReturnType<typeof create<PositionStore>>>
+>();
+
+export const useAppPositionsStore = (props: {
+	id: string;
+	defaultPosition?: Position;
+}) => {
+	if (!storeCache.has(props.id)) {
+		const store = create<PositionStore>()((set) => ({
+			position: props.defaultPosition ?? { x: 0, y: 0 },
+			setPosition: (position: Position) => set({ position }),
+		}));
+		storeCache.set(props.id, store);
+	}
+
+	// biome-ignore lint/style/noNonNullAssertion: we know the store exists
+	return storeCache.get(props.id)!();
+};
+
+type Props = React.PropsWithChildren<{
+	id: string;
+	icon: React.ReactNode;
+	appName: string;
+	className?: string;
+	defaultPosition?: Position;
+}>;
+
+export default function AppIcon({
+	id,
+	icon,
+	appName,
+	className = "",
+	defaultPosition = { x: 0, y: 0 },
+	children,
+}: Props) {
+	const { setWindow, state, setActive } = useWindowStore({ id });
+	const { position, setPosition } = useAppPositionsStore({
+		id,
+		defaultPosition,
+	});
+
+	return (
+		<>
+			<motion.button
+				drag
+				dragMomentum={false}
+				dragElastic={0}
+				dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+				dragConstraints={{
+					top: 10,
+					left: 10,
+					right:
+						typeof window !== "undefined" && window?.innerWidth
+							? window.innerWidth - 65
+							: 0,
+					bottom:
+						typeof window !== "undefined" && window?.innerHeight
+							? window.innerHeight - 120
+							: 0,
+				}}
+				style={{ x: position.x, y: position.y }}
+				onDragEnd={(_, info) => {
+					setPosition({
+						x: position.x + info.offset.x,
+						y: position.y + info.offset.y,
+					});
+				}}
+				whileHover={{ scale: 1.05 }}
+				whileTap={{ scale: 0.95 }}
+				whileDrag={{ scale: 0.95 }}
+				className={cn(
+					"absolute cursor-pointer flex items-center justify-center flex-col gap-1.5 select-none",
+					className,
+				)}
+				onDoubleClick={() => {
+					setWindow({
+						...state,
+						open: true,
+					});
+					setActive();
+				}}
+				aria-label={`${appName} application icon`}
+			>
+				<div className="bg-white/20 w-10 h-10 rounded-xl pointer-events-none overflow-hidden">
+					{icon}
+				</div>
+				<p className="text-neutral-900 text-xs font-medium text-center pointer-events-none w-20 truncate">
+					{appName}
+				</p>
+			</motion.button>
+			{children && state.open && <SlotRoot id={id}>{children}</SlotRoot>}
+		</>
+	);
 }
