@@ -10,13 +10,11 @@ import { useEffect } from "react";
 type Props = PropsWithChildren & {
 	className?: string;
 	id: string;
-	open?: boolean;
-	onClose?: (type: "close" | "minimize") => void;
 };
 
 function RootContent(props: Props) {
 	const dragControls = useDragControls();
-	const { position, setPosition, dragEvent } = useWindowContext();
+	const { position, setPosition, dragEvent, setActive } = useWindowContext();
 
 	useEffect(() => {
 		if (!dragEvent) {
@@ -32,52 +30,51 @@ function RootContent(props: Props) {
 	}, [dragEvent, dragControls]);
 
 	return (
-		<AnimatePresence>
-			<motion.div
-				dragControls={dragControls}
-				className={cn(
-					"absolute rounded-lg overflow-hidden flex flex-col",
-					props.className,
-				)}
-				style={{
-					x: position.x,
-					y: position.y,
-					// width: size.width,
-					// height: size.height,
-				}}
-				drag
-				dragMomentum={false}
-				dragElastic={0}
-				dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
-				// dragConstraints={{
-				// 	top: 10,
-				// 	left: 10,
-				// 	right: window.innerWidth - 65,
-				// 	bottom: window.innerHeight - 120,
-				// }}
-				dragListener={false}
-				onDragEnd={(_, info) => {
-					setPosition({
-						x: position.x + info.offset.x,
-						y: position.y + info.offset.y,
-					});
-				}}
-				aria-label={`${props.id} window`}
-			>
-				{props.children}
-			</motion.div>
-		</AnimatePresence>
+		<motion.div
+			dragControls={dragControls}
+			className={cn(
+				"absolute rounded-lg overflow-hidden flex flex-col shadow-2xl border border-neutral-800",
+				props.className,
+			)}
+			style={{
+				x: position.x,
+				y: position.y,
+				zIndex: position.z,
+			}}
+			drag
+			dragMomentum={false}
+			dragElastic={0}
+			dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+			// dragConstraints={{
+			// 	top: 10,
+			// 	left: 10,
+			// 	right: window.innerWidth - 65,
+			// 	bottom: window.innerHeight - 120,
+			// }}
+			dragListener={false}
+			onDragStart={() => setActive()}
+			onDragEnd={(_, info) => {
+				setPosition({
+					x: position.x + info.offset.x,
+					y: position.y + info.offset.y,
+					z: position.z,
+				});
+				setActive();
+			}}
+			onClick={setActive}
+			aria-label={`${props.id} window`}
+		>
+			{props.children}
+		</motion.div>
 	);
 }
 
 export default function Root(props: Props) {
-	const { open } = props;
-
-	if (!open) return null;
-
 	return (
-		<Provider onClose={props.onClose} id={props.id}>
-			<RootContent {...props} />
+		<Provider id={props.id}>
+			<AnimatePresence>
+				<RootContent {...props} />
+			</AnimatePresence>
 		</Provider>
 	);
 }

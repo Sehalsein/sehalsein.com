@@ -18,6 +18,7 @@ import type { PropsWithChildren } from "react";
 import { cn } from "@/src/lib/utils";
 import { useCallback, useEffect, useState } from "react";
 import { match } from "ts-pattern";
+import type { Tab } from "./type";
 
 export default function TabBar() {
 	const { handleClose, handleMinimize, setDragEvent } = useWindowContext();
@@ -60,21 +61,23 @@ export default function TabBar() {
 							onClose={() => removeTab(tab.id)}
 							onClick={() => setActiveTab(tab)}
 						>
-							{tab.title}
+							{tab.page.title}
 						</TabButton>
 					))}
-					<button
-						className="text-xs text-stone-100 px-2 py-2.5 flex items-center gap-1 justify-between"
-						type="button"
-						onClick={addTab}
-					>
-						<Plus size={10} strokeWidth={4} />
-					</button>
+					<div className="text-xs text-stone-100 justify-center h-8 relative w-10">
+						<button
+							className="text-xs text-stone-100 hover:bg-neutral-700 rounded-full p-2 absolute top-1/2 -translate-y-1/2 left-0"
+							type="button"
+							onClick={addTab}
+						>
+							<Plus size={10} strokeWidth={4} />
+						</button>
+					</div>
 				</div>
 			</motion.div>
 			<AddressBar
 				activeTab={activeTab}
-				onNavigate={(url) => setActiveTab({ ...activeTab, url })}
+				onNavigate={(url) => activeTab.push(url)}
 			/>
 		</div>
 	);
@@ -90,40 +93,38 @@ function TabButton(
 	return (
 		<div
 			className={cn(
-				"text-xs text-stone-100 px-2 pb-2 pt-1.5 flex items-center gap-1 w-32 justify-between",
+				"text-xs text-stone-100 px-2 pb-2 pt-1.5 flex items-center gap-1 w-32 justify-between relative",
 				props.isActive && "bg-neutral-800 rounded-md rounded-b-none",
 			)}
 		>
 			<button
 				type="button"
-				className="w-full text-left"
+				className="w-full text-left truncate pr-4"
 				onClick={props.onClick}
 			>
 				{props.children}
 			</button>
-			<button type="button" onClick={props.onClose}>
+			<button
+				type="button"
+				className="hover:bg-neutral-700 rounded-full p-1 absolute right-2 top-1/2 -translate-y-1/2 transition-colors text-stone-100 disabled:opacity-50 disabled:cursor-not-allowed"
+				onClick={props.onClose}
+			>
 				<X size={10} strokeWidth={4} />
 			</button>
 		</div>
 	);
 }
 
-type Tab = {
-	id: string;
-	url: string;
-	title: string;
-};
-
 function AddressBar(props: {
-	activeTab: Tab;
+	activeTab: ReturnType<typeof useBrowserContext>["activeTab"];
 	onNavigate: (url: string) => void;
 }) {
-	const [value, setValue] = useState(props.activeTab.url);
+	const [value, setValue] = useState(props.activeTab.page.url);
 	const [showInput, setShowInput] = useState(false);
 
 	useEffect(() => {
-		setValue(props.activeTab.url);
-	}, [props.activeTab.url]);
+		setValue(props.activeTab.page.url);
+	}, [props.activeTab.page.url]);
 
 	const onSubmit = useCallback(() => {
 		let url = value.trim();
@@ -139,14 +140,34 @@ function AddressBar(props: {
 	return (
 		<div className="bg-neutral-900">
 			<div className="flex items-center w-full bg-neutral-800 py-1 px-1 pr-2 rounded-t-xl">
-				<NavigationButton icon={<ArrowLeft size={14} />} />
-				<NavigationButton icon={<ArrowRight size={14} />} />
-				<NavigationButton icon={<RefreshCcw size={14} />} />
-				<NavigationButton icon={<Home size={14} />} />
+				<NavigationButton
+					icon={<ArrowLeft size={14} />}
+					onClick={props.activeTab.goBack}
+					disabled={!props.activeTab.goBack}
+				/>
+				<NavigationButton
+					icon={<ArrowRight size={14} />}
+					onClick={props.activeTab.goForward}
+					disabled={!props.activeTab.goForward}
+				/>
+				<NavigationButton
+					icon={
+						<RefreshCcw
+							size={14}
+							className={cn(props.activeTab.isLoading && "animate-spin")}
+						/>
+					}
+					onClick={props.activeTab.refresh}
+				/>
+				<NavigationButton
+					icon={<Home size={14} />}
+					onClick={props.activeTab.home}
+				/>
 				<div className="bg-neutral-700 rounded-full w-full px-2 py-1 text-stone-100 text-sm ml-2">
 					{match(showInput)
 						.with(true, () => (
 							<input
+								className="bg-transparent outline-none w-full"
 								value={value}
 								onChange={(e) => setValue(e.target.value)}
 								onKeyDown={(e) => {
@@ -157,7 +178,11 @@ function AddressBar(props: {
 							/>
 						))
 						.with(false, () => (
-							<button type="button" onClick={() => setShowInput(true)}>
+							<button
+								type="button"
+								className="text-left w-full bg-transparent outline-none"
+								onClick={() => setShowInput(true)}
+							>
 								{value}
 							</button>
 						))
@@ -168,11 +193,17 @@ function AddressBar(props: {
 	);
 }
 
-function NavigationButton(props: { icon: React.ReactNode }) {
+function NavigationButton(props: {
+	icon: React.ReactNode;
+	onClick?: () => void;
+	disabled?: boolean;
+}) {
 	return (
 		<button
 			type="button"
-			className="hover:bg-neutral-700 rounded-full p-2 transition-colors text-stone-100"
+			className="hover:bg-neutral-700 rounded-full p-2 transition-colors text-stone-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+			onClick={props.onClick}
+			disabled={props.disabled}
 		>
 			{props.icon}
 		</button>

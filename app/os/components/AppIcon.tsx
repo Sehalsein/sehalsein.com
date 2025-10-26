@@ -3,10 +3,9 @@
 import type React from "react";
 import { motion } from "motion/react";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { cn } from "@/src/lib/utils";
 import { Root as SlotRoot } from "@radix-ui/react-slot";
-import { useMemo, useState } from "react";
+import { useWindowStore } from "./Window/store";
 
 type Position = {
 	x: number;
@@ -29,17 +28,10 @@ export const useAppPositionsStore = (props: {
 	defaultPosition?: Position;
 }) => {
 	if (!storeCache.has(props.id)) {
-		const store = create<PositionStore>()(
-			persist(
-				(set) => ({
-					position: props.defaultPosition ?? { x: 0, y: 0 },
-					setPosition: (position: Position) => set({ position }),
-				}),
-				{
-					name: `app-positions-${props.id}`,
-				},
-			),
-		);
+		const store = create<PositionStore>()((set) => ({
+			position: props.defaultPosition ?? { x: 0, y: 0 },
+			setPosition: (position: Position) => set({ position }),
+		}));
 		storeCache.set(props.id, store);
 	}
 
@@ -63,19 +55,11 @@ export default function AppIcon({
 	defaultPosition = { x: 0, y: 0 },
 	children,
 }: Props) {
-	const [open, setOpen] = useState(false);
+	const { setWindow, state, setActive } = useWindowStore({ id });
 	const { position, setPosition } = useAppPositionsStore({
 		id,
 		defaultPosition,
 	});
-
-	const windowProps = useMemo(
-		() => ({
-			open,
-			onClose: () => setOpen(false),
-		}),
-		[open],
-	);
 
 	return (
 		<>
@@ -87,8 +71,14 @@ export default function AppIcon({
 				dragConstraints={{
 					top: 10,
 					left: 10,
-					right: window.innerWidth - 65,
-					bottom: window.innerHeight - 120,
+					right:
+						typeof window !== "undefined" && window?.innerWidth
+							? window.innerWidth - 65
+							: 0,
+					bottom:
+						typeof window !== "undefined" && window?.innerHeight
+							? window.innerHeight - 120
+							: 0,
 				}}
 				style={{ x: position.x, y: position.y }}
 				onDragEnd={(_, info) => {
@@ -104,21 +94,23 @@ export default function AppIcon({
 					"absolute cursor-pointer flex items-center justify-center flex-col gap-1.5 select-none",
 					className,
 				)}
-				onDoubleClick={() => setOpen(true)}
+				onDoubleClick={() => {
+					setWindow({
+						...state,
+						open: true,
+					});
+					setActive();
+				}}
 				aria-label={`${appName} application icon`}
 			>
-				<div className="bg-white/20 w-fit h-fit rounded-xl p-2 pointer-events-none">
+				<div className="bg-white/20 w-10 h-10 rounded-xl pointer-events-none overflow-hidden">
 					{icon}
 				</div>
-				<span className="text-neutral-900 text-xs font-medium text-center pointer-events-none">
+				<p className="text-neutral-900 text-xs font-medium text-center pointer-events-none w-20 truncate">
 					{appName}
-				</span>
+				</p>
 			</motion.button>
-			{children && (
-				<SlotRoot id={id} {...windowProps}>
-					{children}
-				</SlotRoot>
-			)}
+			{children && <SlotRoot id={id}>{children}</SlotRoot>}
 		</>
 	);
 }

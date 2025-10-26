@@ -21,12 +21,18 @@ export default function ActionBar(props: Props) {
 				<ActionButton
 					icon={<X size={10} strokeWidth={4} />}
 					className="bg-red-500"
-					onClick={() => handleClose()}
+					onClick={() => {
+						setDragEvent(null);
+						handleClose();
+					}}
 				/>
 				<ActionButton
 					icon={<Minus size={10} strokeWidth={4} />}
 					className="bg-yellow-400"
-					onClick={() => handleMinimize()}
+					onClick={() => {
+						setDragEvent(null);
+						handleMinimize();
+					}}
 				/>
 				<ActionButton
 					icon={
