@@ -11,8 +11,8 @@ import {
 	RefreshCcw,
 	X,
 } from "lucide-react";
-import { ActionButton } from "../../components/Window/ActionBar";
-import { useWindowContext } from "../../components/Window/Context";
+import { ActionButton } from "@/src/view/os/components/Window/ActionBar";
+import { useWindowContext } from "@/src/view/os/components/Window/Context";
 import { useBrowserContext } from "./Context";
 import type { PropsWithChildren } from "react";
 import { cn } from "@/src/lib/utils";

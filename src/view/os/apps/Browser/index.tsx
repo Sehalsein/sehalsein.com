@@ -1,6 +1,6 @@
 "use client";
 
-import Window from "../../components/Window";
+import Window from "@/src/view/os/components/Window";
 import Content from "./Content";
 import { Provider } from "./Context";
 import TabBar from "./TabBar";

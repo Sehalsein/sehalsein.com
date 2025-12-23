@@ -1,4 +1,4 @@
-import Window from "../../components/Window";
+import Window from "@/src/view/os/components/Window";
 import Content from "./Content";
 
 export default function Terminal() {
