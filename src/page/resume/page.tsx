@@ -27,8 +27,8 @@ export default function ResumePage() {
 	return (
 		<>
 			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
 				transition={{ duration: 0.5 }}
 			>
 				<Profile.Root>
@@ -48,8 +48,8 @@ export default function ResumePage() {
 			</motion.div>
 
 			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
 				transition={{ duration: 0.5, delay: 0.1 }}
 			>
 				<Section title="Work Experience">
@@ -91,8 +91,8 @@ export default function ResumePage() {
 			</motion.div>
 
 			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
 				transition={{ duration: 0.5, delay: 0.2 }}
 			>
 				<Section title="Certifications">
@@ -121,8 +121,8 @@ export default function ResumePage() {
 			</motion.div>
 
 			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
 				transition={{ duration: 0.5, delay: 0.3 }}
 			>
 				<Section title="Education">
