@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/src/lib/utils";
-import { motion } from "motion/react";
 import { CompanyLogo } from "./CompanyLogo";
 import { CompanyInfo } from "./CompanyInfo";
 import { Duration } from "./Duration";
@@ -27,16 +26,14 @@ type WorkExperienceRootProps = PropsWithChildren<{
 
 function WorkExperienceRoot({ children, className }: WorkExperienceRootProps) {
 	return (
-		<motion.div
+		<div
 			className={cn(
-				"flex flex-col gap-2 py-3 border-b border-transparent transition-colors",
+				"flex flex-col gap-2 py-3 rounded-lg px-3 -mx-3 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-900/40 hover:translate-x-1",
 				className,
 			)}
-			whileHover={{ scale: 1.01 }}
-			transition={{ type: "spring", stiffness: 300, damping: 20 }}
 		>
 			{children}
-		</motion.div>
+		</div>
 	);
 }
 

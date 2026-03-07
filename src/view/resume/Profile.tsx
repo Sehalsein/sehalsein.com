@@ -12,7 +12,7 @@ type ProfileRootProps = PropsWithChildren<{
 }>;
 
 function ProfileRoot({ children, className }: ProfileRootProps) {
-	return <div className={cn("flex flex-col gap-4", className)}>{children}</div>;
+	return <div className={cn("flex flex-col gap-6", className)}>{children}</div>;
 }
 
 type ProfileHeaderProps = PropsWithChildren<{
@@ -23,7 +23,7 @@ function ProfileHeader({ children, className }: ProfileHeaderProps) {
 	return (
 		<div
 			className={cn(
-				"flex flex-col sm:flex-row gap-4 items-start sm:items-center",
+				"flex flex-col sm:flex-row gap-6 items-start sm:items-center",
 				className,
 			)}
 		>
@@ -60,9 +60,9 @@ function ProfilePhoto({ photo, className }: ProfilePhotoProps) {
 			<Image
 				src={photo}
 				alt="Profile photo"
-				width={80}
-				height={80}
-				className="rounded-full w-20 h-20 object-cover border-2 border-gray-200 dark:border-gray-800"
+				width={96}
+				height={96}
+				className="rounded-full w-24 h-24 object-cover ring-2 ring-gray-900 ring-offset-4 ring-offset-white dark:ring-gray-100 dark:ring-offset-black"
 			/>
 		</motion.div>
 	);
@@ -77,7 +77,7 @@ function ProfileName({ name, className }: ProfileNameProps) {
 	return (
 		<motion.h1
 			className={cn(
-				"text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100",
+				"text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 dark:text-gray-100",
 				className,
 			)}
 			initial={{ opacity: 0, y: -10 }}
@@ -95,7 +95,7 @@ type ProfileContactInfoProps = PropsWithChildren<{
 
 function ProfileContactInfo({ children, className }: ProfileContactInfoProps) {
 	return (
-		<div className={cn("flex flex-wrap items-center gap-3", className)}>
+		<div className={cn("flex flex-wrap items-center gap-3 pt-3 border-t border-gray-200 dark:border-gray-800", className)}>
 			{children}
 		</div>
 	);
@@ -115,7 +115,7 @@ function ProfileEmail({ email, className }: ProfileEmailProps) {
 			transition={{ delay: 0.2 }}
 		>
 			<Link href={`mailto:${email}`}>
-				<div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+				<div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
 					<Mail className="w-4 h-4" />
 					<span className="text-sm">{email}</span>
 				</div>
@@ -138,7 +138,7 @@ function ProfilePhone({ phone, className }: ProfilePhoneProps) {
 			transition={{ delay: 0.25 }}
 		>
 			<Link href={`tel:${phone}`}>
-				<div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+				<div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
 					<Smartphone className="w-4 h-4" />
 					<span className="text-sm">{phone}</span>
 				</div>
@@ -182,7 +182,7 @@ function ProfileSummary({ summary, className }: ProfileSummaryProps) {
 	return (
 		<motion.p
 			className={cn(
-				"text-sm text-gray-600 dark:text-gray-400 leading-relaxed",
+				"text-base text-gray-600 dark:text-gray-400 leading-relaxed pl-4 border-l-2 border-gray-300 dark:border-gray-700",
 				className,
 			)}
 			initial={{ opacity: 0 }}
@@ -206,15 +206,15 @@ function getSocialIcon(name: string) {
 	switch (name.toLowerCase()) {
 		case "linkedin":
 			return (
-				<motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-					<Linkedin className="h-6 w-6 hover:text-blue-600 dark:hover:text-blue-400 rounded-sm p-1 transition-colors" />
-				</motion.div>
+				<div className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm hover:scale-110">
+					<Linkedin className="h-5 w-5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" />
+				</div>
 			);
 		case "github":
 			return (
-				<motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-					<Github className="h-6 w-6 hover:text-gray-900 dark:hover:text-gray-100 rounded-sm p-1 transition-colors" />
-				</motion.div>
+				<div className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm hover:scale-110">
+					<Github className="h-5 w-5 hover:text-gray-900 dark:hover:text-gray-100 transition-colors" />
+				</div>
 			);
 		default:
 			return null;

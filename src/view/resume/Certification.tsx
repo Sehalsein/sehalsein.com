@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/src/lib/utils";
-import { motion } from "motion/react";
 import type { PropsWithChildren } from "react";
 
 type CertificationRootProps = PropsWithChildren<{
@@ -10,16 +9,14 @@ type CertificationRootProps = PropsWithChildren<{
 
 function CertificationRoot({ children, className }: CertificationRootProps) {
 	return (
-		<motion.div
+		<div
 			className={cn(
-				"flex flex-col gap-2 py-2 border-b border-transparent transition-colors",
+				"flex flex-col gap-2 py-2 rounded-lg px-3 -mx-3 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-900/40 hover:translate-x-1",
 				className,
 			)}
-			whileHover={{ scale: 1.01 }}
-			transition={{ type: "spring", stiffness: 300, damping: 20 }}
 		>
 			{children}
-		</motion.div>
+		</div>
 	);
 }
 
@@ -83,14 +80,14 @@ type CertificationIssuedProps = {
 
 function CertificationIssued({ issued, className }: CertificationIssuedProps) {
 	return (
-		<p
+		<span
 			className={cn(
-				"text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap",
+				"inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap",
 				className,
 			)}
 		>
 			{issued}
-		</p>
+		</span>
 	);
 }
 

@@ -14,7 +14,7 @@ export function CompanyLogo({ logo, company, className }: CompanyLogoProps) {
 	return (
 		<motion.div
 			className={cn(
-				"relative w-12 h-12 shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900",
+				"relative w-14 h-14 shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md",
 				className,
 			)}
 			initial={{ opacity: 0, scale: 0.8 }}
@@ -27,7 +27,7 @@ export function CompanyLogo({ logo, company, className }: CompanyLogoProps) {
 					alt={`${company} logo`}
 					fill
 					className="object-contain"
-					sizes="48px"
+					sizes="56px"
 				/>
 			</div>
 		</motion.div>
