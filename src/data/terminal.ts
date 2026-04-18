@@ -163,6 +163,8 @@ export const PALETTE_NAMES = [
 	"dracula",
 	"catppuccin",
 	"mono",
+	"github-dark",
+	"github-dark-colorblind",
 ] as const;
 
 export type PaletteName = (typeof PALETTE_NAMES)[number];

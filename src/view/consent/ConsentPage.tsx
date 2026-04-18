@@ -7,11 +7,16 @@ import { authClient, useSession } from "@/src/lib/authClient";
 
 type OAuth2Client = {
 	oauth2: {
-		consent: (args: {
-			accept: boolean;
-			scope?: string;
-			oauth_query?: string;
-		}) => Promise<{ data?: { redirect_uri?: string } | null }>;
+		// `oauth_query` is auto-injected by the oauthProviderClient() fetch
+		// plugin from window.location.search, so we don't pass it ourselves.
+		consent: (args: { accept: boolean; scope?: string }) => Promise<{
+			data?: { redirect_uri?: string } | null;
+			error?: {
+				message?: string;
+				code?: string;
+				status?: number;
+			} | null;
+		}>;
 	};
 };
 
@@ -38,15 +43,19 @@ export default function ConsentPage() {
 		setError(null);
 		try {
 			const client = authClient as unknown as OAuth2Client;
-			const oauth_query = window.location.search.replace(/^\?/, "");
-			const res = await client.oauth2.consent({
-				accept,
-				scope,
-				oauth_query,
-			});
+			const res = await client.oauth2.consent({ accept, scope });
 			const redirect = res?.data?.redirect_uri;
 			if (redirect) {
 				window.location.href = redirect;
+				return;
+			}
+			if (res?.error) {
+				const msg =
+					res.error.message ||
+					res.error.code ||
+					`status ${res.error.status ?? "unknown"}`;
+				setError(msg);
+				setSubmitting(false);
 				return;
 			}
 			setError("no redirect URL returned by the server.");

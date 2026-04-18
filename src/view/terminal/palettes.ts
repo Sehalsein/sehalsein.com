@@ -128,4 +128,35 @@ export const PALETTES: Record<PaletteName, PaletteVars> = {
 		"--term-mag": "#cccccc",
 		"--term-cyan": "#dddddd",
 	},
+	// GitHub Dark. Source: ghostty-themes / github-dark.
+	"github-dark": {
+		"--term-bg": "#010409",
+		"--term-bg2": "#0d1117",
+		"--term-ink": "#e6edf3",
+		"--term-dim": "#6e7681",
+		"--term-faint": "#484f58",
+		"--term-rule": "#30363d",
+		"--term-green": "#3fb950",
+		"--term-amber": "#e3b341",
+		"--term-red": "#ff7b72",
+		"--term-blue": "#58a6ff",
+		"--term-mag": "#d2a8ff",
+		"--term-cyan": "#56d4dd",
+	},
+	// GitHub Dark (colorblind-accessible): red/green replaced with orange/blue.
+	// Source: ghostty-themes / github-dark-colorblind.
+	"github-dark-colorblind": {
+		"--term-bg": "#010409",
+		"--term-bg2": "#0d1117",
+		"--term-ink": "#c9d1d9",
+		"--term-dim": "#6e7681",
+		"--term-faint": "#484f58",
+		"--term-rule": "#30363d",
+		"--term-green": "#79c0ff",
+		"--term-amber": "#e3b341",
+		"--term-red": "#fdac54",
+		"--term-blue": "#58a6ff",
+		"--term-mag": "#d2a8ff",
+		"--term-cyan": "#56d4dd",
+	},
 };
