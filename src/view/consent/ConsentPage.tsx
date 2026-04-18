@@ -10,7 +10,8 @@ type OAuth2Client = {
 		consent: (args: {
 			accept: boolean;
 			scope?: string;
-		}) => Promise<{ data?: { redirectURI?: string } | null }>;
+			oauth_query?: string;
+		}) => Promise<{ data?: { redirect_uri?: string } | null }>;
 	};
 };
 
@@ -37,8 +38,13 @@ export default function ConsentPage() {
 		setError(null);
 		try {
 			const client = authClient as unknown as OAuth2Client;
-			const res = await client.oauth2.consent({ accept, scope });
-			const redirect = res?.data?.redirectURI;
+			const oauth_query = window.location.search.replace(/^\?/, "");
+			const res = await client.oauth2.consent({
+				accept,
+				scope,
+				oauth_query,
+			});
+			const redirect = res?.data?.redirect_uri;
 			if (redirect) {
 				window.location.href = redirect;
 				return;
