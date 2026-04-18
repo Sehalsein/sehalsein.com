@@ -81,6 +81,12 @@ export default function NowPage() {
 					>
 						→ resume
 					</Link>
+					<Link
+						href="/os"
+						className="underline underline-offset-4 text-term-blue"
+					>
+						→ os
+					</Link>
 				</footer>
 			</div>
 		</main>

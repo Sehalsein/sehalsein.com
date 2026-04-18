@@ -1,149 +1,168 @@
 "use client";
 
-import { useMemo } from "react";
 import { create } from "zustand";
+import { nanoid } from "nanoid";
 
-export type Position = {
-    x: number;
-    y: number;
-    z: number;
-};
-
-export type Size = {
-    width: number;
-    height: number;
-};
+export type Position = { x: number; y: number };
+export type Size = { width: number; height: number };
 
 export type WindowState = {
-    open: boolean;
-    position: Position;
-    size: Size;
+	instanceId: string;
+	appId: string;
+	position: Position;
+	size: Size;
+	minimized: boolean;
+	maximized: boolean;
+	opening: boolean;
+	closing: boolean;
 };
 
-type WindowsStore = {
-    windows: Record<string, WindowState>;
-
-    // Actions
-    getWindowState: (id: string) => WindowState | undefined;
-    setPosition: (id: string, position: Position) => void;
-    setSize: (id: string, size: Size) => void;
-    setActiveWindow: (id: string) => void;
-    setWindow: (id: string, newState: WindowState) => void;
-    closeWindow: (id: string) => void;
+export type OpenAppOpts = {
+	position?: Partial<Position>;
+	size?: Partial<Size>;
 };
 
-export const INITIAL_WINDOW_STATE: WindowState = {
-    open: false,
-    position: { x: 100, y: 100, z: 10 },
-    size: { width: 800, height: 600 },
+type Store = {
+	windows: Record<string, WindowState>;
+	order: string[];
+	focused: string | null;
+	openApp: (appId: string, defaults: Size, opts?: OpenAppOpts) => string;
+	closeWindow: (instanceId: string) => void;
+	focusWindow: (instanceId: string) => void;
+	minimize: (instanceId: string) => void;
+	toggleMax: (instanceId: string) => void;
+	setPosition: (instanceId: string, position: Position) => void;
+	setSize: (instanceId: string, size: Size) => void;
+	findByApp: (appId: string) => WindowState | undefined;
 };
 
-export const useGlobalWindowStore = create<WindowsStore>()((set, get) => ({
-    windows: {},
+export const useOSStore = create<Store>()((set, get) => ({
+	windows: {},
+	order: [],
+	focused: null,
 
-    getWindowState: (id: string) => {
-        return get().windows[id];
-    },
+	openApp: (appId, defaults, opts = {}) => {
+		const instanceId = nanoid(6);
+		const size: Size = {
+			width: opts.size?.width ?? defaults.width,
+			height: opts.size?.height ?? defaults.height,
+		};
+		const position: Position = {
+			x: opts.position?.x ?? 60 + Math.random() * 100,
+			y: opts.position?.y ?? 60 + Math.random() * 80,
+		};
+		set((s) => ({
+			windows: {
+				...s.windows,
+				[instanceId]: {
+					instanceId,
+					appId,
+					position,
+					size,
+					minimized: false,
+					maximized: false,
+					opening: true,
+					closing: false,
+				},
+			},
+			order: [...s.order, instanceId],
+			focused: instanceId,
+		}));
+		setTimeout(() => {
+			set((s) => {
+				const w = s.windows[instanceId];
+				if (!w) return s;
+				return {
+					windows: { ...s.windows, [instanceId]: { ...w, opening: false } },
+				};
+			});
+		}, 220);
+		return instanceId;
+	},
 
-    setWindow: (id: string, newState: WindowState) => {
-        set((state) => {
-            return {
-                windows: {
-                    ...state.windows,
-                    [id]: newState,
-                },
-            };
-        });
-    },
+	closeWindow: (instanceId) => {
+		const w = get().windows[instanceId];
+		if (!w) return;
+		set((s) => ({
+			windows: { ...s.windows, [instanceId]: { ...w, closing: true } },
+		}));
+		setTimeout(() => {
+			set((s) => {
+				const next = { ...s.windows };
+				delete next[instanceId];
+				const order = s.order.filter((id) => id !== instanceId);
+				const focused =
+					s.focused === instanceId
+						? (order[order.length - 1] ?? null)
+						: s.focused;
+				return { windows: next, order, focused };
+			});
+		}, 150);
+	},
 
-    setPosition: (id: string, position: Position) => {
-        set((state) => {
-            const windowState = state.windows[id] || INITIAL_WINDOW_STATE;
-            return {
-                windows: {
-                    ...state.windows,
-                    [id]: {
-                        ...windowState,
-                        position,
-                    },
-                },
-            };
-        });
-    },
+	focusWindow: (instanceId) => {
+		set((s) => {
+			if (!s.windows[instanceId]) return s;
+			const w = s.windows[instanceId];
+			return {
+				order: [...s.order.filter((id) => id !== instanceId), instanceId],
+				focused: instanceId,
+				windows: w.minimized
+					? { ...s.windows, [instanceId]: { ...w, minimized: false } }
+					: s.windows,
+			};
+		});
+	},
 
-    setSize: (id: string, size: Size) => {
-        set((state) => {
-            const windowState = state.windows[id] || INITIAL_WINDOW_STATE;
-            return {
-                windows: {
-                    ...state.windows,
-                    [id]: {
-                        ...windowState,
-                        size,
-                    },
-                },
-            };
-        });
-    },
+	minimize: (instanceId) => {
+		set((s) => {
+			const w = s.windows[instanceId];
+			if (!w) return s;
+			return {
+				windows: { ...s.windows, [instanceId]: { ...w, minimized: true } },
+			};
+		});
+	},
 
-    setActiveWindow: (id: string) => {
-        set((state) => {
-            const updatedWindows = { ...state.windows };
+	toggleMax: (instanceId) => {
+		set((s) => {
+			const w = s.windows[instanceId];
+			if (!w) return s;
+			return {
+				windows: {
+					...s.windows,
+					[instanceId]: { ...w, maximized: !w.maximized },
+				},
+			};
+		});
+	},
 
-            for (const windowId in updatedWindows) {
-                updatedWindows[windowId] = {
-                    ...updatedWindows[windowId],
-                    position: {
-                        ...updatedWindows[windowId].position,
-                        z: 10,
-                    },
-                };
-            }
+	setPosition: (instanceId, position) => {
+		set((s) => {
+			const w = s.windows[instanceId];
+			if (!w) return s;
+			return {
+				windows: { ...s.windows, [instanceId]: { ...w, position } },
+			};
+		});
+	},
 
-            if (updatedWindows[id]) {
-                updatedWindows[id] = {
-                    ...updatedWindows[id],
-                    position: {
-                        ...updatedWindows[id].position,
-                        z: 20,
-                    },
-                };
-            }
+	setSize: (instanceId, size) => {
+		set((s) => {
+			const w = s.windows[instanceId];
+			if (!w) return s;
+			return {
+				windows: { ...s.windows, [instanceId]: { ...w, size } },
+			};
+		});
+	},
 
-
-            return { windows: updatedWindows };
-        });
-    },
-
-    closeWindow: (id: string) => {
-        set((state) => {
-            const updatedWindows = { ...state.windows };
-            delete updatedWindows[id];
-            return { windows: updatedWindows };
-        });
-    },
+	findByApp: (appId) => {
+		const { windows, order } = get();
+		for (let i = order.length - 1; i >= 0; i--) {
+			const w = windows[order[i]];
+			if (w?.appId === appId) return w;
+		}
+		return undefined;
+	},
 }));
-
-export function useWindowStore({
-    id,
-}: {
-    id: string;
-}) {
-    const store = useGlobalWindowStore();
-
-    const currentWindow = store.getWindowState(id);
-    const windowState: WindowState = useMemo(() => ({
-        open: currentWindow?.open || false,
-        position: currentWindow?.position || INITIAL_WINDOW_STATE.position,
-        size: currentWindow?.size || INITIAL_WINDOW_STATE.size,
-    }), [currentWindow]);
-
-    return {
-        state: windowState,
-        closeWindow: () => store.closeWindow(id),
-        setPosition: (position: Position) => store.setPosition(id, position),
-        setSize: (size: Size) => store.setSize(id, size),
-        setActive: () => store.setActiveWindow(id),
-        setWindow: (newState: WindowState) => store.setWindow(id, newState),
-    };
-}

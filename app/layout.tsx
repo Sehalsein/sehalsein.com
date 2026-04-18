@@ -6,7 +6,6 @@ import ThemeProvider from "@/src/view/ThemeProvider";
 export const viewport = {
 	width: "device-width",
 	initialScale: 1,
-	maximumScale: 1,
 };
 
 export const metadata: Metadata = {

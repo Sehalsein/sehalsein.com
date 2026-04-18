@@ -10,7 +10,7 @@ const jetbrains = JetBrains_Mono({
 
 export default function TerminalPage() {
 	return (
-		<div className={jetbrains.className}>
+		<div className={`${jetbrains.className} h-screen w-screen`}>
 			<Terminal />
 		</div>
 	);

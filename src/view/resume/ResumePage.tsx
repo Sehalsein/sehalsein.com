@@ -227,6 +227,12 @@ export default function ResumePage() {
 					>
 						→ guestbook
 					</Link>
+					<Link
+						href="/os"
+						className="underline underline-offset-4 text-term-blue"
+					>
+						→ os
+					</Link>
 					<a
 						href="/resume.pdf"
 						className="underline underline-offset-4 text-term-blue"

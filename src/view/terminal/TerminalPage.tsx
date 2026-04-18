@@ -1709,7 +1709,7 @@ export default function TerminalPage() {
 
 	return (
 		<div
-			className="h-screen w-screen flex flex-col overflow-hidden terminal-selection bg-term-bg text-term-ink antialiased"
+			className="h-full w-full flex flex-col overflow-hidden terminal-selection bg-term-bg text-term-ink antialiased"
 			style={{ fontSize: "14px", lineHeight: "1.65" }}
 			onClick={handleScreenClick}
 		>

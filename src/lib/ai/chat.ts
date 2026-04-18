@@ -54,11 +54,14 @@ export type ChatMessage = {
 	content: string;
 };
 
+export const MAX_OUTPUT_TOKENS = 2048;
+
 export function streamChat(opts: { messages: ChatMessage[] }) {
 	return wrapped.streamText({
 		model: openrouter(MODEL_ID),
 		system: SYSTEM_PROMPT,
 		messages: opts.messages,
+		maxOutputTokens: MAX_OUTPUT_TOKENS,
 		providerOptions: {
 			openrouter: {
 				provider: {
@@ -75,6 +78,7 @@ export async function completeChat(question: string): Promise<string> {
 		model: openrouter(MODEL_ID),
 		system: SYSTEM_PROMPT,
 		messages: [{ role: "user", content: question }],
+		maxOutputTokens: MAX_OUTPUT_TOKENS,
 	});
 	const { text } = await result;
 	return text;
