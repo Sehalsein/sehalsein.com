@@ -1,6 +1,5 @@
-// Root-level fallback mirror for OpenID discovery — recommended by the docs
-// since some clients hardcode /.well-known/openid-configuration ignoring the
-// issuer path.
+// Required OpenID config at the issuer path (= /api/auth).
+// Next.js static routes take precedence over the /api/auth/[...all] catch-all.
 import { oauthProviderOpenIdConfigMetadata } from "@better-auth/oauth-provider";
 import { auth } from "@/src/lib/auth";
 

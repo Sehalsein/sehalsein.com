@@ -5,21 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authClient, useSession } from "@/src/lib/authClient";
 
-type OAuth2Client = {
-	oauth2: {
-		// `oauth_query` is auto-injected by the oauthProviderClient() fetch
-		// plugin from window.location.search, so we don't pass it ourselves.
-		consent: (args: { accept: boolean; scope?: string }) => Promise<{
-			data?: { redirect_uri?: string } | null;
-			error?: {
-				message?: string;
-				code?: string;
-				status?: number;
-			} | null;
-		}>;
-	};
-};
-
 export default function ConsentPage() {
 	const router = useRouter();
 	const params = useSearchParams();
@@ -42,19 +27,19 @@ export default function ConsentPage() {
 		setSubmitting(accept ? "accept" : "deny");
 		setError(null);
 		try {
-			const client = authClient as unknown as OAuth2Client;
-			const res = await client.oauth2.consent({ accept, scope });
-			const redirect = res?.data?.redirect_uri;
-			if (redirect) {
-				window.location.href = redirect;
+			// `oauth_query` is auto-injected by the oauthProviderClient() fetch
+			// plugin from window.location.search — we don't pass it ourselves.
+			const res = await authClient.oauth2.consent({ accept, scope });
+			if (res.data?.redirect && res.data.url) {
+				window.location.href = res.data.url;
 				return;
 			}
-			if (res?.error) {
-				const msg =
+			if (res.error) {
+				setError(
 					res.error.message ||
-					res.error.code ||
-					`status ${res.error.status ?? "unknown"}`;
-				setError(msg);
+						res.error.code ||
+						`status ${res.error.status ?? "unknown"}`,
+				);
 				setSubmitting(false);
 				return;
 			}

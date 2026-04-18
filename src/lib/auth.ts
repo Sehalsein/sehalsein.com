@@ -6,6 +6,7 @@ import { dash } from "@better-auth/infra";
 import { getDb, schema } from "@/src/lib/db";
 
 function createAuth() {
+	const baseURL = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 	return betterAuth({
 		appName: "sehalsein.com",
 		database: drizzleAdapter(getDb(), {
@@ -13,32 +14,8 @@ function createAuth() {
 			schema,
 		}),
 		secret: process.env.BETTER_AUTH_SECRET,
-		baseURL: process.env.BETTER_AUTH_URL,
+		baseURL,
 		disabledPaths: ["/token"],
-		logger: {
-			level: "debug",
-			log: (level, message, ...args) => {
-				// Surface in Netlify/Vercel function logs.
-				// eslint-disable-next-line no-console
-				console[level === "debug" ? "log" : level](
-					`[better-auth:${level}]`,
-					message,
-					...args,
-				);
-			},
-		},
-		onAPIError: {
-			throw: false,
-			onError: (error) => {
-				// eslint-disable-next-line no-console
-				console.error(
-					"[better-auth:onAPIError]",
-					error instanceof Error
-						? { message: error.message, stack: error.stack }
-						: error,
-				);
-			},
-		},
 		user: {
 			additionalFields: {
 				githubLogin: { type: "string", required: false },
@@ -68,12 +45,7 @@ function createAuth() {
 				consentPage: "/consent",
 				allowDynamicClientRegistration: true,
 				allowUnauthenticatedClientRegistration: true,
-				// Resource indicators (RFC 8707) that MCP clients request.
-				// The MCP route's verifyOptions.audience must match one of these.
-				validAudiences: [
-					process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
-					`${process.env.BETTER_AUTH_URL ?? "http://localhost:3000"}/api/mcp`,
-				],
+				validAudiences: [baseURL, `${baseURL}/api/mcp`],
 			}),
 			dash(),
 		],
@@ -90,9 +62,7 @@ export function getAuth(): Auth {
 	return cached;
 }
 
-// Named export for the Better Auth CLI (`pnpm exec @better-auth/cli generate`).
-// The CLI statically imports this file, so it must be a concrete `auth` value
-// (not a function). Evaluated lazily at first access via the getter pattern.
+// Named export for the Better Auth CLI (`pnpm exec better-auth generate`).
 export const auth = new Proxy({} as Auth, {
 	get(_target, prop) {
 		return Reflect.get(getAuth() as object, prop);

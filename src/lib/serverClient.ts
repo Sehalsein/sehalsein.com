@@ -1,16 +1,15 @@
 import { createAuthClient } from "better-auth/client";
 import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client";
-import type { Auth as BetterAuthBase } from "better-auth/types";
-import { getAuth } from "@/src/lib/auth";
 
 function createServerClient() {
-	// Better Auth's oauthProviderResourceClient<T extends Auth> is bivariant,
-	// so our plugin-augmented return type doesn't match. Cast to the base
-	// Auth shape only for this one hand-off.
-	const auth = getAuth() as unknown as BetterAuthBase;
+	// The resource client accepts auth as an optional parameter for inferring
+	// config. We omit it to avoid a Better Auth generic-variance issue between
+	// our plugin-augmented `betterAuth()` return type and the client's base
+	// `Auth` constraint — we pass the same values explicitly at the call site
+	// of getProtectedResourceMetadata, which is the whole surface we use.
 	return createAuthClient({
 		baseURL: process.env.BETTER_AUTH_URL,
-		plugins: [oauthProviderResourceClient(auth)],
+		plugins: [oauthProviderResourceClient()],
 	});
 }
 

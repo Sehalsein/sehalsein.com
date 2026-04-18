@@ -21,8 +21,8 @@ export default function Copyable({
 }: Props) {
 	const [copied, setCopied] = useState(false);
 
-	const handleClick = async (e: React.MouseEvent) => {
-		e.stopPropagation();
+	const handleClick = async (e?: React.MouseEvent) => {
+		e?.stopPropagation();
 		try {
 			await navigator.clipboard.writeText(value);
 			setCopied(true);
@@ -33,7 +33,7 @@ export default function Copyable({
 	};
 
 	const commonProps = {
-		onClick: handleClick,
+		onClick: (e: React.MouseEvent) => handleClick(e),
 		title,
 		className: `${className ?? ""} cursor-pointer select-text`,
 		style: {
@@ -45,7 +45,7 @@ export default function Copyable({
 		onKeyDown: (e: React.KeyboardEvent) => {
 			if (e.key === "Enter" || e.key === " ") {
 				e.preventDefault();
-				handleClick(e as unknown as React.MouseEvent);
+				handleClick();
 			}
 		},
 	};
