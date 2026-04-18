@@ -26,3 +26,42 @@
   }
 }
 
+/* Terminal animations */
+@keyframes fi {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+@keyframes barfill {
+  from { right: 100%; }
+  to { right: 0; }
+}
+@keyframes hint-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes hint-out {
+  to { opacity: 0; }
+}
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  97.5% { opacity: 1; }
+  98% { opacity: 0.92; }
+  98.5% { opacity: 1; }
+}
+
+/* Terminal selection */
+.terminal-selection ::selection {
+  background: rgba(158, 206, 106, 0.25);
+  color: var(--term-ink);
+}
+
+/* Terminal scrollbar */
+.terminal-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
+.terminal-scrollbar::-webkit-scrollbar-track { background: var(--term-bg); }
+.terminal-scrollbar::-webkit-scrollbar-thumb { background: var(--term-rule); }
+.terminal-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--term-faint); }
+
