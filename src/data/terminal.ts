@@ -207,15 +207,22 @@ export const COMMAND_REGISTRY: Record<string, string> = {
 	man: "nothing to see here",
 	exit: "nothing happens",
 	ai: "chat with an AI that knows about me",
+	now: "what I'm up to right now",
+	contributions: "github contribution heatmap",
+	contrib: "alias for contributions",
+	guestbook: "sign the guestbook",
+	mcp: "remote MCP server info",
+	login: "sign in with GitHub",
+	logout: "sign out",
 };
 
 export const COMMAND_GROUPS: [string, string[]][] = [
-	["Navigation", ["about", "work", "project", "experience", "contact"]],
-	["Identity", ["whoami", "neofetch", "gpg", "ssh", "resume"]],
+	["Navigation", ["about", "work", "project", "experience", "contact", "now"]],
+	["Identity", ["whoami", "neofetch", "gpg", "ssh", "resume", "contributions", "login", "logout"]],
 	["Shell", ["ls", "cd", "pwd", "cat", "clear", "banner", "date", "uptime"]],
 	["Editors", ["vim", "git"]],
 	["Themes", [":colorscheme", "themes", ":set"]],
-	["Fun", ["fortune", "cowsay", "matrix", "coffee", "sudo", "socials", "ai"]],
+	["Fun", ["fortune", "cowsay", "matrix", "coffee", "sudo", "socials", "ai", "guestbook", "mcp"]],
 ];
 
 export const HOME_FILES = [

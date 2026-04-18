@@ -178,35 +178,57 @@ export default function BootSequence({ onComplete }: Props) {
 
 					{/* Help hint */}
 					{typingDone && (
-						<p
-							className="text-[14px] mt-2"
-							style={{ color: "var(--term-dim)" }}
-						>
-							type{" "}
-							<span style={{ color: "var(--term-green)" }}>
-								help
-							</span>{" "}
-							or{" "}
-							<span style={{ color: "var(--term-green)" }}>
-								?
-							</span>{" "}
-							·{" "}
-							<span style={{ color: "var(--term-green)" }}>
-								Tab
-							</span>{" "}
-							complete ·{" "}
-							<span style={{ color: "var(--term-green)" }}>
-								↑/↓
-							</span>{" "}
-							history ·{" "}
-							<span style={{ color: "var(--term-green)" }}>
-								:colorscheme &lt;name&gt;
-							</span>{" "}
-							·{" "}
-							<span style={{ color: "var(--term-green)" }}>
-								:set crt
-							</span>
-						</p>
+						<>
+							<p
+								className="text-[14px] mt-2"
+								style={{ color: "var(--term-dim)" }}
+							>
+								<span style={{ color: "var(--term-amber)" }}>
+									new:
+								</span>{" "}
+								<span style={{ color: "var(--term-green)" }}>
+									ai
+								</span>{" "}
+								chat with an LLM that knows me ·{" "}
+								<span style={{ color: "var(--term-green)" }}>
+									mcp
+								</span>{" "}
+								plug me into your MCP client ·{" "}
+								<span style={{ color: "var(--term-green)" }}>
+									guestbook
+								</span>{" "}
+								say hi
+							</p>
+							<p
+								className="text-[14px] mt-1"
+								style={{ color: "var(--term-dim)" }}
+							>
+								type{" "}
+								<span style={{ color: "var(--term-green)" }}>
+									help
+								</span>{" "}
+								or{" "}
+								<span style={{ color: "var(--term-green)" }}>
+									?
+								</span>{" "}
+								·{" "}
+								<span style={{ color: "var(--term-green)" }}>
+									Tab
+								</span>{" "}
+								complete ·{" "}
+								<span style={{ color: "var(--term-green)" }}>
+									↑/↓
+								</span>{" "}
+								history ·{" "}
+								<span style={{ color: "var(--term-green)" }}>
+									:colorscheme &lt;name&gt;
+								</span>{" "}
+								·{" "}
+								<span style={{ color: "var(--term-green)" }}>
+									:set crt
+								</span>
+							</p>
+						</>
 					)}
 				</div>
 			)}

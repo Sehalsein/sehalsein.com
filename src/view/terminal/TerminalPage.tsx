@@ -7,6 +7,9 @@ import CommandInput from "./CommandInput";
 import VimOverlay from "./VimOverlay";
 import MatrixOverlay from "./MatrixOverlay";
 import AiChatMode from "./AiChatMode";
+import ContributionsInline from "./ContributionsInline";
+import GuestbookInline from "./GuestbookInline";
+import { authClient } from "@/src/lib/authClient";
 import { PALETTES } from "./palettes";
 import type { PaletteName } from "@/src/data/terminal";
 import {
@@ -25,13 +28,14 @@ import {
 	VIM_FILES,
 } from "@/src/data/terminal";
 import { RESUME_DATA } from "@/src/data/resume";
+import { NOW_LAST_UPDATED, NOW_SECTIONS } from "@/src/data/now";
 
 type OutputEntry = {
 	id: number;
 	content: ReactNode;
 };
 
-let entryId = 0;
+let entryId = Date.now();
 function nextId() {
 	return entryId++;
 }
@@ -1064,11 +1068,133 @@ export default function TerminalPage() {
 				</span>,
 			);
 		},
-		sudo: () => {
+		sudo: (args) => {
+			const rest = args.join(" ").toLowerCase().trim();
+			if (rest === "make me a sandwich") {
+				print(
+					<span>
+						<span style={{ color: "var(--term-green)" }}>
+							Okay.
+						</span>{" "}
+						<Dim>🥪 (obligatory xkcd 149)</Dim>
+					</span>,
+				);
+				return;
+			}
+			if (rest === "rm -rf /" || rest === "rm -rf --no-preserve-root /") {
+				print(
+					<span style={{ color: "var(--term-red)" }}>
+						nice try. this is a staticpage, there is nothing to
+						delete.
+					</span>,
+				);
+				return;
+			}
 			print(
 				<span style={{ color: "var(--term-red)" }}>
 					sehal is not in the sudoers file. This incident will be
 					reported.
+				</span>,
+			);
+		},
+		hack: () => {
+			const targets = [
+				["scanning 192.168.0.0/16", "432 hosts up"],
+				["bruteforcing root@mainframe", "access granted"],
+				["bypassing firewall", "done"],
+				["downloading 3TB of files", "done"],
+				["encrypting traces", "done"],
+				["exiting matrix", "done"],
+			];
+			print(
+				<div className="my-2 text-[12.5px]">
+					{targets.map(([task, result]) => (
+						<div key={task} className="py-[1px]">
+							<span style={{ color: "var(--term-amber)" }}>
+								[
+								<span style={{ color: "var(--term-green)" }}>
+									████████████
+								</span>
+								]
+							</span>{" "}
+							<span style={{ color: "var(--term-ink)" }}>
+								{task}
+							</span>
+							{" — "}
+							<span style={{ color: "var(--term-green)" }}>
+								{result}
+							</span>
+						</div>
+					))}
+					<div
+						className="mt-2 text-[11px]"
+						style={{ color: "var(--term-dim)" }}
+					>
+						I&apos;m in. (this was a joke, please don&apos;t call
+						the FBI)
+					</div>
+				</div>,
+			);
+		},
+		curl: (args) => {
+			const target = (args[0] || "").toLowerCase();
+			if (!target) {
+				print(
+					<span style={{ color: "var(--term-red)" }}>
+						curl: try one of:{" "}
+						<span style={{ color: "var(--term-green)" }}>
+							curl parrot
+						</span>
+						,{" "}
+						<span style={{ color: "var(--term-green)" }}>
+							curl cowsay &lt;msg&gt;
+						</span>
+					</span>,
+				);
+				return;
+			}
+			if (target === "parrot" || target === "party" || target === "partyparrot") {
+				const parrot = String.raw`             _____________
+        .-'"             "'-.
+       /                     \
+      /    .---.   .---.      \
+     |    |  o  | |  o  |      |
+     |     \___/   \___/       |
+      \        .---.          /
+       '.    \_____/        .'
+         '-.__         __.-'
+              \\'"'"'"'"'//
+               \\       //
+                \\     //`;
+				print(
+					<pre
+						className="whitespace-pre text-[11.5px] leading-[1.15] my-2.5"
+						style={{ color: "var(--term-green)" }}
+					>
+						{parrot}
+					</pre>,
+					<Dim>
+						🎉 party on (animate in the terminal of your heart)
+					</Dim>,
+				);
+				return;
+			}
+			if (target === "cowsay") {
+				HANDLERS.cowsay(args.slice(1));
+				return;
+			}
+			if (target === "localhost" || target.startsWith("http")) {
+				print(
+					<Dim>
+						curl: (7) Failed to connect — this is a browser, not a
+						shell. nice try though.
+					</Dim>,
+				);
+				return;
+			}
+			print(
+				<span style={{ color: "var(--term-red)" }}>
+					curl: (6) Could not resolve host: {escapeText(target)}
 				</span>,
 			);
 		},
@@ -1085,6 +1211,151 @@ export default function TerminalPage() {
 		},
 		ai: () => {
 			setAiChatActive(true);
+		},
+		contributions: () => {
+			print(<ContributionsInline />);
+		},
+		guestbook: () => {
+			print(<GuestbookInline />);
+		},
+		login: async () => {
+			const { data: session } = await authClient.getSession();
+			if (session) {
+				const login =
+					(session.user as { githubLogin?: string | null })
+						.githubLogin ?? session.user.name;
+				print(
+					<span>
+						<Ok text="✓" /> already signed in as{" "}
+						<span style={{ color: "var(--term-green)" }}>
+							@{login}
+						</span>
+					</span>,
+				);
+				return;
+			}
+			print(
+				<Dim>
+					<span style={{ color: "var(--term-amber)" }}>→</span>{" "}
+					redirecting to github for oauth…
+				</Dim>,
+			);
+			await authClient.signIn.social({
+				provider: "github",
+				callbackURL: "/terminal",
+			});
+		},
+		logout: async () => {
+			const { data: session } = await authClient.getSession();
+			if (!session) {
+				print(<Dim>not signed in.</Dim>);
+				return;
+			}
+			await authClient.signOut();
+			print(
+				<span>
+					<Ok text="✓" /> signed out.
+				</span>,
+			);
+		},
+		mcp: () => {
+			const origin =
+				typeof window !== "undefined"
+					? window.location.origin
+					: "https://sehalsein.com";
+			const endpoint = `${origin}/api/mcp`;
+			const configSnippet = JSON.stringify(
+				{
+					mcpServers: {
+						sehal: { url: endpoint },
+					},
+				},
+				null,
+				2,
+			);
+			print(
+				<div className="my-2 text-[12.5px] max-w-[74ch]">
+					<div
+						className="text-[11px] tracking-[0.08em] uppercase mb-2"
+						style={{ color: "var(--term-amber)" }}
+					>
+						Remote MCP server
+					</div>
+					<div className="mb-2">
+						endpoint:{" "}
+						<span style={{ color: "var(--term-green)" }}>
+							{endpoint}
+						</span>
+					</div>
+					<div className="mb-2" style={{ color: "var(--term-dim)" }}>
+						public tools: get_resume, get_experience, get_skills,
+						get_projects, get_now
+						<br />
+						authed tool: ask_sehal (OAuth via GitHub)
+					</div>
+					<div
+						className="text-[10px] tracking-[0.08em] uppercase mt-3 mb-1"
+						style={{ color: "var(--term-dim)" }}
+					>
+						── Claude Desktop / Code config
+					</div>
+					<pre
+						className="whitespace-pre text-[11px] leading-[1.3] p-2.5"
+						style={{
+							background: "var(--term-bg2)",
+							border: "1px solid var(--term-rule)",
+							color: "var(--term-ink)",
+						}}
+					>
+						{configSnippet}
+					</pre>
+				</div>,
+			);
+		},
+		contrib: function (args) {
+			HANDLERS.contributions(args);
+		},
+		now: () => {
+			print(
+				<div className="my-2 text-[12.5px] max-w-[74ch]">
+					<div
+						className="text-[11px] tracking-[0.08em] uppercase mb-2.5"
+						style={{ color: "var(--term-amber)" }}
+					>
+						/now · updated {NOW_LAST_UPDATED}
+					</div>
+					{NOW_SECTIONS.map((s) => (
+						<div key={s.id} className="mb-3">
+							<div
+								className="text-[10px] tracking-[0.1em] uppercase"
+								style={{ color: "var(--term-dim)" }}
+							>
+								── {s.title}
+							</div>
+							{s.items.map((item, i) => (
+								<div key={i} className="pl-3">
+									<span style={{ color: "var(--term-faint)" }}>
+										▸
+									</span>{" "}
+									<span style={{ color: "var(--term-ink)" }}>
+										{item}
+									</span>
+								</div>
+							))}
+						</div>
+					))}
+					<Dim>
+						→ full page:{" "}
+						<a
+							href="/now"
+							style={{ color: "var(--term-blue)" }}
+						>
+							/now
+						</a>
+					</Dim>
+				</div>,
+			);
+			updateHash("now");
 		},
 	};
 
