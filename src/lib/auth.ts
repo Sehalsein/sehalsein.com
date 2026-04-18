@@ -68,6 +68,12 @@ function createAuth() {
 				consentPage: "/consent",
 				allowDynamicClientRegistration: true,
 				allowUnauthenticatedClientRegistration: true,
+				// Resource indicators (RFC 8707) that MCP clients request.
+				// The MCP route's verifyOptions.audience must match one of these.
+				validAudiences: [
+					process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+					`${process.env.BETTER_AUTH_URL ?? "http://localhost:3000"}/api/mcp`,
+				],
 			}),
 			dash(),
 		],
