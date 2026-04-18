@@ -29,11 +29,10 @@ function createAuth() {
 		},
 		onAPIError: {
 			throw: false,
-			onError: (error, ctx) => {
+			onError: (error) => {
 				// eslint-disable-next-line no-console
 				console.error(
 					"[better-auth:onAPIError]",
-					ctx.path,
 					error instanceof Error
 						? { message: error.message, stack: error.stack }
 						: error,
