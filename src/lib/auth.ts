@@ -15,6 +15,31 @@ function createAuth() {
 		secret: process.env.BETTER_AUTH_SECRET,
 		baseURL: process.env.BETTER_AUTH_URL,
 		disabledPaths: ["/token"],
+		logger: {
+			level: "debug",
+			log: (level, message, ...args) => {
+				// Surface in Netlify/Vercel function logs.
+				// eslint-disable-next-line no-console
+				console[level === "debug" ? "log" : level](
+					`[better-auth:${level}]`,
+					message,
+					...args,
+				);
+			},
+		},
+		onAPIError: {
+			throw: false,
+			onError: (error, ctx) => {
+				// eslint-disable-next-line no-console
+				console.error(
+					"[better-auth:onAPIError]",
+					ctx.path,
+					error instanceof Error
+						? { message: error.message, stack: error.stack }
+						: error,
+				);
+			},
+		},
 		user: {
 			additionalFields: {
 				githubLogin: { type: "string", required: false },
