@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { JWTPayload } from "jose";
 import { z } from "zod";
 import { RESUME_DATA } from "@/src/data/resume";
 import { NOW_LAST_UPDATED, NOW_SECTIONS } from "@/src/data/now";
@@ -18,7 +19,10 @@ function errorResult(message: string) {
 	};
 }
 
-export function registerTools(server: McpServer) {
+export function registerTools(
+	server: McpServer,
+	ctx: { jwt: JWTPayload | null },
+) {
 	server.registerTool(
 		"get_resume",
 		{
@@ -160,16 +164,15 @@ export function registerTools(server: McpServer) {
 					.describe("Your question for Sehal."),
 			},
 		},
-		async ({ question }, extra) => {
-			const authInfo = extra.authInfo;
-			if (!authInfo) {
+		async ({ question }) => {
+			if (!ctx.jwt) {
 				return errorResult(
 					"ask_sehal requires authentication. Sign in via your MCP client's OAuth flow.",
 				);
 			}
 			const subject =
-				(authInfo.extra as { userId?: string } | undefined)?.userId ??
-				authInfo.clientId ??
+				(ctx.jwt.sub as string | undefined) ??
+				(ctx.jwt.client_id as string | undefined) ??
 				"anonymous";
 			const rl = await rateLimit({
 				key: `mcp:ask_sehal:${subject}`,

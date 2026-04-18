@@ -1,24 +1,31 @@
-import { betterAuth, type BetterAuthOptions } from "better-auth";
+import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { mcp } from "better-auth/plugins";
+import { jwt } from "better-auth/plugins";
+import { oauthProvider } from "@better-auth/oauth-provider";
 import { dash } from "@better-auth/infra";
 import { getDb, schema } from "@/src/lib/db";
 
-type Auth = ReturnType<typeof betterAuth>;
-
-let cached: Auth | null = null;
-
-function buildOptions(): BetterAuthOptions {
-	return {
+function createAuth() {
+	return betterAuth({
+		appName: "sehalsein.com",
 		database: drizzleAdapter(getDb(), {
 			provider: "pg",
 			schema,
 		}),
 		secret: process.env.BETTER_AUTH_SECRET,
 		baseURL: process.env.BETTER_AUTH_URL,
+		disabledPaths: ["/token"],
 		user: {
 			additionalFields: {
 				githubLogin: { type: "string", required: false },
+			},
+		},
+		advanced: {
+			ipAddress: {
+				ipAddressHeaders: [
+					"x-nf-client-connection-ip",
+					"x-forwarded-for",
+				],
 			},
 		},
 		socialProviders: {
@@ -31,16 +38,24 @@ function buildOptions(): BetterAuthOptions {
 			},
 		},
 		plugins: [
-			mcp({
+			jwt(),
+			oauthProvider({
 				loginPage: "/guestbook",
+				consentPage: "/consent",
+				allowDynamicClientRegistration: true,
+				allowUnauthenticatedClientRegistration: true,
 			}),
 			dash(),
 		],
-	};
+	});
 }
+
+export type Auth = ReturnType<typeof createAuth>;
+
+let cached: Auth | null = null;
 
 export function getAuth(): Auth {
 	if (cached) return cached;
-	cached = betterAuth(buildOptions());
+	cached = createAuth();
 	return cached;
 }

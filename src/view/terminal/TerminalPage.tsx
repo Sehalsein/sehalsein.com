@@ -9,6 +9,7 @@ import MatrixOverlay from "./MatrixOverlay";
 import AiChatMode from "./AiChatMode";
 import ContributionsInline from "./ContributionsInline";
 import GuestbookInline from "./GuestbookInline";
+import Copyable from "./Copyable";
 import { authClient } from "@/src/lib/authClient";
 import { PALETTES } from "./palettes";
 import type { PaletteName } from "@/src/data/terminal";
@@ -1258,57 +1259,368 @@ export default function TerminalPage() {
 				</span>,
 			);
 		},
-		mcp: () => {
+		me: async () => {
+			const { data: session } = await authClient.getSession();
+			if (!session) {
+				print(
+					<span>
+						<Dim>not signed in — try</Dim>{" "}
+						<span style={{ color: "var(--term-green)" }}>
+							login
+						</span>
+					</span>,
+				);
+				return;
+			}
+			const user = session.user as {
+				id: string;
+				name: string;
+				email: string;
+				image?: string | null;
+				githubLogin?: string | null;
+			};
+			const fields: [string, string][] = [
+				["user", `@${user.githubLogin ?? user.name}`],
+				["name", user.name],
+				["email", user.email],
+				["id", user.id],
+				[
+					"expires",
+					new Date(session.session.expiresAt).toLocaleString(),
+				],
+			];
+			print(
+				<div
+					className="py-2.5 px-4 my-1.5 text-[12.5px]"
+					style={{
+						background: "var(--term-bg)",
+						borderLeft: "2px solid var(--term-blue)",
+					}}
+				>
+					<div
+						className="text-[11px] tracking-[0.08em] uppercase mb-1.5 font-medium"
+						style={{ color: "var(--term-amber)" }}
+					>
+						current session
+					</div>
+					{fields.map(([k, v]) => (
+						<div key={k}>
+							<CmdName>{k}</CmdName>
+							<span style={{ color: "var(--term-ink)" }}>{v}</span>
+						</div>
+					))}
+				</div>,
+			);
+		},
+		mcp: (args) => {
 			const origin =
 				typeof window !== "undefined"
 					? window.location.origin
 					: "https://sehalsein.com";
 			const endpoint = `${origin}/api/mcp`;
-			const configSnippet = JSON.stringify(
-				{
-					mcpServers: {
-						sehal: { url: endpoint },
-					},
-				},
+			const verbose = args.some((a) =>
+				["-v", "--verbose", "-h", "--help", "setup"].includes(
+					a.toLowerCase(),
+				),
+			);
+
+			const desktopSnippet = JSON.stringify(
+				{ mcpServers: { sehal: { url: endpoint } } },
 				null,
 				2,
 			);
+			const codeCommand = `claude mcp add --transport http sehal ${endpoint}`;
+			const cursorSnippet = JSON.stringify(
+				{ mcpServers: { sehal: { url: endpoint } } },
+				null,
+				2,
+			);
+
+			if (!verbose) {
+				// Short summary + one-liner setup command
+				print(
+					<div className="my-2 text-[12.5px] max-w-[74ch]">
+						<div
+							className="text-[11px] tracking-[0.08em] uppercase mb-2"
+							style={{ color: "var(--term-amber)" }}
+						>
+							remote mcp server
+						</div>
+						<div className="mb-1">
+							endpoint:{" "}
+							<Copyable
+								as="span"
+								value={endpoint}
+								style={{ color: "var(--term-green)" }}
+								title="click to copy endpoint"
+							>
+								{endpoint}
+							</Copyable>
+						</div>
+						<div
+							className="mb-2 text-[11.5px]"
+							style={{ color: "var(--term-dim)" }}
+						>
+							public:{" "}
+							<span style={{ color: "var(--term-ink)" }}>
+								get_resume · get_experience · get_skills ·
+								get_projects · get_now
+							</span>
+							{" — "}authed:{" "}
+							<span style={{ color: "var(--term-ink)" }}>
+								ask_sehal
+							</span>
+						</div>
+						<div
+							className="text-[11.5px] mb-1"
+							style={{ color: "var(--term-dim)" }}
+						>
+							add it in Claude Code:
+						</div>
+						<Copyable
+							value={codeCommand}
+							className="whitespace-pre text-[11px] leading-[1.3] p-2.5 pr-16"
+							style={{
+								background: "var(--term-bg2)",
+								border: "1px solid var(--term-rule)",
+								color: "var(--term-green)",
+							}}
+						>
+							{codeCommand}
+						</Copyable>
+						<div
+							className="mt-2 text-[11.5px]"
+							style={{ color: "var(--term-dim)" }}
+						>
+							→ Claude Desktop, Cursor, or the full OAuth flow:{" "}
+							<span style={{ color: "var(--term-green)" }}>
+								mcp --help
+							</span>
+						</div>
+					</div>,
+				);
+				return;
+			}
+
+			// Verbose: full setup guide
 			print(
 				<div className="my-2 text-[12.5px] max-w-[74ch]">
 					<div
 						className="text-[11px] tracking-[0.08em] uppercase mb-2"
 						style={{ color: "var(--term-amber)" }}
 					>
-						Remote MCP server
+						remote mcp server · setup
 					</div>
 					<div className="mb-2">
 						endpoint:{" "}
-						<span style={{ color: "var(--term-green)" }}>
+						<Copyable
+							as="span"
+							value={endpoint}
+							style={{ color: "var(--term-green)" }}
+							title="click to copy endpoint"
+						>
 							{endpoint}
-						</span>
-					</div>
-					<div className="mb-2" style={{ color: "var(--term-dim)" }}>
-						public tools: get_resume, get_experience, get_skills,
-						get_projects, get_now
-						<br />
-						authed tool: ask_sehal (OAuth via GitHub)
+						</Copyable>
 					</div>
 					<div
-						className="text-[10px] tracking-[0.08em] uppercase mt-3 mb-1"
+						className="mb-3 text-[11.5px]"
 						style={{ color: "var(--term-dim)" }}
 					>
-						── Claude Desktop / Code config
+						streamable HTTP · OAuth 2.1 dynamic client registration
+						(RFC 7591) · no bearer token needed — your client does the
+						dance.
 					</div>
-					<pre
-						className="whitespace-pre text-[11px] leading-[1.3] p-2.5"
+
+					{/* Tools */}
+					<div
+						className="text-[10px] tracking-[0.1em] uppercase my-2"
+						style={{ color: "var(--term-dim)" }}
+					>
+						── tools
+					</div>
+					<div style={{ color: "var(--term-ink)" }}>
+						<div>
+							<span style={{ color: "var(--term-green)" }}>
+								get_resume
+							</span>
+							,{" "}
+							<span style={{ color: "var(--term-green)" }}>
+								get_experience
+							</span>
+							,{" "}
+							<span style={{ color: "var(--term-green)" }}>
+								get_skills
+							</span>
+							,{" "}
+							<span style={{ color: "var(--term-green)" }}>
+								get_projects
+							</span>
+							,{" "}
+							<span style={{ color: "var(--term-green)" }}>
+								get_now
+							</span>{" "}
+							<span style={{ color: "var(--term-dim)" }}>
+								— public, no auth
+							</span>
+						</div>
+						<div>
+							<span style={{ color: "var(--term-green)" }}>
+								ask_sehal
+							</span>{" "}
+							<span style={{ color: "var(--term-dim)" }}>
+								— ask an LLM that knows me · OAuth-gated ·
+								rate-limited
+							</span>
+						</div>
+					</div>
+					<div
+						className="text-[10px] tracking-[0.1em] uppercase my-2 mt-3"
+						style={{ color: "var(--term-dim)" }}
+					>
+						── resources
+					</div>
+					<div style={{ color: "var(--term-ink)" }}>
+						<span style={{ color: "var(--term-green)" }}>
+							resume://sehal
+						</span>
+						{", "}
+						<span style={{ color: "var(--term-green)" }}>
+							now://sehal
+						</span>
+					</div>
+
+					{/* Claude Desktop */}
+					<div
+						className="text-[10px] tracking-[0.1em] uppercase my-2 mt-4"
+						style={{ color: "var(--term-dim)" }}
+					>
+						── claude desktop
+					</div>
+					<div
+						className="mb-1"
+						style={{ color: "var(--term-dim)" }}
+					>
+						edit{" "}
+						<span style={{ color: "var(--term-amber)" }}>
+							~/Library/Application Support/Claude/claude_desktop_config.json
+						</span>{" "}
+						(macOS) or{" "}
+						<span style={{ color: "var(--term-amber)" }}>
+							%APPDATA%\Claude\claude_desktop_config.json
+						</span>{" "}
+						(Windows):
+					</div>
+					<Copyable
+						value={desktopSnippet}
+						className="whitespace-pre text-[11px] leading-[1.3] p-2.5 pr-16"
 						style={{
 							background: "var(--term-bg2)",
 							border: "1px solid var(--term-rule)",
 							color: "var(--term-ink)",
 						}}
 					>
-						{configSnippet}
-					</pre>
+						{desktopSnippet}
+					</Copyable>
+					<div
+						className="text-[11px] mt-1"
+						style={{ color: "var(--term-dim)" }}
+					>
+						then restart Claude Desktop.
+					</div>
+
+					{/* Claude Code */}
+					<div
+						className="text-[10px] tracking-[0.1em] uppercase my-2 mt-4"
+						style={{ color: "var(--term-dim)" }}
+					>
+						── claude code (cli)
+					</div>
+					<Copyable
+						value={codeCommand}
+						className="whitespace-pre text-[11px] leading-[1.3] p-2.5 pr-16"
+						style={{
+							background: "var(--term-bg2)",
+							border: "1px solid var(--term-rule)",
+							color: "var(--term-green)",
+						}}
+					>
+						{codeCommand}
+					</Copyable>
+
+					{/* Cursor / VS Code */}
+					<div
+						className="text-[10px] tracking-[0.1em] uppercase my-2 mt-4"
+						style={{ color: "var(--term-dim)" }}
+					>
+						── cursor / vs code (mcp.json)
+					</div>
+					<Copyable
+						value={cursorSnippet}
+						className="whitespace-pre text-[11px] leading-[1.3] p-2.5 pr-16"
+						style={{
+							background: "var(--term-bg2)",
+							border: "1px solid var(--term-rule)",
+							color: "var(--term-ink)",
+						}}
+					>
+						{cursorSnippet}
+					</Copyable>
+
+					{/* First-run flow */}
+					<div
+						className="text-[10px] tracking-[0.1em] uppercase my-2 mt-4"
+						style={{ color: "var(--term-dim)" }}
+					>
+						── first connection
+					</div>
+					<ol
+						className="list-decimal pl-5"
+						style={{ color: "var(--term-ink)" }}
+					>
+						<li>client fetches the MCP endpoint → gets 401</li>
+						<li>
+							follows{" "}
+							<span style={{ color: "var(--term-amber)" }}>
+								www-authenticate
+							</span>{" "}
+							to discover OAuth metadata
+						</li>
+						<li>
+							dynamically registers itself as an OAuth app with
+							sehalsein.com
+						</li>
+						<li>
+							opens your browser → GitHub sign-in → consent screen
+							at{" "}
+							<a
+								href="/consent"
+								style={{ color: "var(--term-blue)" }}
+							>
+								/consent
+							</a>
+						</li>
+						<li>
+							receives a short-lived JWT, which unlocks{" "}
+							<span style={{ color: "var(--term-green)" }}>
+								ask_sehal
+							</span>
+						</li>
+					</ol>
+
+					{/* Verify */}
+					<div
+						className="text-[10px] tracking-[0.1em] uppercase my-2 mt-4"
+						style={{ color: "var(--term-dim)" }}
+					>
+						── verify
+					</div>
+					<div style={{ color: "var(--term-dim)" }}>
+						<span style={{ color: "var(--term-green)" }}>curl</span>{" "}
+						<span style={{ color: "var(--term-amber)" }}>
+							{`${origin}/.well-known/oauth-protected-resource/api/mcp`}
+						</span>{" "}
+						— should return JSON with resource + authorization_servers.
+					</div>
 				</div>,
 			);
 		},

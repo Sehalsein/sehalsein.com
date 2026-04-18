@@ -214,11 +214,13 @@ export const COMMAND_REGISTRY: Record<string, string> = {
 	mcp: "remote MCP server info",
 	login: "sign in with GitHub",
 	logout: "sign out",
+	me: "show current signed-in user",
 };
 
 export const COMMAND_GROUPS: [string, string[]][] = [
 	["Navigation", ["about", "work", "project", "experience", "contact", "now"]],
-	["Identity", ["whoami", "neofetch", "gpg", "ssh", "resume", "contributions", "login", "logout"]],
+	["Identity", ["whoami", "neofetch", "gpg", "ssh", "resume", "contributions"]],
+	["Auth", ["login", "logout", "me"]],
 	["Shell", ["ls", "cd", "pwd", "cat", "clear", "banner", "date", "uptime"]],
 	["Editors", ["vim", "git"]],
 	["Themes", [":colorscheme", "themes", ":set"]],

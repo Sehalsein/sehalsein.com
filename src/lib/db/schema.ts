@@ -6,6 +6,7 @@ import {
 	integer,
 	uuid,
 	primaryKey,
+	jsonb,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
@@ -59,48 +60,98 @@ export const verification = pgTable("verification", {
 	updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// ── OIDC Provider (for Better Auth mcp plugin) ────────────────────
+// ── JWT plugin ─────────────────────────────────────────────────────
 
-export const oauthApplication = pgTable("oauth_application", {
+export const jwks = pgTable("jwks", {
 	id: text("id").primaryKey(),
-	name: text("name").notNull(),
-	icon: text("icon"),
-	metadata: text("metadata"),
+	publicKey: text("public_key").notNull(),
+	privateKey: text("private_key").notNull(),
+	createdAt: timestamp("created_at").notNull(),
+	expiresAt: timestamp("expires_at"),
+});
+
+// ── OAuth Provider plugin (@better-auth/oauth-provider) ───────────
+
+export const oauthClient = pgTable("oauth_client", {
+	id: text("id").primaryKey(),
 	clientId: text("client_id").notNull().unique(),
 	clientSecret: text("client_secret"),
-	redirectUrls: text("redirect_urls").notNull(),
-	type: text("type").notNull(),
 	disabled: boolean("disabled").default(false),
-	userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
-	createdAt: timestamp("created_at").notNull().defaultNow(),
-	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	skipConsent: boolean("skip_consent"),
+	enableEndSession: boolean("enable_end_session"),
+	subjectType: text("subject_type"),
+	scopes: text("scopes").array(),
+	userId: text("user_id").references(() => user.id),
+	createdAt: timestamp("created_at"),
+	updatedAt: timestamp("updated_at"),
+	name: text("name"),
+	uri: text("uri"),
+	icon: text("icon"),
+	contacts: text("contacts").array(),
+	tos: text("tos"),
+	policy: text("policy"),
+	softwareId: text("software_id"),
+	softwareVersion: text("software_version"),
+	softwareStatement: text("software_statement"),
+	redirectUris: text("redirect_uris").array().notNull(),
+	postLogoutRedirectUris: text("post_logout_redirect_uris").array(),
+	tokenEndpointAuthMethod: text("token_endpoint_auth_method"),
+	grantTypes: text("grant_types").array(),
+	responseTypes: text("response_types").array(),
+	public: boolean("public"),
+	type: text("type"),
+	requirePKCE: boolean("require_pkce"),
+	referenceId: text("reference_id"),
+	metadata: jsonb("metadata"),
+});
+
+export const oauthRefreshToken = pgTable("oauth_refresh_token", {
+	id: text("id").primaryKey(),
+	token: text("token").notNull(),
+	clientId: text("client_id")
+		.notNull()
+		.references(() => oauthClient.clientId),
+	sessionId: text("session_id").references(() => session.id, {
+		onDelete: "set null",
+	}),
+	userId: text("user_id")
+		.notNull()
+		.references(() => user.id),
+	referenceId: text("reference_id"),
+	expiresAt: timestamp("expires_at").notNull(),
+	createdAt: timestamp("created_at").notNull(),
+	revoked: timestamp("revoked"),
+	authTime: timestamp("auth_time"),
+	scopes: text("scopes").array().notNull(),
 });
 
 export const oauthAccessToken = pgTable("oauth_access_token", {
 	id: text("id").primaryKey(),
-	accessToken: text("access_token").notNull().unique(),
-	refreshToken: text("refresh_token").notNull().unique(),
-	accessTokenExpiresAt: timestamp("access_token_expires_at").notNull(),
-	refreshTokenExpiresAt: timestamp("refresh_token_expires_at").notNull(),
-	clientId: text("client_id").references(() => oauthApplication.clientId, {
-		onDelete: "cascade",
+	token: text("token").unique(),
+	clientId: text("client_id")
+		.notNull()
+		.references(() => oauthClient.clientId),
+	sessionId: text("session_id").references(() => session.id, {
+		onDelete: "set null",
 	}),
-	userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
-	scopes: text("scopes").notNull(),
-	createdAt: timestamp("created_at").notNull().defaultNow(),
-	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	userId: text("user_id").references(() => user.id),
+	referenceId: text("reference_id"),
+	refreshId: text("refresh_id").references(() => oauthRefreshToken.id),
+	expiresAt: timestamp("expires_at").notNull(),
+	createdAt: timestamp("created_at").notNull(),
+	scopes: text("scopes").array().notNull(),
 });
 
 export const oauthConsent = pgTable("oauth_consent", {
 	id: text("id").primaryKey(),
-	clientId: text("client_id").references(() => oauthApplication.clientId, {
-		onDelete: "cascade",
-	}),
-	userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
-	scopes: text("scopes").notNull(),
-	consentGiven: boolean("consent_given").notNull(),
-	createdAt: timestamp("created_at").notNull().defaultNow(),
-	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	clientId: text("client_id")
+		.notNull()
+		.references(() => oauthClient.clientId),
+	userId: text("user_id").references(() => user.id),
+	referenceId: text("reference_id"),
+	scopes: text("scopes").array().notNull(),
+	createdAt: timestamp("created_at").notNull(),
+	updatedAt: timestamp("updated_at").notNull(),
 });
 
 // ── App-specific tables ────────────────────────────────────────────
