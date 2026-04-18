@@ -6,6 +6,7 @@ import BootSequence from "./BootSequence";
 import CommandInput from "./CommandInput";
 import VimOverlay from "./VimOverlay";
 import MatrixOverlay from "./MatrixOverlay";
+import AiChatMode from "./AiChatMode";
 import { PALETTES } from "./palettes";
 import type { PaletteName } from "@/src/data/terminal";
 import {
@@ -45,6 +46,8 @@ export default function TerminalPage() {
 	const [overlay, setOverlay] = useState<
 		null | { type: "vim"; file: string } | { type: "matrix" }
 	>(null);
+	const [aiChatActive, setAiChatActive] = useState(false);
+	const [aiOutputIds, setAiOutputIds] = useState<number[]>([]);
 	const [fileStore, setFileStore] = useState<Record<string, string[]>>(() => {
 		const store: Record<string, string[]> = {};
 		for (const [name, lines] of Object.entries(VIM_FILES)) {
@@ -1080,6 +1083,9 @@ export default function TerminalPage() {
 		exit: () => {
 			print(<Dim>there is no exit. keep scrolling.</Dim>);
 		},
+		ai: () => {
+			setAiChatActive(true);
+		},
 	};
 
 	// Deep linking — run once after boot only
@@ -1176,12 +1182,26 @@ export default function TerminalPage() {
 				))}
 
 				{/* Input line */}
-				{bootDone && (
+				{bootDone && !aiChatActive && (
 					<CommandInput
 						cwd={cwd}
 						ps1={ps1}
 						onCommand={runCommand}
 						onClear={clearOutput}
+					/>
+				)}
+				{bootDone && aiChatActive && (
+					<AiChatMode
+						onExit={() => {
+							setAiChatActive(false);
+							// Clear AI chat entries from output
+							setOutput((prev) =>
+								prev.filter(
+									(e) => !aiOutputIds.includes(e.id),
+								),
+							);
+							setAiOutputIds([]);
+						}}
 					/>
 				)}
 

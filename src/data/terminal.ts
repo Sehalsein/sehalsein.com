@@ -206,6 +206,7 @@ export const COMMAND_REGISTRY: Record<string, string> = {
 	sudo: "try it",
 	man: "nothing to see here",
 	exit: "nothing happens",
+	ai: "chat with an AI that knows about me",
 };
 
 export const COMMAND_GROUPS: [string, string[]][] = [
@@ -214,7 +215,7 @@ export const COMMAND_GROUPS: [string, string[]][] = [
 	["Shell", ["ls", "cd", "pwd", "cat", "clear", "banner", "date", "uptime"]],
 	["Editors", ["vim", "git"]],
 	["Themes", [":colorscheme", "themes", ":set"]],
-	["Fun", ["fortune", "cowsay", "matrix", "coffee", "sudo", "socials"]],
+	["Fun", ["fortune", "cowsay", "matrix", "coffee", "sudo", "socials", "ai"]],
 ];
 
 export const HOME_FILES = [
@@ -297,5 +298,6 @@ export const MOBILE_CHIPS = [
 	"themes",
 	":set crt",
 	"matrix",
+	"ai",
 	"clear",
 ];

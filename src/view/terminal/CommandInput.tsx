@@ -215,18 +215,25 @@ export default function CommandInput({ cwd, ps1, onCommand, onClear }: Props) {
 
 	return (
 		<>
-			<div className="flex gap-2.5 mt-5 items-baseline">
+			<form
+				className="flex gap-2.5 mt-5 items-baseline"
+				autoComplete="off"
+				onSubmit={(e) => e.preventDefault()}
+				data-lpignore="true"
+			>
 				<PromptDisplay ps1={ps1} cwd={cwd} />
 				<div className="flex-1 relative">
 					<input
 						ref={inputRef}
-						type="text"
-						className="w-full bg-transparent border-none outline-none p-0"
+						type="search"
+						name="terminal-search-input"
+						className="w-full bg-transparent border-none outline-none p-0 appearance-none"
 						style={{
 							color: "var(--term-ink)",
 							caretColor: "var(--term-green)",
 							fontFamily: "inherit",
 							fontSize: "inherit",
+							WebkitAppearance: "none",
 						}}
 						value={value}
 						onChange={(e) => setValue(e.target.value)}
@@ -235,6 +242,12 @@ export default function CommandInput({ cwd, ps1, onCommand, onClear }: Props) {
 						autoCorrect="off"
 						autoCapitalize="off"
 						spellCheck={false}
+						data-1p-ignore
+						data-lpignore="true"
+						data-form-type="other"
+						role="combobox"
+						aria-autocomplete="none"
+						aria-expanded={false}
 					/>
 					{ghost && (
 						<div
@@ -246,7 +259,7 @@ export default function CommandInput({ cwd, ps1, onCommand, onClear }: Props) {
 						</div>
 					)}
 				</div>
-			</div>
+			</form>
 
 			{/* Mobile chips */}
 			<div

@@ -2,6 +2,12 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "Sehal Sein",
   description:

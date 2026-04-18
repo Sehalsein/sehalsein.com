@@ -155,6 +155,7 @@ export default function VimOverlay({ filename, lines, onClose }: Props) {
 				<input
 					ref={cmdRef}
 					type="text"
+					name="vim-cmd-input"
 					className="bg-transparent border-none outline-none p-0 w-32"
 					style={{
 						color: "var(--term-ink)",
@@ -170,6 +171,9 @@ export default function VimOverlay({ filename, lines, onClose }: Props) {
 					placeholder=":q or :wq"
 					spellCheck={false}
 					autoComplete="off"
+					data-1p-ignore
+					data-lpignore="true"
+					data-form-type="other"
 				/>
 			</div>
 		</div>
