@@ -1,3 +1,7 @@
+// Better Auth tables are generated via `pnpm exec better-auth generate`.
+// App-specific tables (guestbook_entry, rate_limit_bucket) live at the bottom.
+
+import { relations } from "drizzle-orm";
 import {
 	pgTable,
 	text,
@@ -5,60 +9,85 @@ import {
 	boolean,
 	integer,
 	uuid,
-	primaryKey,
 	jsonb,
+	index,
+	primaryKey,
 } from "drizzle-orm/pg-core";
+
+// ── Better Auth core ───────────────────────────────────────────────
 
 export const user = pgTable("user", {
 	id: text("id").primaryKey(),
 	name: text("name").notNull(),
 	email: text("email").notNull().unique(),
-	emailVerified: boolean("email_verified").notNull().default(false),
+	emailVerified: boolean("email_verified").default(false).notNull(),
 	image: text("image"),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at")
+		.defaultNow()
+		.$onUpdate(() => new Date())
+		.notNull(),
 	githubLogin: text("github_login"),
-	createdAt: timestamp("created_at").notNull().defaultNow(),
-	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const session = pgTable("session", {
-	id: text("id").primaryKey(),
-	token: text("token").notNull().unique(),
-	expiresAt: timestamp("expires_at").notNull(),
-	ipAddress: text("ip_address"),
-	userAgent: text("user_agent"),
-	userId: text("user_id")
-		.notNull()
-		.references(() => user.id, { onDelete: "cascade" }),
-	createdAt: timestamp("created_at").notNull().defaultNow(),
-	updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+export const session = pgTable(
+	"session",
+	{
+		id: text("id").primaryKey(),
+		expiresAt: timestamp("expires_at").notNull(),
+		token: text("token").notNull().unique(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at")
+			.$onUpdate(() => new Date())
+			.notNull(),
+		ipAddress: text("ip_address"),
+		userAgent: text("user_agent"),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+	},
+	(table) => [index("session_userId_idx").on(table.userId)],
+);
 
-export const account = pgTable("account", {
-	id: text("id").primaryKey(),
-	accountId: text("account_id").notNull(),
-	providerId: text("provider_id").notNull(),
-	userId: text("user_id")
-		.notNull()
-		.references(() => user.id, { onDelete: "cascade" }),
-	accessToken: text("access_token"),
-	refreshToken: text("refresh_token"),
-	idToken: text("id_token"),
-	accessTokenExpiresAt: timestamp("access_token_expires_at"),
-	refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
-	scope: text("scope"),
-	password: text("password"),
-	createdAt: timestamp("created_at").notNull().defaultNow(),
-	updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+export const account = pgTable(
+	"account",
+	{
+		id: text("id").primaryKey(),
+		accountId: text("account_id").notNull(),
+		providerId: text("provider_id").notNull(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		accessToken: text("access_token"),
+		refreshToken: text("refresh_token"),
+		idToken: text("id_token"),
+		accessTokenExpiresAt: timestamp("access_token_expires_at"),
+		refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+		scope: text("scope"),
+		password: text("password"),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at")
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [index("account_userId_idx").on(table.userId)],
+);
 
-export const verification = pgTable("verification", {
-	id: text("id").primaryKey(),
-	identifier: text("identifier").notNull(),
-	value: text("value").notNull(),
-	expiresAt: timestamp("expires_at").notNull(),
-	createdAt: timestamp("created_at").defaultNow(),
-	updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const verification = pgTable(
+	"verification",
+	{
+		id: text("id").primaryKey(),
+		identifier: text("identifier").notNull(),
+		value: text("value").notNull(),
+		expiresAt: timestamp("expires_at").notNull(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at")
+			.defaultNow()
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [index("verification_identifier_idx").on(table.identifier)],
+);
 
 // ── JWT plugin ─────────────────────────────────────────────────────
 
@@ -70,7 +99,7 @@ export const jwks = pgTable("jwks", {
 	expiresAt: timestamp("expires_at"),
 });
 
-// ── OAuth Provider plugin (@better-auth/oauth-provider) ───────────
+// ── OAuth Provider plugin (@better-auth/oauth-provider) ────────────
 
 export const oauthClient = pgTable("oauth_client", {
 	id: text("id").primaryKey(),
@@ -81,7 +110,7 @@ export const oauthClient = pgTable("oauth_client", {
 	enableEndSession: boolean("enable_end_session"),
 	subjectType: text("subject_type"),
 	scopes: text("scopes").array(),
-	userId: text("user_id").references(() => user.id),
+	userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
 	createdAt: timestamp("created_at"),
 	updatedAt: timestamp("updated_at"),
 	name: text("name"),
@@ -110,16 +139,16 @@ export const oauthRefreshToken = pgTable("oauth_refresh_token", {
 	token: text("token").notNull(),
 	clientId: text("client_id")
 		.notNull()
-		.references(() => oauthClient.clientId),
+		.references(() => oauthClient.clientId, { onDelete: "cascade" }),
 	sessionId: text("session_id").references(() => session.id, {
 		onDelete: "set null",
 	}),
 	userId: text("user_id")
 		.notNull()
-		.references(() => user.id),
+		.references(() => user.id, { onDelete: "cascade" }),
 	referenceId: text("reference_id"),
-	expiresAt: timestamp("expires_at").notNull(),
-	createdAt: timestamp("created_at").notNull(),
+	expiresAt: timestamp("expires_at"),
+	createdAt: timestamp("created_at"),
 	revoked: timestamp("revoked"),
 	authTime: timestamp("auth_time"),
 	scopes: text("scopes").array().notNull(),
@@ -130,15 +159,17 @@ export const oauthAccessToken = pgTable("oauth_access_token", {
 	token: text("token").unique(),
 	clientId: text("client_id")
 		.notNull()
-		.references(() => oauthClient.clientId),
+		.references(() => oauthClient.clientId, { onDelete: "cascade" }),
 	sessionId: text("session_id").references(() => session.id, {
 		onDelete: "set null",
 	}),
-	userId: text("user_id").references(() => user.id),
+	userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
 	referenceId: text("reference_id"),
-	refreshId: text("refresh_id").references(() => oauthRefreshToken.id),
-	expiresAt: timestamp("expires_at").notNull(),
-	createdAt: timestamp("created_at").notNull(),
+	refreshId: text("refresh_id").references(() => oauthRefreshToken.id, {
+		onDelete: "cascade",
+	}),
+	expiresAt: timestamp("expires_at"),
+	createdAt: timestamp("created_at"),
 	scopes: text("scopes").array().notNull(),
 });
 
@@ -146,13 +177,90 @@ export const oauthConsent = pgTable("oauth_consent", {
 	id: text("id").primaryKey(),
 	clientId: text("client_id")
 		.notNull()
-		.references(() => oauthClient.clientId),
-	userId: text("user_id").references(() => user.id),
+		.references(() => oauthClient.clientId, { onDelete: "cascade" }),
+	userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
 	referenceId: text("reference_id"),
 	scopes: text("scopes").array().notNull(),
-	createdAt: timestamp("created_at").notNull(),
-	updatedAt: timestamp("updated_at").notNull(),
+	createdAt: timestamp("created_at"),
+	updatedAt: timestamp("updated_at"),
 });
+
+// ── Better Auth relations ──────────────────────────────────────────
+
+export const userRelations = relations(user, ({ many }) => ({
+	sessions: many(session),
+	accounts: many(account),
+	oauthClients: many(oauthClient),
+	oauthRefreshTokens: many(oauthRefreshToken),
+	oauthAccessTokens: many(oauthAccessToken),
+	oauthConsents: many(oauthConsent),
+}));
+
+export const sessionRelations = relations(session, ({ one, many }) => ({
+	user: one(user, { fields: [session.userId], references: [user.id] }),
+	oauthRefreshTokens: many(oauthRefreshToken),
+	oauthAccessTokens: many(oauthAccessToken),
+}));
+
+export const accountRelations = relations(account, ({ one }) => ({
+	user: one(user, { fields: [account.userId], references: [user.id] }),
+}));
+
+export const oauthClientRelations = relations(oauthClient, ({ one, many }) => ({
+	user: one(user, { fields: [oauthClient.userId], references: [user.id] }),
+	oauthRefreshTokens: many(oauthRefreshToken),
+	oauthAccessTokens: many(oauthAccessToken),
+	oauthConsents: many(oauthConsent),
+}));
+
+export const oauthRefreshTokenRelations = relations(
+	oauthRefreshToken,
+	({ one, many }) => ({
+		oauthClient: one(oauthClient, {
+			fields: [oauthRefreshToken.clientId],
+			references: [oauthClient.clientId],
+		}),
+		session: one(session, {
+			fields: [oauthRefreshToken.sessionId],
+			references: [session.id],
+		}),
+		user: one(user, {
+			fields: [oauthRefreshToken.userId],
+			references: [user.id],
+		}),
+		oauthAccessTokens: many(oauthAccessToken),
+	}),
+);
+
+export const oauthAccessTokenRelations = relations(
+	oauthAccessToken,
+	({ one }) => ({
+		oauthClient: one(oauthClient, {
+			fields: [oauthAccessToken.clientId],
+			references: [oauthClient.clientId],
+		}),
+		session: one(session, {
+			fields: [oauthAccessToken.sessionId],
+			references: [session.id],
+		}),
+		user: one(user, {
+			fields: [oauthAccessToken.userId],
+			references: [user.id],
+		}),
+		oauthRefreshToken: one(oauthRefreshToken, {
+			fields: [oauthAccessToken.refreshId],
+			references: [oauthRefreshToken.id],
+		}),
+	}),
+);
+
+export const oauthConsentRelations = relations(oauthConsent, ({ one }) => ({
+	oauthClient: one(oauthClient, {
+		fields: [oauthConsent.clientId],
+		references: [oauthClient.clientId],
+	}),
+	user: one(user, { fields: [oauthConsent.userId], references: [user.id] }),
+}));
 
 // ── App-specific tables ────────────────────────────────────────────
 

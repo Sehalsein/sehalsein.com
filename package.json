@@ -42,6 +42,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@better-auth/cli": "^1.4.21",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/bad-words": "^3.0.3",
     "@types/node": "^25.6.0",

@@ -83,3 +83,12 @@ export function getAuth(): Auth {
 	cached = createAuth();
 	return cached;
 }
+
+// Named export for the Better Auth CLI (`pnpm exec @better-auth/cli generate`).
+// The CLI statically imports this file, so it must be a concrete `auth` value
+// (not a function). Evaluated lazily at first access via the getter pattern.
+export const auth = new Proxy({} as Auth, {
+	get(_target, prop) {
+		return Reflect.get(getAuth() as object, prop);
+	},
+});
