@@ -11,7 +11,7 @@ import ContributionsInline from "./ContributionsInline";
 import GuestbookInline from "./GuestbookInline";
 import Copyable from "./Copyable";
 import { authClient } from "@/src/lib/authClient";
-import { PALETTES } from "./palettes";
+import { useTheme } from "next-themes";
 import type { PaletteName } from "@/src/data/terminal";
 import {
 	PROJECTS,
@@ -42,7 +42,8 @@ function nextId() {
 }
 
 export default function TerminalPage() {
-	const [palette, setPaletteState] = useState<PaletteName>("default");
+	const { theme, setTheme } = useTheme();
+	const palette = (theme as PaletteName | undefined) ?? "default";
 	const [crt, setCrtState] = useState(false);
 	const [cwd, setCwd] = useState("~");
 	const [ps1, setPs1] = useState<string | null>(null);
@@ -64,20 +65,20 @@ export default function TerminalPage() {
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const screenRef = useRef<HTMLDivElement>(null);
 
-	// Persist palette/crt
+	// Restore non-palette preferences (palette itself is managed by next-themes).
 	useEffect(() => {
-		const saved = localStorage.getItem("terminal-palette") as PaletteName;
-		if (saved && PALETTE_NAMES.includes(saved)) setPaletteState(saved);
 		const savedCrt = localStorage.getItem("terminal-crt");
 		if (savedCrt === "true") setCrtState(true);
 		const savedPs1 = localStorage.getItem("terminal-ps1");
 		if (savedPs1) setPs1(savedPs1);
 	}, []);
 
-	const setPalette = useCallback((p: PaletteName) => {
-		setPaletteState(p);
-		localStorage.setItem("terminal-palette", p);
-	}, []);
+	const setPalette = useCallback(
+		(p: PaletteName) => {
+			setTheme(p);
+		},
+		[setTheme],
+	);
 
 	const setCrt = useCallback((on: boolean) => {
 		setCrtState(on);
@@ -1706,19 +1707,10 @@ export default function TerminalPage() {
 		[overlay],
 	);
 
-	const paletteVars = PALETTES[palette];
-
 	return (
 		<div
-			className="h-screen w-screen flex flex-col overflow-hidden terminal-selection"
-			style={{
-				...paletteVars,
-				background: "var(--term-bg)",
-				color: "var(--term-ink)",
-				fontSize: "14px",
-				lineHeight: "1.65",
-				WebkitFontSmoothing: "antialiased",
-			} as React.CSSProperties}
+			className="h-screen w-screen flex flex-col overflow-hidden terminal-selection bg-term-bg text-term-ink antialiased"
+			style={{ fontSize: "14px", lineHeight: "1.65" }}
 			onClick={handleScreenClick}
 		>
 			{/* CRT overlay */}

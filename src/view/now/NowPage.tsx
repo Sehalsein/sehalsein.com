@@ -8,36 +8,22 @@ import ContributionHeatmap from "@/src/view/widgets/ContributionHeatmap";
 
 export default function NowPage() {
 	return (
-		<main
-			className="min-h-screen w-full px-6 py-16 md:px-12 md:py-20"
-			style={{
-				background: "#0b0d10",
-				color: "#d7d9de",
-				fontFamily: "var(--font-mono, ui-monospace, monospace)",
-			}}
-		>
+		<main className="min-h-screen w-full bg-term-bg text-term-ink font-mono px-6 py-16 md:px-12 md:py-20">
 			<div className="mx-auto max-w-[720px]">
 				<header className="mb-10">
-					<div
-						className="text-[11px] tracking-[0.12em] uppercase mb-3"
-						style={{ color: "#7a7f86" }}
-					>
+					<div className="text-[11px] tracking-[0.12em] uppercase mb-3 text-term-faint">
 						sehalsein.com / now
 					</div>
 					<h1 className="text-2xl md:text-3xl font-medium mb-2">
 						What I&apos;m up to right now
 					</h1>
-					<p
-						className="text-[13px] leading-[1.7]"
-						style={{ color: "#9aa0a8" }}
-					>
+					<p className="text-[13px] leading-[1.7] text-term-dim">
 						A{" "}
 						<a
 							href={NOW_INSPIRATION_URL}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="underline underline-offset-4"
-							style={{ color: "#7ab7ff" }}
+							className="underline underline-offset-4 text-term-blue"
 						>
 							/now page
 						</a>{" "}
@@ -50,13 +36,9 @@ export default function NowPage() {
 					{NOW_SECTIONS.map((section) => (
 						<section
 							key={section.id}
-							className="pl-4"
-							style={{ borderLeft: "2px solid #2b7fff" }}
+							className="pl-4 border-l-2 border-term-blue"
 						>
-							<h2
-								className="text-[11px] tracking-[0.1em] uppercase mb-3 font-medium"
-								style={{ color: "#f5b041" }}
-							>
+							<h2 className="text-[11px] tracking-[0.1em] uppercase mb-3 font-medium text-term-amber">
 								{section.title}
 							</h2>
 							<ul className="flex flex-col gap-2">
@@ -65,10 +47,7 @@ export default function NowPage() {
 										key={i}
 										className="text-[14px] leading-[1.7]"
 									>
-										<span
-											className="mr-2"
-											style={{ color: "#5a6068" }}
-										>
+										<span className="mr-2 text-term-muted">
 											▸
 										</span>
 										{item}
@@ -79,37 +58,26 @@ export default function NowPage() {
 					))}
 				</div>
 
-				<section
-					className="mt-12 pl-4"
-					style={{ borderLeft: "2px solid #2b7fff" }}
-				>
+				<section className="mt-12 pl-4 border-l-2 border-term-blue">
 					<ContributionHeatmap />
 				</section>
 
-				<footer
-					className="mt-14 pt-6 text-[11px] flex flex-wrap gap-x-5 gap-y-2"
-					style={{
-						color: "#6a7078",
-						borderTop: "1px dashed #2a2f36",
-					}}
-				>
+				<footer className="mt-14 pt-6 text-[11px] flex flex-wrap gap-x-5 gap-y-2 text-term-faint border-t border-dashed border-term-rule">
 					<span>
 						Last updated:{" "}
-						<span style={{ color: "#9aa0a8" }}>
+						<span className="text-term-dim">
 							{NOW_LAST_UPDATED}
 						</span>
 					</span>
 					<Link
 						href="/terminal"
-						className="underline underline-offset-4"
-						style={{ color: "#7ab7ff" }}
+						className="underline underline-offset-4 text-term-blue"
 					>
-						→ back to terminal
+						→ terminal
 					</Link>
 					<Link
 						href="/resume"
-						className="underline underline-offset-4"
-						style={{ color: "#7ab7ff" }}
+						className="underline underline-offset-4 text-term-blue"
 					>
 						→ resume
 					</Link>

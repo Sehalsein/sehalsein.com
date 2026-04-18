@@ -51,14 +51,14 @@ export default function ContributionHeatmap() {
 
 	if (state.status === "loading") {
 		return (
-			<div className="text-[11px]" style={{ color: "#6a7078" }}>
+			<div className="text-[11px] text-term-faint">
 				loading contributions…
 			</div>
 		);
 	}
 	if (state.status === "error") {
 		return (
-			<div className="text-[11px]" style={{ color: "#a05060" }}>
+			<div className="text-[11px] text-term-red">
 				could not load contributions: {state.message}
 			</div>
 		);
@@ -74,13 +74,10 @@ export default function ContributionHeatmap() {
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="flex items-baseline justify-between">
-				<div
-					className="text-[11px] tracking-[0.08em] uppercase"
-					style={{ color: "#f5b041" }}
-				>
+				<div className="text-[11px] tracking-[0.08em] uppercase text-term-amber">
 					GitHub · {data.login}
 				</div>
-				<div className="text-[11px]" style={{ color: "#6a7078" }}>
+				<div className="text-[11px] text-term-faint">
 					{data.total.toLocaleString()} contributions · last year
 				</div>
 			</div>
@@ -113,10 +110,7 @@ export default function ContributionHeatmap() {
 					)}
 				</svg>
 			</div>
-			<div
-				className="flex items-center gap-2 text-[10px]"
-				style={{ color: "#6a7078" }}
-			>
+			<div className="flex items-center gap-2 text-[10px] text-term-faint">
 				<span>less</span>
 				{LEVEL_COLORS.map((c) => (
 					<span

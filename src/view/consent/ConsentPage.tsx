@@ -52,63 +52,32 @@ export default function ConsentPage() {
 	};
 
 	return (
-		<main
-			className="min-h-screen w-full px-6 py-16 md:px-12 md:py-20"
-			style={{
-				background: "#0b0d10",
-				color: "#d7d9de",
-				fontFamily: "var(--font-mono, ui-monospace, monospace)",
-			}}
-		>
+		<main className="min-h-screen w-full bg-term-bg text-term-ink font-mono px-6 py-16 md:px-12 md:py-20">
 			<div className="mx-auto max-w-[560px]">
 				<header className="mb-8">
-					<div
-						className="text-[11px] tracking-[0.12em] uppercase mb-3"
-						style={{ color: "#7a7f86" }}
-					>
+					<div className="text-[11px] tracking-[0.12em] uppercase mb-3 text-term-faint">
 						sehalsein.com / oauth consent
 					</div>
 					<h1 className="text-2xl md:text-3xl font-medium mb-2">
 						Authorize access
 					</h1>
-					<p
-						className="text-[13px] leading-[1.7]"
-						style={{ color: "#9aa0a8" }}
-					>
-						<span style={{ color: "#7ab7ff" }}>{clientName}</span>{" "}
-						is requesting access to your sehalsein.com account.
+					<p className="text-[13px] leading-[1.7] text-term-dim">
+						<span className="text-term-blue">{clientName}</span> is
+						requesting access to your sehalsein.com account.
 					</p>
 				</header>
 
 				{isPending || !session ? (
-					<div
-						className="text-[12px]"
-						style={{ color: "#6a7078" }}
-					>
-						loading…
-					</div>
+					<div className="text-[12px] text-term-faint">loading…</div>
 				) : (
-					<div
-						className="pl-4"
-						style={{ borderLeft: "2px solid #2b7fff" }}
-					>
-						<div
-							className="text-[11px] tracking-[0.1em] uppercase mb-2"
-							style={{ color: "#f5b041" }}
-						>
+					<div className="pl-4 border-l-2 border-term-blue">
+						<div className="text-[11px] tracking-[0.1em] uppercase mb-2 text-term-amber">
 							Requested scopes
 						</div>
 						<ul className="flex flex-col gap-1 mb-6">
 							{scope.split(" ").map((s) => (
-								<li
-									key={s}
-									className="text-[13px]"
-									style={{ color: "#d7d9de" }}
-								>
-									<span
-										className="mr-2"
-										style={{ color: "#5a6068" }}
-									>
+								<li key={s} className="text-[13px]">
+									<span className="mr-2 text-term-muted">
 										▸
 									</span>
 									{s}
@@ -121,13 +90,7 @@ export default function ConsentPage() {
 								type="button"
 								disabled={!!submitting}
 								onClick={() => decide(true)}
-								className="text-[13px] px-4 py-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-								style={{
-									border: "1px solid #2b7fff",
-									color: "#7ab7ff",
-									background: "transparent",
-									fontFamily: "inherit",
-								}}
+								className="text-[13px] px-4 py-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border border-term-blue text-term-blue bg-transparent font-[inherit]"
 							>
 								{submitting === "accept"
 									? "approving…"
@@ -137,33 +100,21 @@ export default function ConsentPage() {
 								type="button"
 								disabled={!!submitting}
 								onClick={() => decide(false)}
-								className="text-[13px] px-4 py-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-								style={{
-									border: "1px dashed #5a6068",
-									color: "#9aa0a8",
-									background: "transparent",
-									fontFamily: "inherit",
-								}}
+								className="text-[13px] px-4 py-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border border-dashed border-term-muted text-term-dim bg-transparent font-[inherit]"
 							>
 								{submitting === "deny" ? "denying…" : "deny"}
 							</button>
 						</div>
 
 						{error && (
-							<div
-								className="text-[11px] mt-3"
-								style={{ color: "#d1618a" }}
-							>
+							<div className="text-[11px] mt-3 text-term-red">
 								{error}
 							</div>
 						)}
 
-						<div
-							className="mt-6 text-[11px]"
-							style={{ color: "#6a7078" }}
-						>
+						<div className="mt-6 text-[11px] text-term-faint">
 							signed in as{" "}
-							<span style={{ color: "#7ab7ff" }}>
+							<span className="text-term-blue">
 								{(
 									session.user as {
 										githubLogin?: string | null;
@@ -174,19 +125,12 @@ export default function ConsentPage() {
 					</div>
 				)}
 
-				<footer
-					className="mt-14 pt-6 text-[11px] flex flex-wrap gap-x-5 gap-y-2"
-					style={{
-						color: "#6a7078",
-						borderTop: "1px dashed #2a2f36",
-					}}
-				>
+				<footer className="mt-14 pt-6 text-[11px] flex flex-wrap gap-x-5 gap-y-2 text-term-faint border-t border-dashed border-term-rule">
 					<Link
 						href="/terminal"
-						className="underline underline-offset-4"
-						style={{ color: "#7ab7ff" }}
+						className="underline underline-offset-4 text-term-blue"
 					>
-						→ back to terminal
+						→ terminal
 					</Link>
 				</footer>
 			</div>

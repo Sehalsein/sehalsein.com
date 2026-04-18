@@ -1,20 +1,188 @@
 @import 'tailwindcss';
 
+/* ─────────────────────────────────────────────────────────────────
+   Theme tokens — Tailwind v4 generates utilities from --color-term-*
+   (bg-term-bg, text-term-ink, border-term-rule, etc.).
+   Default palette is declared in @theme. Alternative palettes override
+   the same variables under [data-palette="<name>"], which any ancestor
+   can carry (typically <html>). Utilities keep working unchanged.
+   ───────────────────────────────────────────────────────────────── */
+
 @theme {
   --background-image-gradient-radial: radial-gradient(var(--tw-gradient-stops));
   --background-image-gradient-conic: conic-gradient(
     from 180deg at 50% 50%,
     var(--tw-gradient-stops)
   );
+
+  /* Default palette */
+  --color-term-bg: #0a0b09;
+  --color-term-bg2: #0f110e;
+  --color-term-ink: #d6d3c4;
+  --color-term-dim: #9aa0a8;
+  --color-term-faint: #6a7078;
+  --color-term-muted: #5a6068;
+  --color-term-rule: #2a2f36;
+  --color-term-green: #9ece6a;
+  --color-term-amber: #d9a05b;
+  --color-term-red: #e46767;
+  --color-term-blue: #7aa2f7;
+  --color-term-mag: #c98ed6;
+  --color-term-cyan: #7dcfff;
+}
+
+/* Alternative palettes. Set on any ancestor:
+      <html data-palette="tokyonight"> … </html>
+   Utilities referencing --color-term-* automatically pick up the overrides. */
+
+[data-palette="tokyonight"] {
+  --color-term-bg: #1a1b26;
+  --color-term-bg2: #16161e;
+  --color-term-ink: #c0caf5;
+  --color-term-dim: #7aa2d0;
+  --color-term-faint: #565f89;
+  --color-term-muted: #3b4261;
+  --color-term-rule: #292e42;
+  --color-term-green: #9ece6a;
+  --color-term-amber: #e0af68;
+  --color-term-red: #f7768e;
+  --color-term-blue: #7aa2f7;
+  --color-term-mag: #bb9af7;
+  --color-term-cyan: #7dcfff;
+}
+
+[data-palette="solarized"] {
+  --color-term-bg: #002b36;
+  --color-term-bg2: #073642;
+  --color-term-ink: #eee8d5;
+  --color-term-dim: #93a1a1;
+  --color-term-faint: #839496;
+  --color-term-muted: #586e75;
+  --color-term-rule: #073642;
+  --color-term-green: #859900;
+  --color-term-amber: #b58900;
+  --color-term-red: #dc322f;
+  --color-term-blue: #268bd2;
+  --color-term-mag: #d33682;
+  --color-term-cyan: #2aa198;
+}
+
+[data-palette="gruvbox"] {
+  --color-term-bg: #282828;
+  --color-term-bg2: #1d2021;
+  --color-term-ink: #ebdbb2;
+  --color-term-dim: #bdae93;
+  --color-term-faint: #a89984;
+  --color-term-muted: #665c54;
+  --color-term-rule: #3c3836;
+  --color-term-green: #b8bb26;
+  --color-term-amber: #fabd2f;
+  --color-term-red: #fb4934;
+  --color-term-blue: #83a598;
+  --color-term-mag: #d3869b;
+  --color-term-cyan: #8ec07c;
+}
+
+[data-palette="nord"] {
+  --color-term-bg: #2e3440;
+  --color-term-bg2: #3b4252;
+  --color-term-ink: #e5e9f0;
+  --color-term-dim: #d8dee9;
+  --color-term-faint: #81a1c1;
+  --color-term-muted: #4c566a;
+  --color-term-rule: #434c5e;
+  --color-term-green: #a3be8c;
+  --color-term-amber: #ebcb8b;
+  --color-term-red: #bf616a;
+  --color-term-blue: #81a1c1;
+  --color-term-mag: #b48ead;
+  --color-term-cyan: #88c0d0;
+}
+
+[data-palette="dracula"] {
+  --color-term-bg: #282a36;
+  --color-term-bg2: #21222c;
+  --color-term-ink: #f8f8f2;
+  --color-term-dim: #bdbed4;
+  --color-term-faint: #6272a4;
+  --color-term-muted: #44475a;
+  --color-term-rule: #44475a;
+  --color-term-green: #50fa7b;
+  --color-term-amber: #ffb86c;
+  --color-term-red: #ff5555;
+  --color-term-blue: #8be9fd;
+  --color-term-mag: #ff79c6;
+  --color-term-cyan: #8be9fd;
+}
+
+[data-palette="catppuccin"] {
+  --color-term-bg: #1e1e2e;
+  --color-term-bg2: #181825;
+  --color-term-ink: #cdd6f4;
+  --color-term-dim: #bac2de;
+  --color-term-faint: #7f849c;
+  --color-term-muted: #45475a;
+  --color-term-rule: #313244;
+  --color-term-green: #a6e3a1;
+  --color-term-amber: #f9e2af;
+  --color-term-red: #f38ba8;
+  --color-term-blue: #89b4fa;
+  --color-term-mag: #cba6f7;
+  --color-term-cyan: #94e2d5;
+}
+
+[data-palette="mono"] {
+  --color-term-bg: #0a0a0a;
+  --color-term-bg2: #111111;
+  --color-term-ink: #e6e6e6;
+  --color-term-dim: #aaaaaa;
+  --color-term-faint: #888888;
+  --color-term-muted: #555555;
+  --color-term-rule: #222222;
+  --color-term-green: #e6e6e6;
+  --color-term-amber: #bbbbbb;
+  --color-term-red: #ffffff;
+  --color-term-blue: #aaaaaa;
+  --color-term-mag: #cccccc;
+  --color-term-cyan: #dddddd;
+}
+
+[data-palette="github-dark"] {
+  --color-term-bg: #010409;
+  --color-term-bg2: #0d1117;
+  --color-term-ink: #e6edf3;
+  --color-term-dim: #9198a1;
+  --color-term-faint: #6e7681;
+  --color-term-muted: #484f58;
+  --color-term-rule: #30363d;
+  --color-term-green: #3fb950;
+  --color-term-amber: #e3b341;
+  --color-term-red: #ff7b72;
+  --color-term-blue: #58a6ff;
+  --color-term-mag: #d2a8ff;
+  --color-term-cyan: #56d4dd;
+}
+
+[data-palette="github-dark-colorblind"] {
+  --color-term-bg: #010409;
+  --color-term-bg2: #0d1117;
+  --color-term-ink: #c9d1d9;
+  --color-term-dim: #9198a1;
+  --color-term-faint: #6e7681;
+  --color-term-muted: #484f58;
+  --color-term-rule: #30363d;
+  --color-term-green: #79c0ff;
+  --color-term-amber: #e3b341;
+  --color-term-red: #fdac54;
+  --color-term-blue: #58a6ff;
+  --color-term-mag: #d2a8ff;
+  --color-term-cyan: #56d4dd;
 }
 
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
   looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
 */
 @layer base {
   *,
@@ -62,15 +230,34 @@ input[type="search"]::-webkit-search-results-decoration {
   98.5% { opacity: 1; }
 }
 
+/* Legacy aliases — some terminal components still read --term-* directly
+   via `style={{ color: "var(--term-*)" }}`. Keep these in sync with the
+   theme tokens so the old usages continue to work without rewriting. */
+:root,
+[data-palette] {
+  --term-bg: var(--color-term-bg);
+  --term-bg2: var(--color-term-bg2);
+  --term-ink: var(--color-term-ink);
+  --term-dim: var(--color-term-dim);
+  --term-faint: var(--color-term-faint);
+  --term-muted: var(--color-term-muted);
+  --term-rule: var(--color-term-rule);
+  --term-green: var(--color-term-green);
+  --term-amber: var(--color-term-amber);
+  --term-red: var(--color-term-red);
+  --term-blue: var(--color-term-blue);
+  --term-mag: var(--color-term-mag);
+  --term-cyan: var(--color-term-cyan);
+}
+
 /* Terminal selection */
 .terminal-selection ::selection {
   background: rgba(158, 206, 106, 0.25);
-  color: var(--term-ink);
+  color: var(--color-term-ink);
 }
 
 /* Terminal scrollbar */
 .terminal-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
-.terminal-scrollbar::-webkit-scrollbar-track { background: var(--term-bg); }
-.terminal-scrollbar::-webkit-scrollbar-thumb { background: var(--term-rule); }
-.terminal-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--term-faint); }
-
+.terminal-scrollbar::-webkit-scrollbar-track { background: var(--color-term-bg); }
+.terminal-scrollbar::-webkit-scrollbar-thumb { background: var(--color-term-rule); }
+.terminal-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--color-term-faint); }
