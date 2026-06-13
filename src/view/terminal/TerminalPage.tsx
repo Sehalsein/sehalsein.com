@@ -1220,6 +1220,17 @@ export default function TerminalPage() {
 		guestbook: () => {
 			print(<GuestbookInline />);
 		},
+		playground: () => {
+			print(
+				<Dim>
+					<span style={{ color: "var(--term-amber)" }}>→</span>{" "}
+					launching the island…
+				</Dim>,
+			);
+			window.setTimeout(() => {
+				window.location.assign("/playground");
+			}, 450);
+		},
 		login: async () => {
 			const { data: session } = await authClient.getSession();
 			if (session) {
