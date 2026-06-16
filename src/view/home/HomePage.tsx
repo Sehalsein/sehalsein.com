@@ -53,22 +53,6 @@ const PROJECTS: Project[] = [
 			"Sign in with GitHub, leave a note. Like the old web.",
 		preview: <GuestbookPreview />,
 	},
-	{
-		href: "/playground",
-		label: "playground",
-		title: "floating dev island",
-		description:
-			"A living low-poly 3D world. Orbit the island, then walk up to the monitor, arcade cabinet, or mailbox and use them — right inside the world.",
-		preview: <PlaygroundPreview />,
-	},
-	{
-		href: "/world",
-		label: "world",
-		title: "the circuit",
-		description:
-			"Drive a low-poly car around a race circuit. Beat your lap time, pull hydraulics, and unlock achievements. A bruno-simon-style playground, gamepad-ready.",
-		preview: <WorldPreview />,
-	},
 ];
 
 export default function HomePage() {
@@ -200,18 +184,6 @@ function Footer() {
 				className="text-term-blue underline-offset-4 hover:underline"
 			>
 				→ resume
-			</Link>
-			<Link
-				href="/playground"
-				className="text-term-blue underline-offset-4 hover:underline"
-			>
-				→ playground
-			</Link>
-			<Link
-				href="/world"
-				className="text-term-blue underline-offset-4 hover:underline"
-			>
-				→ world
 			</Link>
 			<span>© {new Date().getFullYear()}</span>
 		</footer>
@@ -350,72 +322,6 @@ function NowPreview() {
 				<li>DDIA (re-read)</li>
 				<li>rich hickey talks</li>
 			</ul>
-		</div>
-	);
-}
-
-function PlaygroundPreview() {
-	return (
-		<div
-			className="relative flex h-full w-full items-center justify-center overflow-hidden bg-term-bg"
-			style={{ perspective: "320px" }}
-		>
-			<div
-				className="relative"
-				style={{
-					transform: "rotateX(56deg) rotateZ(45deg)",
-					transformStyle: "preserve-3d",
-				}}
-			>
-				<div className="h-20 w-20 rounded-sm border border-term-green/60 bg-term-green/15" />
-				<div
-					className="absolute left-4 top-4 h-6 w-6 border border-term-amber/70 bg-term-amber/25"
-					style={{ transform: "translateZ(12px)" }}
-				/>
-				<div
-					className="absolute bottom-4 right-5 h-4 w-4 border border-term-blue/70 bg-term-blue/25"
-					style={{ transform: "translateZ(16px)" }}
-				/>
-				<div
-					className="absolute bottom-7 left-5 h-3 w-3 border border-term-red/70 bg-term-red/25"
-					style={{ transform: "translateZ(8px)" }}
-				/>
-			</div>
-			<div className="absolute right-2 top-2 text-[8px] text-term-faint">
-				fps 60
-			</div>
-			<div className="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] text-term-faint">
-				drag to orbit · click objects
-			</div>
-		</div>
-	);
-}
-
-function WorldPreview() {
-	return (
-		<div
-			className="relative flex h-full w-full items-center justify-center overflow-hidden bg-term-bg"
-			style={{ perspective: "320px" }}
-		>
-			<div
-				className="relative h-24 w-24"
-				style={{ transform: "rotateX(58deg) rotateZ(30deg)", transformStyle: "preserve-3d" }}
-			>
-				{/* oval track */}
-				<div className="absolute inset-2 rounded-[50%] border-2 border-term-blue/60" />
-				<div className="absolute inset-6 rounded-[50%] border border-term-rule" />
-				{/* start line */}
-				<div className="absolute right-3 top-1/2 h-2 w-1.5 -translate-y-1/2 bg-term-red/80" />
-				{/* car */}
-				<div
-					className="absolute left-5 top-3 h-2 w-3 rounded-[1px] bg-term-amber"
-					style={{ transform: "translateZ(6px)" }}
-				/>
-			</div>
-			<div className="absolute right-2 top-2 text-[8px] text-term-faint">lap 0:00</div>
-			<div className="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] text-term-faint">
-				wasd to drive · race the loop
-			</div>
 		</div>
 	);
 }

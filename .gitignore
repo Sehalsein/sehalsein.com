@@ -5,6 +5,11 @@
 /.pnp
 .pnp.js
 
+# engine (folio-derived 3D app) — local reference/build tool only. The live
+# playground is the Next-native port in src/playground + public/playground-assets,
+# so the whole engine/ dir is kept on disk but not committed.
+/engine
+
 # testing
 /coverage
 

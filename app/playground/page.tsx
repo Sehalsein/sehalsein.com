@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import PlaygroundPage from "@/src/page/playground/page";
+import PlaygroundPage from "@/src/view/playground/PlaygroundPage";
 
 export const metadata: Metadata = {
 	title: "playground — sehal sein",
-	description:
-		"A low-poly 3D floating island. Orbit around, click objects to explore the site.",
+	description: "Drive a low-poly car around a track on an infinite grid.",
 };
 
 export default function Page() {
