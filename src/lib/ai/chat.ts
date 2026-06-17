@@ -14,7 +14,17 @@ const openrouter = createOpenRouter({
 	apiKey: process.env.OPEN_ROUTER_KEY,
 });
 
-export const MODEL_ID = "moonshotai/kimi-k2.5";
+// All-free routing: try MODEL_ID first (quickest), then FALLBACK_MODELS in
+// order when one is rate-limited or down. OpenRouter caps the fallback list
+// at 3, so gpt-oss-120b is reached via openrouter/free (the Free Models
+// Router, a universal catch-all across every free model).
+export const MODEL_ID = "openai/gpt-oss-20b:free";
+
+export const FALLBACK_MODELS = [
+	"google/gemma-4-26b-a4b-it:free",
+	"google/gemma-4-31b-it:free",
+	"openrouter/free",
+];
 
 export const SYSTEM_PROMPT = `You are a terminal assistant embedded in Sehal Sein's personal website (sehalsein.com).
 You know everything about Sehal from his resume data below.
@@ -64,10 +74,8 @@ export function streamChat(opts: { messages: ChatMessage[] }) {
 		maxOutputTokens: MAX_OUTPUT_TOKENS,
 		providerOptions: {
 			openrouter: {
-				provider: {
-					only: ["cloudflare"],
-					allow_fallbacks: false,
-				},
+				models: FALLBACK_MODELS,
+				reasoning: { effort: "low" },
 			},
 		},
 	});
@@ -79,6 +87,12 @@ export async function completeChat(question: string): Promise<string> {
 		system: SYSTEM_PROMPT,
 		messages: [{ role: "user", content: question }],
 		maxOutputTokens: MAX_OUTPUT_TOKENS,
+		providerOptions: {
+			openrouter: {
+				models: FALLBACK_MODELS,
+				reasoning: { effort: "low" },
+			},
+		},
 	});
 	const { text } = await result;
 	return text;

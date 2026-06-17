@@ -43,6 +43,15 @@ export default function OSShell() {
 	const onBootDone = useCallback(() => {
 		setBooted(true);
 		setTimeout(() => {
+			const requested = new URLSearchParams(window.location.search).get(
+				"open",
+			);
+			if (requested && requested in APPS) {
+				openApp(requested as AppId, APPS[requested as AppId].defaultSize, {
+					position: { x: 160, y: 90 },
+				});
+				return;
+			}
 			openApp("about", APPS.about.defaultSize, {
 				position: { x: 80, y: 70 },
 			});
