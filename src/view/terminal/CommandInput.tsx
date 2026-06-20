@@ -273,7 +273,7 @@ export default function CommandInput({ cwd, ps1, onCommand, onClear }: Props) {
 					<button
 						key={cmd}
 						type="button"
-						className="whitespace-nowrap text-[11.5px] px-3 py-[7px] rounded-full cursor-pointer transition-all shrink-0"
+						className="whitespace-nowrap text-[11.5px] px-3 py-[7px] rounded-full cursor-pointer transition-[background-color,border-color,color] duration-150 ease-out active:scale-95 shrink-0"
 						style={{
 							background: "var(--term-bg2)",
 							border: "1px solid var(--term-rule)",

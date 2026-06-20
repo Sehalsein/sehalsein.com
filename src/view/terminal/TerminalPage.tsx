@@ -41,7 +41,7 @@ function nextId() {
 	return entryId++;
 }
 
-export default function TerminalPage() {
+export default function TerminalPage({ chrome = true }: { chrome?: boolean } = {}) {
 	const { theme, setTheme } = useTheme();
 	const palette = (theme as PaletteName | undefined) ?? "default";
 	const [crt, setCrtState] = useState(false);
@@ -1744,13 +1744,18 @@ export default function TerminalPage() {
 				</>
 			)}
 
-			{/* Chrome */}
-			<TerminalChrome cwd={cwd} />
+			{/* Chrome — suppressed when embedded (e.g. inside the OS window,
+			    which already supplies a draggable title bar) */}
+			{chrome && <TerminalChrome cwd={cwd} />}
 
 			{/* Screen */}
 			<div
 				ref={screenRef}
-				className="flex-1 overflow-y-auto px-8 pt-6 pb-[120px] max-sm:px-4 max-sm:pb-[140px] terminal-scrollbar"
+				className={`flex-1 overflow-y-auto terminal-scrollbar ${
+					chrome
+						? "px-8 pt-6 pb-[120px] max-sm:px-4 max-sm:pb-[140px]"
+						: "px-4 pt-4 pb-8 max-sm:px-3"
+				}`}
 				style={{
 					textShadow: crt ? "0 0 2px currentColor" : undefined,
 				}}
@@ -1819,7 +1824,7 @@ export default function TerminalPage() {
 						border: "1px solid var(--term-rule)",
 						color: "var(--term-dim)",
 						animation:
-							"hint-in 0.4s ease-out 3s both, hint-out 0.5s ease-in 14s forwards",
+							"hint-in 0.4s ease-out 3s both, hint-out 0.5s ease-out 14s forwards",
 					}}
 				>
 					press{" "}

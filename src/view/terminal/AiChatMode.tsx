@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Markdown from "@/src/components/Markdown";
 
 type Props = {
 	onExit: () => void;
@@ -267,17 +268,16 @@ export default function AiChatMode({ onExit }: Props) {
 									borderLeft: "2px solid var(--term-blue)",
 								}}
 							>
-								<span>{msg.text}</span>
-								{isStreaming &&
-									msg.id ===
-										messages[messages.length - 1]?.id && (
-										<span
-											className="inline-block w-[9px] h-[16px] align-[-3px] ml-[2px] animate-[blink_1.05s_steps(1)_infinite]"
-											style={{
-												background: "var(--term-ink)",
-											}}
-										/>
-									)}
+								<Markdown
+									streaming={
+										isStreaming &&
+										msg.id ===
+											messages[messages.length - 1]?.id
+									}
+									className="[&_*]:!text-[color:inherit] [&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_a]:underline [&_code]:text-term-amber"
+								>
+									{msg.text}
+								</Markdown>
 							</div>
 						)}
 					</div>
