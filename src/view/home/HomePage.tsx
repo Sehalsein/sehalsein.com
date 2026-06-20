@@ -22,6 +22,14 @@ const PROJECTS: Project[] = [
 		preview: <TerminalPreview />,
 	},
 	{
+		href: "/adventure",
+		label: "adventure",
+		title: "text adventure",
+		description:
+			"An AI Game Master narrates a branching story. Pick a genre, track your life, inventory, and map as every choice shapes the tale.",
+		preview: <AdventurePreview />,
+	},
+	{
 		href: "/os",
 		label: "os",
 		title: "sehalOS",
@@ -122,8 +130,12 @@ function ProjectGrid() {
 				</span>
 			</div>
 			<ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{PROJECTS.map((p) => (
-					<li key={p.href}>
+				{PROJECTS.map((p, i) => (
+					<li
+						key={p.href}
+						className="home-card"
+						style={{ animationDelay: `${i * 50}ms` }}
+					>
 						<ProjectCard project={p} />
 					</li>
 				))}
@@ -136,7 +148,7 @@ function ProjectCard({ project }: { project: Project }) {
 	return (
 		<Link
 			href={project.href}
-			className="group flex h-full flex-col gap-4 rounded-lg border border-term-rule bg-term-bg2/40 p-4 transition-colors hover:border-term-green focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-term-green focus-visible:ring-offset-2 focus-visible:ring-offset-term-bg"
+			className="home-card-link group flex h-full flex-col gap-4 rounded-lg border border-term-rule bg-term-bg2/40 p-4 hover:border-term-green focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-term-green focus-visible:ring-offset-2 focus-visible:ring-offset-term-bg"
 		>
 			<div
 				aria-hidden="true"
@@ -180,6 +192,12 @@ function Footer() {
 				→ os
 			</Link>
 			<Link
+				href="/adventure"
+				className="text-term-blue underline-offset-4 hover:underline"
+			>
+				→ adventure
+			</Link>
+			<Link
 				href="/resume"
 				className="text-term-blue underline-offset-4 hover:underline"
 			>
@@ -220,6 +238,44 @@ function TerminalPreview() {
 					<span className="text-term-green">›</span>{" "}
 					<span className="inline-block h-[10px] w-1.5 animate-[blink_1.05s_steps(1)_infinite] bg-term-ink align-middle" />
 				</div>
+			</div>
+		</div>
+	);
+}
+
+function AdventurePreview() {
+	return (
+		<div className="flex h-full w-full flex-col gap-2 bg-term-bg p-3 text-[10px]">
+			{/* HUD: life bar + location */}
+			<div className="flex items-center gap-2">
+				<span className="text-[11px] leading-none">❤️</span>
+				<div className="h-1.5 flex-1 overflow-hidden rounded-full bg-term-rule">
+					<div className="h-full w-[72%] rounded-full bg-term-green" />
+				</div>
+				<span className="tabular-nums text-term-green">72</span>
+			</div>
+			<div className="flex items-center gap-1.5 text-[9px] text-term-dim">
+				<span className="text-term-amber">📍</span>
+				<span>the whispering woods</span>
+			</div>
+			{/* narration */}
+			<p className="leading-relaxed text-term-ink">
+				A gnarled path forks beneath the black pines. Something{" "}
+				<span className="text-term-green">watches</span> from the dark.
+			</p>
+			{/* choices */}
+			<div className="mt-auto flex flex-col gap-1">
+				{["enter the cave", "follow the river"].map((c, i) => (
+					<div
+						key={c}
+						className="flex items-center gap-1.5 rounded border border-term-rule px-1.5 py-1"
+					>
+						<span className="grid h-3.5 w-3.5 place-items-center rounded border border-term-green/50 text-[8px] text-term-green">
+							{i + 1}
+						</span>
+						<span className="text-term-dim">{c}</span>
+					</div>
+				))}
 			</div>
 		</div>
 	);

@@ -52,6 +52,7 @@
     "react-dom": "^19.2.5",
     "seedrandom": "^3.0.5",
     "stats-gl": "^4.1.0",
+    "streamdown": "^2.5.0",
     "tailwind-merge": "^3.5.0",
     "three": "^0.184.0",
     "ts-pattern": "^5.9.0",
