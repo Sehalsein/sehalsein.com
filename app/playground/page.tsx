@@ -3,7 +3,7 @@ import PlaygroundPage from "@/src/view/playground/PlaygroundPage";
 
 export const metadata: Metadata = {
 	title: "playground — sehal sein",
-	description: "Drive a low-poly car around a track on an infinite grid.",
+	description: "Isometric racing on procedurally generated circuits — pick a seed, pick a car, race the AI.",
 };
 
 export default function Page() {

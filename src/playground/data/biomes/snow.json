@@ -1,0 +1,41 @@
+{
+	"id": "snow",
+	"name": "Snow",
+	"trackNames": ["Glacier Sprint", "Frostbite Ring", "Aurora Alpine", "Whiteout Valley"],
+	"environment": {
+		"skyColor": "#cfe2f2",
+		"fogColor": "#dcebf5",
+		"fogNear": 180,
+		"fogFar": 560,
+		"sunColor": "#eef4ff",
+		"sunIntensity": 2.0,
+		"hemiSkyColor": "#dfeaf5",
+		"hemiGroundColor": "#9fb4c4",
+		"hemiIntensity": 1.0,
+		"sunDirection": [0.35, 0.8, 0.45]
+	},
+	"terrain": {
+		"baseColor": "#eef4f8",
+		"lowColor": "#dbe7ee",
+		"highColor": "#ffffff",
+		"amplitude": 20,
+		"noiseScale": 0.009
+	},
+	"road": {
+		"color": "#3e4149",
+		"edgeColor": "#f2f5f7",
+		"runoffColor": "#cfdde6",
+		"curbColorA": "#3f6fc9",
+		"curbColorB": "#f2f5f7",
+		"barrierColor": "#4a76c4"
+	},
+	"props": {
+		"density": 3.4,
+		"specs": [
+			{ "kind": "pineSnow", "weight": 0.7, "minScale": 0.8, "maxScale": 1.7 },
+			{ "kind": "rock", "weight": 0.18, "minScale": 0.6, "maxScale": 1.4 },
+			{ "kind": "boulder", "weight": 0.12, "minScale": 0.9, "maxScale": 2.0 }
+		],
+		"palette": ["#2e6b48", "#387652", "#27604a", "#417f5c"]
+	}
+}

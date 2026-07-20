@@ -55,6 +55,9 @@ const GROUPS: Item[][] = [
 export default function ContextMenu({ x, y, onClose, onAction }: Props) {
 	const ref = useRef<HTMLDivElement>(null);
 	const [pos, setPos] = useState({ x, y });
+	// Grow from the corner nearest the cursor. Flips when the menu is nudged
+	// back on-screen so it never appears to emanate from empty space.
+	const [origin, setOrigin] = useState("top left");
 
 	useLayoutEffect(() => {
 		const el = ref.current;
@@ -65,6 +68,7 @@ export default function ContextMenu({ x, y, onClose, onAction }: Props) {
 		if (r.right > window.innerWidth) nx = window.innerWidth - r.width - 8;
 		if (r.bottom > window.innerHeight) ny = window.innerHeight - r.height - 8;
 		if (nx !== x || ny !== y) setPos({ x: nx, y: ny });
+		setOrigin(`${ny < y ? "bottom" : "top"} ${nx < x ? "right" : "left"}`);
 	}, [x, y]);
 
 	useEffect(() => {
@@ -86,7 +90,7 @@ export default function ContextMenu({ x, y, onClose, onAction }: Props) {
 			className="ctx"
 			role="menu"
 			aria-label="Desktop actions"
-			style={{ left: pos.x, top: pos.y }}
+			style={{ left: pos.x, top: pos.y, transformOrigin: origin }}
 		>
 			{GROUPS.map((group, gi) => (
 				<div key={group[0].action} role="group">

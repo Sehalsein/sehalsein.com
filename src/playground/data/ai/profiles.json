@@ -1,0 +1,38 @@
+{
+	"profiles": [
+		{
+			"id": "rookie",
+			"name": "Rookie",
+			"aggression": 0.3,
+			"consistency": 0.5,
+			"cornering": 0.55,
+			"reactionTime": 0.28,
+			"braking": 0.5,
+			"mistakeChance": 0.35,
+			"difficulty": 0.35
+		},
+		{
+			"id": "racer",
+			"name": "Racer",
+			"aggression": 0.55,
+			"consistency": 0.7,
+			"cornering": 0.72,
+			"reactionTime": 0.18,
+			"braking": 0.7,
+			"mistakeChance": 0.18,
+			"difficulty": 0.6
+		},
+		{
+			"id": "ace",
+			"name": "Ace",
+			"aggression": 0.8,
+			"consistency": 0.88,
+			"cornering": 0.9,
+			"reactionTime": 0.1,
+			"braking": 0.88,
+			"mistakeChance": 0.07,
+			"difficulty": 0.85
+		}
+	],
+	"driverNames": ["Nova", "Kestrel", "Rook", "Saber", "Juniper", "Comet", "Vesper", "Drift", "Halcyon", "Piston", "Ember", "Gale"]
+}

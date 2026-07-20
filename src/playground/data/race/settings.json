@@ -1,0 +1,12 @@
+{
+	"laps": 3,
+	"aiCount": 5,
+	"countdownSeconds": 3,
+	"wrongWayGraceSeconds": 2.5,
+	"respawnHeightDrop": -30,
+	"modes": {
+		"practice": { "laps": 0, "ai": false, "timed": false },
+		"race": { "laps": 3, "ai": true, "timed": true },
+		"timetrial": { "laps": 3, "ai": false, "timed": true }
+	}
+}

@@ -39,11 +39,16 @@
 .hr-menu { transition:background .14s ease, border-color .14s ease; }
 .hr-menu:hover { background:#d23b22 !important; border-color:#d23b22 !important; }
 .hr-choice { transition:transform .14s ease, background .14s ease, color .14s ease, box-shadow .14s ease; }
-.hr-choice:hover { background:#1a1714 !important; color:#ece5d6 !important; transform:translateX(5px); box-shadow:-4px 0 0 0 #d23b22; }
+.hr-choice:hover { background:#1a1714 !important; color:#ece5d6 !important; box-shadow:-4px 0 0 0 #d23b22; }
 .hr-choice:hover .hr-choice-num { color:#d4a84b !important; }
 .hr-save { transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease; }
-.hr-save:hover { transform:translateY(-2px); box-shadow:0 10px 24px -16px rgba(26,23,20,.8); }
+.hr-save:hover { box-shadow:0 10px 24px -16px rgba(26,23,20,.8); }
 .hr-save-del { transition:background .14s ease, color .14s ease; }
+/* Positional lift only on true hover pointers (a tap shouldn't shove the row). */
+@media (hover: hover) and (pointer: fine) {
+  .hr-choice:hover { transform:translateX(5px); }
+  .hr-save:hover { transform:translateY(-2px); }
+}
 .hr-save-del:hover { background:#d23b22 !important; border-color:#d23b22 !important; color:#fff !important; }
 
 /* The character sidebar folds away on narrow screens; the tale takes the room. */
@@ -53,6 +58,9 @@
   .hr-root *, .hr-root *::before, .hr-root *::after {
     animation-duration:.001ms !important; animation-iteration-count:1 !important;
   }
+  /* Colour/box-shadow hover feedback stays; positional lift is dropped. */
+  .hr-choice:hover { transform:none !important; }
+  .hr-save:hover { transform:none !important; }
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -268,8 +276,8 @@ input[type="search"]::-webkit-search-results-decoration {
   51%, 100% { opacity: 0; }
 }
 @keyframes barfill {
-  from { right: 100%; }
-  to { right: 0; }
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 @keyframes hint-in {
   from { opacity: 0; transform: translateY(6px); }

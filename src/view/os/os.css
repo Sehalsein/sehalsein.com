@@ -17,6 +17,10 @@
   --mag: #c98ed6;
   --cyan: #7dcfff;
 
+  /* Motion — one gentle ease-out shared across the OS chrome.
+     Intentionally softer than the site-wide --ease-out (globals.css). */
+  --os-ease: cubic-bezier(.2, .8, .2, 1);
+
   position: fixed;
   inset: 0;
   background: var(--bg);
@@ -47,14 +51,24 @@ html[data-palette="github-dark-colorblind"] .os-root { --bg:#010409;--bg-2:#0d11
 .os-root a:hover { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
 .os-root a:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 3px; }
 
-/* Honor prefers-reduced-motion across the OS */
+/* Honor prefers-reduced-motion across the OS.
+   Keep opacity/colour cues (they aid comprehension); strip positional
+   movement by redefining the entrance keyframes to fade-only and killing
+   hover/ambient transforms. Mirrors the home-page pattern in globals.css. */
 @media (prefers-reduced-motion: reduce) {
   .os-root *, .os-root *::before, .os-root *::after {
-    animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+  @keyframes widgetIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes wOpen    { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes wClose   { to   { opacity: 0; } }
+  @keyframes wMin     { to   { opacity: 0; } }
+  @keyframes spotIn   { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ctxIn    { from { opacity: 0; } to { opacity: 1; } }
+  .os-root[data-crt="on"] { animation: none; }
+  .os-root .dock-icon:hover,
+  .os-root .dock-icon:active { transform: none; }
 }
 
 /* CRT */
@@ -85,9 +99,9 @@ html[data-palette="github-dark-colorblind"] .os-root { --bg:#010409;--bg-2:#0d11
 .boot-screen .lines .l { padding: 1px 0; animation: fade .2s; }
 .boot-screen .lines .ok { color: var(--green); margin: 0 8px; font-weight: 500; }
 .boot-screen .bar { width: 220px; height: 3px; background: var(--rule); margin-top: 28px; overflow: hidden; border-radius: 2px; }
-.boot-screen .bar::after { content: ""; display: block; height: 100%; background: var(--green); animation: fill 1.2s ease-out forwards; }
+.boot-screen .bar::after { content: ""; display: block; height: 100%; width: 100%; background: var(--green); transform-origin: left; animation: fill 1.2s ease-out forwards; }
 @keyframes fade { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
-@keyframes fill { to { width: 100%; } from { width: 0; } }
+@keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 /* desktop */
 .desktop { position: absolute; inset: 0; background: var(--bg); z-index: 1; overflow: hidden; }
@@ -120,7 +134,7 @@ html[data-palette="github-dark-colorblind"] .os-root { --bg:#010409;--bg-2:#0d11
   padding: 14px 16px;
   color: var(--ink);
   box-shadow: 0 24px 60px -28px rgba(0,0,0,0.75), inset 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
-  animation: widgetIn .6s cubic-bezier(.2,.8,.2,1) both;
+  animation: widgetIn .6s var(--os-ease) both;
 }
 .widget.d1 { animation-delay: .05s; }
 .widget.d2 { animation-delay: .12s; }
@@ -216,26 +230,32 @@ html[data-palette="github-dark-colorblind"] .os-root { --bg:#010409;--bg-2:#0d11
   display: flex; align-items: center; justify-content: center;
   color: var(--ink);
   cursor: pointer;
-  transition: transform .2s cubic-bezier(.2,.8,.2,1), border-color .15s, color .15s, background .15s;
+  transition: transform .2s var(--os-ease), border-color .15s, color .15s, background .15s;
   position: relative;
   will-change: transform;
   padding: 0;
 }
 .dock-icon svg { width: 22px; height: 22px; stroke-width: 1.75; }
+/* Colour feedback is safe on touch; the lift/scale is not (a tap fires a
+   sticky false :hover), so gate the transform to real hover-capable pointers. */
 .dock-icon:hover {
-  transform: translateY(-6px) scale(1.1);
   border-color: color-mix(in srgb, var(--green) 60%, var(--rule));
   color: var(--green);
   background: color-mix(in srgb, var(--green) 10%, var(--bg-2));
 }
+@media (hover: hover) and (pointer: fine) {
+  .dock-icon:hover { transform: translateY(-6px) scale(1.1); }
+  .dock-icon:hover .tip { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+}
 .dock-icon:active { transform: translateY(-2px) scale(1.02); }
 .dock-icon:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
 .dock-icon .dot {
-  position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%);
-  width: 3px; height: 3px; border-radius: 50%; background: transparent;
-  transition: background .15s, width .15s;
+  position: absolute; bottom: -7px; left: 50%;
+  width: 4px; height: 4px; border-radius: 50%; background: transparent;
+  transform: translateX(-50%) scale(0.75);
+  transition: background .15s, transform .15s;
 }
-.dock-icon.running .dot { background: var(--green); width: 4px; height: 4px; box-shadow: 0 0 4px var(--green); }
+.dock-icon.running .dot { background: var(--green); transform: translateX(-50%) scale(1); box-shadow: 0 0 4px var(--green); }
 .dock-icon .tip {
   position: absolute; bottom: 62px; left: 50%; transform: translateX(-50%);
   background: color-mix(in srgb, var(--bg-2) 96%, transparent);
@@ -247,7 +267,7 @@ html[data-palette="github-dark-colorblind"] .os-root { --bg:#010409;--bg-2:#0d11
   transition: opacity .15s, transform .15s;
   letter-spacing: 0.02em;
 }
-.dock-icon:hover .tip { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+/* Reveal handled inside the hover-media query above (keeps tips off touch taps). */
 
 /* window */
 .os-window {
@@ -264,8 +284,8 @@ html[data-palette="github-dark-colorblind"] .os-root { --bg:#010409;--bg-2:#0d11
   transition: box-shadow .2s, opacity .2s;
   min-width: 280px; min-height: 180px;
 }
-.os-window.opening { animation: wOpen .22s cubic-bezier(.2,.8,.2,1); transform-origin: center bottom; }
-.os-window.closing { animation: wClose .15s cubic-bezier(.2,.8,.2,1) forwards; }
+.os-window.opening { animation: wOpen .22s var(--os-ease); transform-origin: center bottom; }
+.os-window.closing { animation: wClose .15s var(--os-ease) forwards; }
 .os-window.min { animation: wMin .24s cubic-bezier(.4,.0,.7,.2) forwards; pointer-events: none; }
 .os-window.max { top: 34px !important; left: 0 !important; width: 100% !important; height: calc(100% - 102px) !important; border-radius: 0; }
 @keyframes wOpen { from { transform: scale(.92) translateY(6px); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -339,7 +359,7 @@ html[data-palette="github-dark-colorblind"] .os-root { --bg:#010409;--bg-2:#0d11
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 40px 100px -20px rgba(0,0,0,0.85), inset 0 1px 0 color-mix(in srgb, var(--ink) 5%, transparent);
-  animation: spotIn .22s cubic-bezier(.2,.8,.2,1);
+  animation: spotIn .22s var(--os-ease);
 }
 @keyframes spotIn { from { opacity: 0; transform: translateY(-10px) scale(.98); } to { opacity: 1; transform: none; } }
 .spotlight .input-wrap {
@@ -387,6 +407,9 @@ html[data-palette="github-dark-colorblind"] .os-root { --bg:#010409;--bg-2:#0d11
   padding: 5px; min-width: 240px;
   box-shadow: 0 24px 60px -10px rgba(0,0,0,0.7), inset 0 1px 0 color-mix(in srgb, var(--ink) 5%, transparent);
   font-size: 12px;
+  /* Grow from the cursor corner, not the centre. ContextMenu.tsx overrides
+     this inline when the menu is flipped to stay on-screen. */
+  transform-origin: top left;
   animation: ctxIn .12s ease-out;
   overscroll-behavior: contain;
 }
@@ -780,9 +803,9 @@ html[data-palette="github-dark-colorblind"] .os-root { --bg:#010409;--bg-2:#0d11
 .app-settings .sw .lbl { position: absolute; bottom: 2px; left: 4px; color: white; font-size: 8.5px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
 .app-settings .toggle { position: relative; width: 36px; height: 20px; border-radius: 10px; background: var(--rule); cursor: pointer; border: 1px solid var(--rule); padding: 0; }
 .app-settings .toggle:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
-.app-settings .toggle::after { content: ""; position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--dim); transition: left .15s, background .15s; }
+.app-settings .toggle::after { content: ""; position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--dim); transition: transform .15s, background .15s; }
 .app-settings .toggle.on { background: color-mix(in srgb, var(--green) 40%, var(--rule)); }
-.app-settings .toggle.on::after { left: 18px; background: var(--green); }
+.app-settings .toggle.on::after { transform: translateX(16px); background: var(--green); }
 .app-settings .walls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .app-settings .wall { aspect-ratio: 16/10; border-radius: 6px; cursor: pointer; border: 2px solid transparent; padding: 0; }
 .app-settings .wall.active { border-color: var(--green); box-shadow: 0 0 0 2px color-mix(in srgb, var(--green) 30%, transparent); }

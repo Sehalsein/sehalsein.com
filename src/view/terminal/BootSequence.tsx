@@ -243,10 +243,9 @@ function BootBar() {
 			style={{ background: "var(--term-faint)" }}
 		>
 			<span
-				className="absolute inset-0 animate-[barfill_0.8s_ease-out_forwards]"
+				className="absolute inset-0 origin-left animate-[barfill_0.8s_ease-out_forwards]"
 				style={{
 					background: "var(--term-green)",
-					right: "100%",
 				}}
 			/>
 		</span>

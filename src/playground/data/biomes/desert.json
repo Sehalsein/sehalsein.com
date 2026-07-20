@@ -1,0 +1,41 @@
+{
+	"id": "desert",
+	"name": "Desert",
+	"trackNames": ["Dune Basin GP", "Scorpion Pass", "Mirage Speedway", "Red Mesa Loop"],
+	"environment": {
+		"skyColor": "#ffd9a0",
+		"fogColor": "#f7cf9b",
+		"fogNear": 240,
+		"fogFar": 700,
+		"sunColor": "#ffe9c4",
+		"sunIntensity": 2.6,
+		"hemiSkyColor": "#ffe1b3",
+		"hemiGroundColor": "#b07b4a",
+		"hemiIntensity": 0.8,
+		"sunDirection": [0.6, 0.9, 0.2]
+	},
+	"terrain": {
+		"baseColor": "#e8b46b",
+		"lowColor": "#d9a15a",
+		"highColor": "#f2cd8b",
+		"amplitude": 12,
+		"noiseScale": 0.006
+	},
+	"road": {
+		"color": "#4d4a4e",
+		"edgeColor": "#f5e9cf",
+		"runoffColor": "#d9b878",
+		"curbColorA": "#c9563f",
+		"curbColorB": "#f7ead2",
+		"barrierColor": "#d97f3f"
+	},
+	"props": {
+		"density": 1.8,
+		"specs": [
+			{ "kind": "cactus", "weight": 0.5, "minScale": 0.8, "maxScale": 1.6 },
+			{ "kind": "rock", "weight": 0.3, "minScale": 0.6, "maxScale": 1.5 },
+			{ "kind": "boulder", "weight": 0.2, "minScale": 0.9, "maxScale": 2.2 }
+		],
+		"palette": ["#4f8f4f", "#5d9c53", "#8f7f5c", "#b3925f"]
+	}
+}
