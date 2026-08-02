@@ -1,0 +1,16 @@
+{
+	"id": "roadster",
+	"name": "Vega Roadster",
+	"description": "Balanced all-rounder. Forgiving grip, honest speed.",
+	"silhouette": "roadster",
+	"defaultLivery": "ember",
+	"stats": {
+		"acceleration": 0.62,
+		"maxSpeed": 0.66,
+		"handling": 0.7,
+		"grip": 0.66,
+		"weight": 0.42,
+		"drift": 0.5,
+		"boost": 0.5
+	}
+}

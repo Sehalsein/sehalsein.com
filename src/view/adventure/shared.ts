@@ -280,20 +280,83 @@ export function avatarUri(key: string, o: AvatarOpts = {}): string {
  *  Parsing the GM's JSON turn (tolerant of code fences / stray prose)
  * ------------------------------------------------------------------ */
 
+/** Every balanced top-level `{...}` span in `t`, in the order they open.
+ *
+ *  Reasoning models often think out loud before answering, and that prose is
+ *  full of braces — the system prompt alone teaches them to write things like
+ *  {"skill","ability","dc"}. Slicing from the first `{` to the last `}` would
+ *  swallow all of it, so we count depth instead. When `strings` is set, quoted
+ *  spans are skipped so braces inside JSON string values don't shift the depth.
+ */
+function objectSpans(t: string, strings: boolean): string[] {
+	const out: string[] = [];
+	let depth = 0,
+		start = -1,
+		inStr = false,
+		esc = false;
+	for (let i = 0; i < t.length; i++) {
+		const c = t[i];
+		if (inStr) {
+			if (esc) esc = false;
+			else if (c === "\\") esc = true;
+			else if (c === '"') inStr = false;
+			continue;
+		}
+		if (strings && c === '"') inStr = true;
+		else if (c === "{") {
+			if (depth === 0) start = i;
+			depth++;
+		} else if (c === "}" && depth > 0) {
+			depth--;
+			if (depth === 0) {
+				out.push(t.slice(start, i + 1));
+				start = -1;
+			}
+		}
+	}
+	return out;
+}
+
+/** Does this parsed value actually look like a GM turn, rather than a stray
+ *  object the model happened to write while reasoning? */
+function isGMTurn(v: unknown): v is GMResponse {
+	if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+	const o = v as GMResponse;
+	return typeof o.narration === "string" || Array.isArray(o.choices);
+}
+
 export function parseGM(raw: string): GMResponse | null {
-	let t = String(raw || "").trim();
-	t = t
+	const t = String(raw || "")
+		.trim()
 		.replace(/^```(?:json)?/i, "")
 		.replace(/```$/, "")
 		.trim();
-	const a = t.indexOf("{"),
-		b = t.lastIndexOf("}");
-	if (a >= 0 && b > a) t = t.slice(a, b + 1);
+	if (!t) return null;
+
+	// Fast path: the model behaved and returned bare JSON.
 	try {
-		return JSON.parse(t) as GMResponse;
+		const v = JSON.parse(t);
+		if (isGMTurn(v)) return v;
 	} catch {
-		return null;
+		/* fall through to scanning */
 	}
+
+	// Otherwise hunt for the payload. The real turn is whatever comes *after*
+	// the thinking, so walk the candidates back-to-front and take the first
+	// one that both parses and looks like a turn. The second pass drops string
+	// awareness, which rescues text whose prose left an unpaired quote behind.
+	for (const strings of [true, false]) {
+		const spans = objectSpans(t, strings);
+		for (let i = spans.length - 1; i >= 0; i--) {
+			try {
+				const v = JSON.parse(spans[i]);
+				if (isGMTurn(v)) return v;
+			} catch {
+				/* not this one */
+			}
+		}
+	}
+	return null;
 }
 
 /* ------------------------------------------------------------------ *

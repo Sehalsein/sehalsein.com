@@ -1,0 +1,16 @@
+{
+	"id": "muscle",
+	"name": "Brute V8",
+	"description": "Monster straight-line pace. Wrestle it through corners.",
+	"silhouette": "muscle",
+	"defaultLivery": "cobalt",
+	"stats": {
+		"acceleration": 0.82,
+		"maxSpeed": 0.88,
+		"handling": 0.42,
+		"grip": 0.5,
+		"weight": 0.78,
+		"drift": 0.78,
+		"boost": 0.62
+	}
+}

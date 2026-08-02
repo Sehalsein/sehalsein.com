@@ -30,6 +30,22 @@ const PROJECTS: Project[] = [
 		preview: <AdventurePreview />,
 	},
 	{
+		href: "/doom",
+		label: "doom",
+		title: "browser doom",
+		description:
+			"A software-rendered shooter — raycast walls, billboarded sprites, synthesized sound. Every texture and animation is generated at boot; nothing is downloaded.",
+		preview: <DoomPreview />,
+	},
+	{
+		href: "/racer",
+		label: "racer",
+		title: "iso racer",
+		description:
+			"Isometric arcade racing on circuits generated from a seed. Drift for boost, draft the leader, and share the link — the same seed rebuilds the same track.",
+		preview: <RacerPreview />,
+	},
+	{
 		href: "/os",
 		label: "os",
 		title: "sehalOS",
@@ -198,6 +214,18 @@ function Footer() {
 				→ adventure
 			</Link>
 			<Link
+				href="/doom"
+				className="text-term-blue underline-offset-4 hover:underline"
+			>
+				→ doom
+			</Link>
+			<Link
+				href="/racer"
+				className="text-term-blue underline-offset-4 hover:underline"
+			>
+				→ racer
+			</Link>
+			<Link
 				href="/resume"
 				className="text-term-blue underline-offset-4 hover:underline"
 			>
@@ -238,6 +266,88 @@ function TerminalPreview() {
 					<span className="text-term-green">›</span>{" "}
 					<span className="inline-block h-[10px] w-1.5 animate-[blink_1.05s_steps(1)_infinite] bg-term-ink align-middle" />
 				</div>
+			</div>
+		</div>
+	);
+}
+
+function DoomPreview() {
+	return (
+		<div className="grid h-full w-full grid-rows-[1fr_22px] bg-[#0b0a0e]">
+			{/* A suggestion of a corridor: floor, ceiling, and two lit walls. */}
+			<div className="relative overflow-hidden">
+				<div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-[#181722] to-[#2a2734]" />
+				<div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#241d1a] to-[#3a2f28]" />
+				<div
+					className="absolute inset-y-0 left-0 w-[30%] bg-[#4a4438]"
+					style={{ clipPath: "polygon(0 0, 100% 26%, 100% 74%, 0 100%)" }}
+				/>
+				<div
+					className="absolute inset-y-0 right-0 w-[30%] bg-[#5a5142]"
+					style={{ clipPath: "polygon(0 26%, 100% 0, 100% 100%, 0 74%)" }}
+				/>
+				{/* Crosshair */}
+				<div className="absolute left-1/2 top-1/2 h-[7px] w-[1px] -translate-x-1/2 -translate-y-1/2 bg-[#8fd08a]" />
+				<div className="absolute left-1/2 top-1/2 h-[1px] w-[7px] -translate-x-1/2 -translate-y-1/2 bg-[#8fd08a]" />
+			</div>
+			<div className="flex items-center gap-3 border-t border-[#3e3a3e] bg-[#1a181c] px-2 font-mono text-[9px] leading-none">
+				<span className="text-[#60be58]">100%</span>
+				<span className="text-term-faint">armor</span>
+				<span className="text-[#e2ded2]">50</span>
+				<span className="ml-auto flex gap-[3px]">
+					<span className="h-2.5 w-1.5 bg-[#ce362c]" />
+					<span className="h-2.5 w-1.5 bg-[#4a76e8]" />
+				</span>
+			</div>
+		</div>
+	);
+}
+
+function RacerPreview() {
+	return (
+		<div className="relative h-full w-full overflow-hidden bg-[#8fbe79]">
+			{/* A slice of circuit seen from the isometric camera: kerbed road
+			    ribbon running diagonally with the field strung out along it. */}
+			<div
+				className="absolute -inset-y-[45%] left-[8%] w-[52%] rotate-[32deg] bg-[#b34a44]"
+				style={{ borderRadius: "2px" }}
+			>
+				<div className="absolute inset-x-[7%] inset-y-0 bg-[#cfe0b8]" />
+				<div className="absolute inset-x-[13%] inset-y-0 bg-[#3f434f]" />
+				<div className="absolute inset-x-[13%] inset-y-0 border-x border-white/70" />
+				<div className="absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-[repeating-linear-gradient(to_bottom,rgba(255,255,255,0.85)_0_7px,transparent_7px_16px)]" />
+				{/* cars, nose-up the road */}
+				<span className="absolute left-[30%] top-[36%] h-3 w-2 rounded-[2px] bg-[#4a76e8] shadow-[0_1px_0_rgba(0,0,0,0.35)]" />
+				<span className="absolute left-[58%] top-[43%] h-3 w-2 rounded-[2px] bg-[#5cbf62] shadow-[0_1px_0_rgba(0,0,0,0.35)]" />
+				<span className="absolute left-[32%] top-[52%] h-3 w-2 rounded-[2px] bg-[#ce6a3c] shadow-[0_1px_0_rgba(0,0,0,0.35)]" />
+				{/* the player, a step behind and lit yellow like the minimap dot */}
+				<span className="absolute left-[57%] top-[60%] h-3.5 w-2.5 rounded-[2px] bg-[#ffd84d] shadow-[0_1px_0_rgba(0,0,0,0.4)]" />
+			</div>
+			{/* pines dotted over the grass */}
+			<span className="absolute left-[70%] top-[16%] h-0 w-0 border-x-[6px] border-b-[13px] border-x-transparent border-b-[#3f7a4a]" />
+			<span className="absolute left-[84%] top-[46%] h-0 w-0 border-x-[5px] border-b-[11px] border-x-transparent border-b-[#356b41]" />
+			<span className="absolute left-[6%] top-[74%] h-0 w-0 border-x-[5px] border-b-[11px] border-x-transparent border-b-[#3f7a4a]" />
+			{/* minimap */}
+			<svg
+				viewBox="0 0 40 40"
+				className="absolute right-1.5 top-1.5 h-9 w-9 rounded border border-white/25 bg-black/35"
+			>
+				<path
+					d="M14 6 C27 4 36 10 34 18 C32 25 22 23 20 28 C18 33 10 36 7 30 C4 24 6 8 14 6 Z"
+					fill="none"
+					stroke="rgba(255,255,255,0.9)"
+					strokeWidth="2.5"
+					strokeLinejoin="round"
+				/>
+				<circle cx="33" cy="19" r="2.6" fill="#ffd84d" />
+			</svg>
+			{/* speed read-out */}
+			<div className="absolute bottom-1.5 left-1.5 rounded border border-white/15 bg-black/45 px-1.5 py-0.5 font-mono leading-none text-white">
+				<span className="text-[13px] font-bold tabular-nums">184</span>
+				<span className="ml-0.5 text-[7px] opacity-70">km/h</span>
+			</div>
+			<div className="absolute bottom-1.5 right-1.5 font-mono text-[7px] tracking-[0.14em] text-white/80">
+				LAP 2/3 · P2
 			</div>
 		</div>
 	);

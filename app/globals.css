@@ -38,6 +38,14 @@
 .hr-btn-red:hover:not(:disabled) { filter:brightness(1.1); }
 .hr-menu { transition:background .14s ease, border-color .14s ease; }
 .hr-menu:hover { background:#d23b22 !important; border-color:#d23b22 !important; }
+.hr-voice { transition:border-color .14s ease, color .14s ease; }
+.hr-voice:hover { border-color:#d4a84b !important; color:#d4a84b !important; }
+/* Sound waves breathe only while the narrator is actually speaking. */
+.hr-voice-wave { opacity:.35; }
+.hr-voice-on .hr-voice-wave { opacity:1; }
+.hr-voice-speaking .hr-voice-wave { animation:hr-voicewave 1.1s ease-in-out infinite; }
+.hr-voice-speaking .hr-voice-wave:last-child { animation-delay:.18s; }
+@keyframes hr-voicewave { 0%,100% { opacity:.3; } 50% { opacity:1; } }
 .hr-choice { transition:transform .14s ease, background .14s ease, color .14s ease, box-shadow .14s ease; }
 .hr-choice:hover { background:#1a1714 !important; color:#ece5d6 !important; box-shadow:-4px 0 0 0 #d23b22; }
 .hr-choice:hover .hr-choice-num { color:#d4a84b !important; }

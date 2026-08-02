@@ -1,0 +1,10 @@
+[
+	{ "id": "ember", "name": "Ember", "body": "#e0493e", "accent": "#f7f4ef", "cabin": "#2b2e36" },
+	{ "id": "cobalt", "name": "Cobalt", "body": "#3f6fd9", "accent": "#f2c14e", "cabin": "#20232b" },
+	{ "id": "lime", "name": "Lime", "body": "#43b649", "accent": "#ffffff", "cabin": "#26382a" },
+	{ "id": "solar", "name": "Solar", "body": "#f2a922", "accent": "#24262e", "cabin": "#33240f" },
+	{ "id": "violet", "name": "Violet", "body": "#8e63d9", "accent": "#f0e9ff", "cabin": "#2a2338" },
+	{ "id": "graphite", "name": "Graphite", "body": "#4a4f5c", "accent": "#ff8a3d", "cabin": "#1c1e24" },
+	{ "id": "frost", "name": "Frost", "body": "#e8eef2", "accent": "#3aa7c9", "cabin": "#2c3339" },
+	{ "id": "midnight", "name": "Midnight", "body": "#232a3d", "accent": "#5fe0c4", "cabin": "#12151f" }
+]

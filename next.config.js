@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Playground engine (folio-derived) build-time flags. Ported from the engine's
-  // old Vite VITE_* vars to NEXT_PUBLIC_*. MINIMAL = the stripped /playground build.
-  env: {
-    NEXT_PUBLIC_MINIMAL: 'true',
-    NEXT_PUBLIC_DAY_CYCLE_PROGRESS: '0.05',
+  // /playground was renamed to /racer — keep old links (and shared run URLs
+  // like /playground/W8NZ77?seed=…) working.
+  async redirects() {
+    return [
+      { source: '/playground', destination: '/racer', permanent: true },
+      { source: '/playground/:run', destination: '/racer/:run', permanent: true },
+    ]
   },
   async rewrites() {
     return [

@@ -1,0 +1,81 @@
+{
+	"gravity": -22,
+	"fixedHz": 60,
+	"chassis": {
+		"halfWidth": 0.92,
+		"halfHeight": 0.34,
+		"halfLength": 1.72,
+		"comDrop": 0.42
+	},
+	"suspension": {
+		"restLength": 0.55,
+		"wheelRadius": 0.36,
+		"stiffness": 110,
+		"damping": 11,
+		"forceApplyHeight": 0.1
+	},
+	"wheels": {
+		"offsetX": 0.82,
+		"offsetZFront": 1.18,
+		"offsetZRear": -1.18,
+		"offsetY": -0.1
+	},
+	"stats": {
+		"engineAccelMin": 13,
+		"engineAccelMax": 24,
+		"topSpeedMin": 33,
+		"topSpeedMax": 62,
+		"reverseSpeedFraction": 0.4,
+		"brakeDecel": 26,
+		"steerMinRad": 0.42,
+		"steerMaxRad": 0.66,
+		"steerSpeedFalloff": 0.012,
+		"gripMin": 1.5,
+		"gripMax": 2.7,
+		"massMin": 950,
+		"massMax": 1650,
+		"driftGripScaleMin": 0.55,
+		"driftGripScaleMax": 0.22,
+		"boostPowerMin": 1.6,
+		"boostPowerMax": 2.1,
+		"boostDrainPerSec": 0.45,
+		"boostRegenPerSec": 0.18,
+		"driftRegenPerSec": 0.34,
+		"driftRegenMinAmount": 0.35,
+		"handbrakeScrub": 0.035,
+		"parkingHoldScrub": 0.45,
+		"handbrakeGripScale": 0.22,
+		"handbrakeYawDamping": 0.35
+	},
+	"aero": {
+		"downforceCoeff": 4.2,
+		"dragCoeff": 0.3,
+		"angularDamping": 2.4,
+		"linearDamping": 0.05
+	},
+	"stabilization": {
+		"uprightTorque": 260,
+		"airUprightTorque": 90
+	},
+	"surfaces": {
+		"road": {
+			"gripScale": 1.0,
+			"dragScale": 1.0
+		},
+		"runoff": {
+			"gripScale": 0.82,
+			"dragScale": 1.6
+		},
+		"offroad": {
+			"gripScale": 0.6,
+			"dragScale": 3.2
+		}
+	},
+	"slipstream": {
+		"maxDistance": 22,
+		"maxLateral": 3.6,
+		"minLeaderSpeed": 14,
+		"regenMultiplier": 3.5,
+		"pullAccel": 2.4
+	}
+}

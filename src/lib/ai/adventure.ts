@@ -31,7 +31,12 @@ export async function completeAdventure(prompt: string): Promise<string> {
 		providerOptions: {
 			openrouter: {
 				models: FALLBACK_MODELS,
-				reasoning: { effort: "low" },
+				// No reasoning: some models on the fallback list interleave their
+				// chain-of-thought with the answer, and that prose is full of
+				// braces (the prompt itself teaches {"skill","ability","dc"}),
+				// which used to derail JSON extraction. A 2-4 sentence turn does
+				// not need deliberation anyway.
+				reasoning: { effort: "none", exclude: true },
 			},
 		},
 	});

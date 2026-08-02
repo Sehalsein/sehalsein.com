@@ -1,0 +1,205 @@
+/*
+ * Route-scoped styling for /me.
+ *
+ * The backdrop (dot grid + ring) is DOM, not WebGL: it costs nothing, and it
+ * recolours with the palette for free because it is built from the same
+ * --color-term-* variables as the rest of the site. The head overlapping the
+ * ring is what communicates depth before it even moves.
+ */
+
+.me-figure {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.me-host {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	overflow: hidden;
+	border: 1px solid var(--color-term-rule);
+	border-radius: 0.5rem;
+	background: radial-gradient(
+		120% 90% at 50% 18%,
+		var(--color-term-bg2),
+		var(--color-term-bg) 78%
+	);
+	touch-action: manipulation;
+	isolation: isolate;
+}
+
+/* faint dot grid */
+.me-host::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-image: radial-gradient(var(--color-term-rule) 1px, transparent 1px);
+	background-size: 22px 22px;
+	opacity: 0.5;
+	mask-image: radial-gradient(70% 70% at 50% 45%, #000 30%, transparent 100%);
+}
+
+/* the ring the head sits in front of */
+.me-host::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 47%;
+	width: 62%;
+	aspect-ratio: 1;
+	translate: -50% -50%;
+	border: 1px dashed var(--color-term-rule);
+	border-radius: 50%;
+}
+
+.me-canvas,
+.me-fallback {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+}
+
+.me-fallback {
+	object-fit: contain;
+	padding: 6%;
+}
+
+.me-caption {
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	color: var(--color-term-faint);
+}
+
+.me-status {
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	color: var(--color-term-faint);
+	font-variant-numeric: tabular-nums;
+	min-height: 1.2em;
+}
+
+/* ── page chrome ─────────────────────────────────────────────────────────── */
+
+.me-section-title {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.24em;
+	color: var(--color-term-amber);
+	border-left: 2px solid var(--color-term-blue);
+	padding-left: 0.6rem;
+}
+
+.me-row {
+	display: flex;
+	gap: 0.5rem;
+	align-items: baseline;
+	font-size: 13px;
+	color: var(--color-term-dim);
+	padding: 0.15rem 0.35rem;
+	border-radius: 3px;
+	transition: color 140ms ease, background-color 140ms ease;
+}
+
+.me-row::before {
+	content: "▸";
+	color: var(--color-term-faint);
+	flex: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.me-row:hover {
+		color: var(--color-term-ink);
+		background: color-mix(in srgb, var(--color-term-bg2) 70%, transparent);
+	}
+
+	.me-row:hover::before {
+		color: var(--color-term-green);
+	}
+}
+
+.me-palette {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.me-swatch {
+	display: flex;
+	width: 2.1rem;
+	height: 1.35rem;
+	overflow: hidden;
+	border: 1px solid var(--color-term-rule);
+	border-radius: 3px;
+	cursor: pointer;
+	transition: transform 160ms var(--ease-out), border-color 140ms ease;
+}
+
+.me-swatch span {
+	flex: 1;
+}
+
+.me-swatch[aria-pressed="true"] {
+	border-color: var(--color-term-green);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.me-swatch:hover {
+		transform: translateY(-2px);
+		border-color: var(--color-term-green);
+	}
+}
+
+.me-swatch:focus-visible {
+	outline: 2px solid var(--color-term-green);
+	outline-offset: 2px;
+}
+
+.me-toggle {
+	font-size: 11px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--color-term-faint);
+	border: 1px dashed var(--color-term-rule);
+	border-radius: 3px;
+	padding: 0.25rem 0.55rem;
+	cursor: pointer;
+	transition: color 140ms ease, border-color 140ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.me-toggle:hover {
+		color: var(--color-term-ink);
+		border-color: var(--color-term-green);
+	}
+}
+
+.me-toggle:focus-visible {
+	outline: 2px solid var(--color-term-green);
+	outline-offset: 2px;
+}
+
+/* ── reduced motion ──────────────────────────────────────────────────────── */
+/*
+ * Matches the approach in globals.css: strip the transform component, keep the
+ * colour feedback. The stage does its own, larger reduction in JS — autonomous
+ * motion off, gaze kept but heavily damped.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.me-swatch,
+	.me-row,
+	.me-toggle {
+		transition-duration: 1ms;
+	}
+
+	.me-swatch:hover {
+		transform: none;
+	}
+}
