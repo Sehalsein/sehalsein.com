@@ -213,7 +213,7 @@ export const COMMAND_REGISTRY: Record<string, string> = {
 	contributions: "github contribution heatmap",
 	contrib: "alias for contributions",
 	guestbook: "sign the guestbook",
-	playground: "explore the 3d island",
+	racer: "isometric racing on procedural circuits",
 	mcp: "remote MCP server info",
 	login: "sign in with GitHub",
 	logout: "sign out",
@@ -227,7 +227,7 @@ export const COMMAND_GROUPS: [string, string[]][] = [
 	["Shell", ["ls", "cd", "pwd", "cat", "clear", "banner", "date", "uptime"]],
 	["Editors", ["vim", "git"]],
 	["Themes", [":colorscheme", "themes", ":set"]],
-	["Fun", ["fortune", "cowsay", "matrix", "coffee", "sudo", "socials", "ai", "guestbook", "playground", "mcp"]],
+	["Fun", ["fortune", "cowsay", "matrix", "coffee", "sudo", "socials", "ai", "guestbook", "racer", "mcp"]],
 ];
 
 export const HOME_FILES = [

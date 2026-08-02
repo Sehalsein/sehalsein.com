@@ -1,0 +1,16 @@
+{
+	"id": "formula",
+	"name": "Apex Open-Wheel",
+	"description": "Downforce monster. Grips like nothing else — and refuses to slide, so boost is scarce.",
+	"silhouette": "formula",
+	"defaultLivery": "midnight",
+	"stats": {
+		"acceleration": 0.88,
+		"maxSpeed": 0.86,
+		"handling": 0.9,
+		"grip": 0.9,
+		"weight": 0.2,
+		"drift": 0.12,
+		"boost": 0.34
+	}
+}

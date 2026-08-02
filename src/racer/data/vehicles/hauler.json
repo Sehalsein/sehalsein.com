@@ -1,0 +1,16 @@
+{
+	"id": "hauler",
+	"name": "Ridge Hauler",
+	"description": "Two tonnes of pickup. Slow in, sideways out, unbothered by kerbs.",
+	"silhouette": "pickup",
+	"defaultLivery": "graphite",
+	"stats": {
+		"acceleration": 0.58,
+		"maxSpeed": 0.62,
+		"handling": 0.34,
+		"grip": 0.76,
+		"weight": 0.96,
+		"drift": 0.88,
+		"boost": 0.56
+	}
+}

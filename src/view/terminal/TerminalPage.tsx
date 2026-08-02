@@ -1220,15 +1220,15 @@ export default function TerminalPage({ chrome = true }: { chrome?: boolean } = {
 		guestbook: () => {
 			print(<GuestbookInline />);
 		},
-		playground: () => {
+		racer: () => {
 			print(
 				<Dim>
 					<span style={{ color: "var(--term-amber)" }}>→</span>{" "}
-					launching the island…
+					rolling out to the grid…
 				</Dim>,
 			);
 			window.setTimeout(() => {
-				window.location.assign("/playground");
+				window.location.assign("/racer");
 			}, 450);
 		},
 		login: async () => {

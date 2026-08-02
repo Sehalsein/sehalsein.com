@@ -1,0 +1,16 @@
+{
+	"id": "wedge",
+	"name": "Sable GT",
+	"description": "Doorstop-shaped and allergic to drag. Nervous under braking.",
+	"silhouette": "wedge",
+	"defaultLivery": "solar",
+	"stats": {
+		"acceleration": 0.68,
+		"maxSpeed": 0.84,
+		"handling": 0.6,
+		"grip": 0.7,
+		"weight": 0.52,
+		"drift": 0.58,
+		"boost": 0.6
+	}
+}

@@ -1,0 +1,888 @@
+/* Isometric racer UI. All game UI is DOM-overlaid on the WebGL canvas. */
+
+.rg-host {
+	position: fixed;
+	inset: 0;
+	overflow: hidden;
+	background: #0d0e12;
+	font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+	user-select: none;
+}
+
+.rg-canvas {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+/* ---------- HUD ---------- */
+
+.rg-hud {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	color: #f2f3f5;
+	z-index: 20;
+}
+
+.rg-panel {
+	background: rgba(13, 14, 18, 0.62);
+	backdrop-filter: blur(6px);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: 10px;
+	padding: 10px 14px;
+}
+
+.rg-hud-top {
+	position: absolute;
+	top: 14px;
+	left: 96px; /* clear the "home" link */
+	right: 14px;
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.rg-race-info .rg-track-name {
+	font-size: 11px;
+	opacity: 0.75;
+	margin-bottom: 6px;
+	letter-spacing: 0.04em;
+}
+
+.rg-race-info .rg-lap,
+.rg-race-info .rg-pos {
+	display: inline-block;
+	font-size: 20px;
+	font-weight: 700;
+	margin-right: 14px;
+}
+
+.rg-times {
+	font-size: 16px;
+	font-variant-numeric: tabular-nums;
+}
+
+.rg-times .rg-best {
+	font-size: 11px;
+	opacity: 0.7;
+	margin-top: 4px;
+}
+
+.rg-times .rg-pb {
+	font-size: 11px;
+	margin-top: 2px;
+	color: rgba(255, 216, 77, 0.55);
+}
+
+.rg-times .rg-pb.is-set {
+	color: #ffd84d;
+}
+
+/* ---------- minimap + standings column ---------- */
+
+.rg-hud-right {
+	margin-left: auto;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 8px;
+}
+
+.rg-minimap {
+	background: rgba(13, 14, 18, 0.55);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: 12px;
+}
+
+.rg-standings {
+	padding: 8px 10px;
+	min-width: 180px;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+}
+
+.rg-standing {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	opacity: 0.72;
+}
+
+.rg-standing.is-player {
+	opacity: 1;
+	color: #ffd84d;
+	font-weight: 700;
+}
+
+.rg-standing-pos {
+	width: 12px;
+	text-align: right;
+	opacity: 0.7;
+}
+
+.rg-standing-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	flex: none;
+}
+
+.rg-standing-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.rg-standing-gap {
+	opacity: 0.75;
+}
+
+.rg-hud-bottom {
+	position: absolute;
+	left: 18px;
+	bottom: 18px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 210px;
+}
+
+.rg-speed {
+	font-size: 40px;
+	font-weight: 800;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.rg-speed small {
+	font-size: 13px;
+	font-weight: 400;
+	opacity: 0.7;
+}
+
+.rg-boost {
+	height: 8px;
+	border-radius: 4px;
+	background: rgba(255, 255, 255, 0.14);
+	overflow: hidden;
+}
+
+.rg-boost-fill {
+	height: 100%;
+	width: 100%;
+	background: #5b9bff;
+	border-radius: 4px;
+	transition: width 80ms linear;
+}
+
+.rg-boost-fill.is-active {
+	background: #ffd84d;
+}
+
+.rg-countdown {
+	position: absolute;
+	top: 32%;
+	left: 0;
+	right: 0;
+	text-align: center;
+	font-size: 96px;
+	font-weight: 900;
+	color: #ffd84d;
+	text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.rg-countdown.is-pop {
+	animation: rg-pop 0.5s ease-out;
+}
+
+@keyframes rg-pop {
+	0% { transform: scale(1.7); opacity: 0; }
+	100% { transform: scale(1); opacity: 1; }
+}
+
+.rg-wrongway {
+	position: absolute;
+	top: 22%;
+	left: 0;
+	right: 0;
+	text-align: center;
+	font-size: 34px;
+	font-weight: 900;
+	color: #ff5f4d;
+	display: none;
+	animation: rg-blink 0.7s steps(2) infinite;
+}
+
+.rg-wrongway.is-visible {
+	display: block;
+}
+
+@keyframes rg-blink {
+	50% { opacity: 0.25; }
+}
+
+/* Lap time vs personal best, flashed at each start-line crossing. */
+.rg-flash {
+	position: absolute;
+	top: 15%;
+	left: 0;
+	right: 0;
+	text-align: center;
+	font-size: 22px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	color: #f2f3f5;
+	text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+	opacity: 0;
+	transform: translateY(6px);
+	transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.rg-flash.is-visible {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.rg-flash.is-good {
+	color: #7dffa8;
+	text-shadow: 0 0 18px rgba(125, 255, 168, 0.5);
+}
+
+.rg-hint {
+	position: absolute;
+	bottom: 10px;
+	right: 14px;
+	font-size: 10px;
+	opacity: 0.55;
+	letter-spacing: 0.03em;
+}
+
+/* ---------- results ---------- */
+
+.rg-results {
+	position: absolute;
+	inset: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: rgba(10, 11, 14, 0.55);
+	pointer-events: auto;
+}
+
+.rg-results.is-visible {
+	display: flex;
+}
+
+.rg-results-card {
+	background: rgba(16, 17, 22, 0.95);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	border-radius: 14px;
+	padding: 26px 30px;
+	min-width: 380px;
+}
+
+.rg-results-card h2 {
+	margin: 0 0 14px;
+	font-size: 20px;
+	letter-spacing: 0.05em;
+}
+
+.rg-results-card table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+	font-variant-numeric: tabular-nums;
+}
+
+.rg-results-card th,
+.rg-results-card td {
+	text-align: left;
+	padding: 6px 10px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.rg-results-card th {
+	opacity: 0.6;
+	font-weight: 500;
+	font-size: 11px;
+}
+
+.rg-results-card tr.is-player td {
+	color: #ffd84d;
+	font-weight: 700;
+}
+
+.rg-results-card h2 .rg-badge {
+	margin-left: 10px;
+	padding: 3px 8px;
+	border-radius: 999px;
+	background: rgba(125, 255, 168, 0.16);
+	border: 1px solid rgba(125, 255, 168, 0.45);
+	color: #7dffa8;
+	font-size: 10px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	vertical-align: middle;
+}
+
+.rg-results-actions {
+	margin-top: 18px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+/* ---------- menu ---------- */
+
+.rg-menu {
+	position: absolute;
+	inset: 0;
+	z-index: 30;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background:
+		radial-gradient(1200px 600px at 50% -10%, rgba(91, 155, 255, 0.16), transparent),
+		rgba(10, 11, 14, 0.66);
+	backdrop-filter: blur(5px);
+	color: #f2f3f5;
+	overflow-y: auto;
+}
+
+.rg-menu-card {
+	width: min(820px, calc(100vw - 40px));
+	background: rgba(16, 17, 22, 0.94);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	border-radius: 16px;
+	padding: 28px 32px;
+	margin: 20px 0;
+}
+
+.rg-menu-card h1 {
+	margin: 0;
+	font-size: 34px;
+	font-weight: 900;
+	letter-spacing: 0.14em;
+}
+
+.rg-menu-sub {
+	margin: 4px 0 20px;
+	font-size: 12px;
+	opacity: 0.6;
+	letter-spacing: 0.06em;
+}
+
+.rg-field-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin-bottom: 14px;
+}
+
+.rg-field-row label {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	opacity: 0.9;
+	flex: 1;
+	min-width: 120px;
+}
+
+.rg-menu select,
+.rg-menu input[type="text"] {
+	background: rgba(255, 255, 255, 0.07);
+	color: #f2f3f5;
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 8px;
+	padding: 8px 10px;
+	font: inherit;
+	font-size: 13px;
+}
+
+.rg-menu input[type="range"] {
+	accent-color: #5b9bff;
+}
+
+.rg-seed-row {
+	display: flex;
+	gap: 6px;
+}
+
+.rg-seed-row input {
+	flex: 1;
+	min-width: 0;
+	text-transform: uppercase;
+}
+
+.rg-seed-row button {
+	background: rgba(255, 255, 255, 0.09);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 15px;
+	padding: 0 10px;
+}
+
+.rg-menu-record {
+	margin: 2px 0 0;
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	color: #ffd84d;
+}
+
+.rg-menu-record[hidden] {
+	display: none;
+}
+
+/* ---------- garage: turntable + car picker + paint ---------- */
+
+.rg-garage {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+	gap: 14px;
+	margin: 12px 0 20px;
+}
+
+.rg-preview {
+	position: relative;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: 12px;
+	background:
+		radial-gradient(120% 90% at 50% 0%, rgba(91, 155, 255, 0.16), transparent 70%),
+		rgba(255, 255, 255, 0.035);
+	overflow: hidden;
+	min-height: 210px;
+}
+
+.rg-preview-canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+	cursor: grab;
+	touch-action: none;
+}
+
+.rg-preview-canvas:active {
+	cursor: grabbing;
+}
+
+.rg-preview-caption {
+	position: absolute;
+	left: 14px;
+	right: 14px;
+	bottom: 12px;
+	pointer-events: none;
+}
+
+.rg-preview-caption strong {
+	display: block;
+	font-size: 15px;
+	letter-spacing: 0.04em;
+}
+
+.rg-preview-caption small {
+	display: block;
+	margin-top: 3px;
+	font-size: 10.5px;
+	line-height: 1.45;
+	opacity: 0.65;
+}
+
+.rg-garage-side {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	min-width: 0;
+}
+
+.rg-vehicles {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+	gap: 8px;
+}
+
+.rg-vehicle-card {
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: 10px;
+	padding: 9px 11px;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	transition: border-color 120ms, transform 120ms;
+}
+
+.rg-vehicle-card strong {
+	font-size: 12px;
+}
+
+.rg-vehicle-card:hover {
+	transform: translateY(-2px);
+}
+
+.rg-vehicle-card.is-selected {
+	border-color: #ffd84d;
+	background: rgba(255, 216, 77, 0.08);
+}
+
+.rg-liveries {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 7px;
+	margin-top: auto;
+}
+
+.rg-livery {
+	position: relative;
+	width: 34px;
+	height: 24px;
+	padding: 0;
+	border: 1px solid rgba(255, 255, 255, 0.22);
+	border-radius: 7px;
+	background: none;
+	cursor: pointer;
+	overflow: hidden;
+	transition: border-color 120ms, transform 120ms;
+}
+
+.rg-livery span {
+	position: absolute;
+	inset: 0;
+}
+
+.rg-livery i {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 30%;
+}
+
+.rg-livery:hover {
+	transform: translateY(-2px);
+}
+
+.rg-livery.is-selected {
+	border-color: #ffd84d;
+	box-shadow: 0 0 0 2px rgba(255, 216, 77, 0.35);
+}
+
+.rg-statbars {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	margin-top: 4px;
+}
+
+.rg-statbar {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 9px;
+}
+
+.rg-statbar em {
+	font-style: normal;
+	width: 26px;
+	opacity: 0.6;
+}
+
+.rg-statbar i {
+	flex: 1;
+	height: 4px;
+	background: rgba(255, 255, 255, 0.12);
+	border-radius: 2px;
+	overflow: hidden;
+	display: block;
+}
+
+.rg-statbar b {
+	display: block;
+	height: 100%;
+	background: #5b9bff;
+	border-radius: 2px;
+}
+
+.rg-start {
+	background: #ffd84d;
+	color: #17181c;
+	font: inherit;
+	font-weight: 800;
+	font-size: 15px;
+	letter-spacing: 0.1em;
+	border: none;
+	border-radius: 10px;
+	padding: 13px 26px;
+	cursor: pointer;
+	width: 100%;
+	transition: transform 100ms, filter 100ms;
+}
+
+.rg-results-actions button,
+.rg-pause-actions button {
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	color: #f2f3f5;
+	font: inherit;
+	font-weight: 700;
+	font-size: 12px;
+	letter-spacing: 0.06em;
+	border-radius: 10px;
+	padding: 10px 18px;
+	cursor: pointer;
+	transition: transform 100ms, filter 100ms, border-color 100ms;
+}
+
+.rg-results-actions button.is-primary,
+.rg-pause-actions button.is-primary {
+	background: #ffd84d;
+	border-color: #ffd84d;
+	color: #17181c;
+	font-weight: 800;
+}
+
+.rg-start:hover,
+.rg-results-actions button:hover,
+.rg-pause-actions button:hover {
+	filter: brightness(1.12);
+	border-color: rgba(255, 255, 255, 0.45);
+	transform: translateY(-1px);
+}
+
+/* ---------- pause ---------- */
+
+.rg-pause {
+	position: absolute;
+	inset: 0;
+	z-index: 40;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(10, 11, 14, 0.6);
+	backdrop-filter: blur(5px);
+	color: #f2f3f5;
+}
+
+.rg-pause[hidden] {
+	display: none;
+}
+
+.rg-pause-card {
+	background: rgba(16, 17, 22, 0.95);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	border-radius: 14px;
+	padding: 24px 28px;
+	min-width: min(400px, calc(100vw - 40px));
+	text-align: center;
+}
+
+.rg-pause-card h2 {
+	margin: 0;
+	font-size: 22px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+
+.rg-pause-track {
+	margin: 8px 0 18px;
+	font-size: 11px;
+	opacity: 0.6;
+}
+
+.rg-pause-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
+}
+
+.rg-pause-hint {
+	margin: 16px 0 0;
+	font-size: 10px;
+	opacity: 0.45;
+}
+
+/* ---------- state tags (slipstream / drift) ---------- */
+
+.rg-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	min-height: 13px;
+}
+
+.rg-tag {
+	display: none;
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.14em;
+	animation: rg-tag-pulse 0.9s ease-in-out infinite;
+}
+
+.rg-tag.is-visible {
+	display: block;
+}
+
+.rg-slip {
+	color: #4de1ff;
+	text-shadow: 0 0 12px rgba(77, 225, 255, 0.55);
+}
+
+.rg-drift {
+	color: #ffb14d;
+	text-shadow: 0 0 12px rgba(255, 177, 77, 0.55);
+}
+
+.rg-boost.is-slipstream {
+	box-shadow: 0 0 10px rgba(77, 225, 255, 0.45);
+}
+
+.rg-boost.is-slipstream .rg-boost-fill:not(.is-active) {
+	background: #4de1ff;
+}
+
+@keyframes rg-tag-pulse {
+	50% { opacity: 0.55; }
+}
+
+/* ---------- touch controls ---------- */
+
+.rg-touch {
+	position: absolute;
+	inset: 0;
+	z-index: 25;
+	pointer-events: none;
+	touch-action: none;
+	color: #f2f3f5;
+}
+
+.rg-touch[hidden] {
+	display: none;
+}
+
+.rg-touch-left,
+.rg-touch-right {
+	position: absolute;
+	bottom: max(18px, env(safe-area-inset-bottom));
+	display: flex;
+	gap: 10px;
+}
+
+.rg-touch-left {
+	left: 14px;
+}
+
+.rg-touch-right {
+	right: 14px;
+	flex-direction: column;
+	align-items: flex-end;
+}
+
+.rg-touch-row {
+	display: flex;
+	gap: 10px;
+}
+
+.rg-touch-pad {
+	pointer-events: auto;
+	touch-action: none;
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	background: rgba(13, 14, 18, 0.5);
+	border: 1px solid rgba(255, 255, 255, 0.24);
+	backdrop-filter: blur(6px);
+	color: inherit;
+	font: inherit;
+	font-weight: 800;
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	border-radius: 18px;
+	transition: background 90ms, transform 90ms;
+}
+
+.rg-touch-pad[data-active] {
+	background: rgba(255, 216, 77, 0.35);
+	transform: scale(0.96);
+}
+
+.rg-touch-steer {
+	width: 82px;
+	height: 82px;
+	font-size: 22px;
+	border-radius: 50%;
+}
+
+.rg-touch-throttle {
+	width: 92px;
+	height: 92px;
+	border-radius: 50%;
+	font-size: 15px;
+	background: rgba(125, 255, 168, 0.16);
+	border-color: rgba(125, 255, 168, 0.45);
+}
+
+.rg-touch-brake {
+	width: 72px;
+	height: 92px;
+	background: rgba(255, 95, 77, 0.14);
+	border-color: rgba(255, 95, 77, 0.4);
+}
+
+.rg-touch-drift,
+.rg-touch-boost {
+	width: 78px;
+	height: 46px;
+	font-size: 10px;
+}
+
+.rg-touch-boost {
+	background: rgba(91, 155, 255, 0.16);
+	border-color: rgba(91, 155, 255, 0.45);
+}
+
+.rg-touch-reset {
+	pointer-events: auto;
+	position: absolute;
+	right: 14px;
+	top: 210px;
+	width: 38px;
+	height: 38px;
+	border-radius: 50%;
+	background: rgba(13, 14, 18, 0.5);
+	border: 1px solid rgba(255, 255, 255, 0.24);
+	color: inherit;
+	font-size: 17px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+/* mobile: give the game the screen and shrink the read-outs */
+@media (max-width: 700px) {
+	.rg-garage { grid-template-columns: 1fr; }
+	.rg-preview { min-height: 170px; }
+	.rg-hint { display: none; }
+	.rg-minimap { width: 108px; height: 108px; }
+	.rg-standings { display: none; }
+	.rg-hud-top { left: 82px; gap: 8px; }
+	.rg-race-info .rg-lap,
+	.rg-race-info .rg-pos { font-size: 15px; }
+	.rg-speed { font-size: 30px; }
+	.rg-hud-bottom { width: 150px; bottom: 122px; }
+	.rg-countdown { font-size: 68px; }
+	.rg-touch-reset { top: 150px; }
+}

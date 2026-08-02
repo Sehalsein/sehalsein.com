@@ -1,0 +1,16 @@
+{
+	"id": "zip",
+	"name": "Zip Kart",
+	"description": "Featherweight corner demon. Slow on the straights.",
+	"silhouette": "kart",
+	"defaultLivery": "lime",
+	"stats": {
+		"acceleration": 0.72,
+		"maxSpeed": 0.48,
+		"handling": 0.92,
+		"grip": 0.82,
+		"weight": 0.18,
+		"drift": 0.34,
+		"boost": 0.46
+	}
+}

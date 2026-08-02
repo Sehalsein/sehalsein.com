@@ -34,6 +34,8 @@ import {
 	type GMCheck,
 	type GMResponse,
 } from "./shared";
+import { Narrator, loadVoicePref, writeVoicePref } from "./narrator";
+import { Sfx, loadSfxPref, writeSfxPref } from "./sfx";
 
 /* ------------------------------------------------------------------ *
  *  State
@@ -82,6 +84,11 @@ type GameState = {
 	typingIndex: number;
 	typed: number;
 	flash: "damage" | "heal" | null;
+	// Spoken narration: `voice` is the player's preference, `speaking` is
+	// whether a clip is actually playing right now.
+	voice: boolean;
+	speaking: boolean;
+	sfx: boolean;
 };
 
 function defaultAssign(): Stats {
@@ -119,6 +126,9 @@ const INITIAL: GameState = {
 	typingIndex: -1,
 	typed: 0,
 	flash: null,
+	voice: false,
+	speaking: false,
+	sfx: true,
 };
 
 type Patch = Partial<GameState> | ((prev: GameState) => Partial<GameState>);
@@ -155,6 +165,11 @@ export default function AdventurePage({ id }: { id: string }) {
 	const flashT = useRef(0);
 	const pendingCheck = useRef<GMCheck | null>(null);
 	const offlineCount = useRef(0);
+	const narratorRef = useRef<Narrator | null>(null);
+	const sfxRef = useRef<Sfx | null>(null);
+	// Lazy so the server render never constructs one.
+	const narrator = () => (narratorRef.current ??= new Narrator());
+	const sfx = () => (sfxRef.current ??= new Sfx());
 	const logEl = useRef<HTMLDivElement>(null);
 	const inputEl = useRef<HTMLInputElement>(null);
 
@@ -188,12 +203,23 @@ export default function AdventurePage({ id }: { id: string }) {
 		} else {
 			set({ phase: "create" });
 		}
+		const sfxOn = loadSfxPref();
+		set({ voice: loadVoicePref(), speaking: false, sfx: sfxOn });
+		sfx().enabled = sfxOn;
 		setMounted(true);
+		// Debug handle, matching __doom / __rg / __me elsewhere in the site —
+		// lets the kit be auditioned from the console without playing a turn.
+		(window as unknown as { __hr?: unknown }).__hr = {
+			sfx: sfx(),
+			narrator: narrator(),
+		};
 		return () => {
 			clearInterval(typeIv.current);
 			clearInterval(diceIv.current);
 			clearTimeout(noticeT.current);
 			clearTimeout(flashT.current);
+			narratorRef.current?.stop();
+			sfxRef.current?.dispose();
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [id]);
@@ -404,12 +430,25 @@ export default function AdventurePage({ id }: { id: string }) {
 	async function turn(actionLine: string) {
 		set({ busy: true });
 		const prompt = buildPrompt(actionLine);
-		const raw = await complete(prompt);
-		const o: GMResponse = parseGM(raw) || {
-			narration: String(raw || "The path is silent."),
-			choices: ["Continue"],
-		};
-		applyGM(o);
+		let o: GMResponse | null = parseGM(await complete(prompt));
+		if (!o) {
+			// The GM occasionally answers with its own reasoning instead of a
+			// turn. Ask once more before giving up — raw model text must never
+			// reach the log (or the narrator, which bills per character).
+			o = parseGM(
+				await complete(
+					prompt +
+						"\n\nYour previous reply was not valid JSON. Reply with ONLY the JSON object, and nothing before or after it.",
+				),
+			);
+		}
+		applyGM(
+			o || {
+				narration:
+					"For a moment the thread of the tale is lost to you — and then the dark is simply the dark again, waiting.",
+				choices: ["Continue"],
+			},
+		);
 	}
 
 	function submitAction(text: string) {
@@ -417,6 +456,7 @@ export default function AdventurePage({ id }: { id: string }) {
 		if (s.busy || s.diceOverlay || s.status !== "playing") return;
 		const t = (text || "").trim();
 		if (!t) return;
+		sfx().click();
 		set((prev) => ({
 			log: [...prev.log, { kind: "player", text: t }],
 			history: [...prev.history, "You: " + t],
@@ -461,12 +501,14 @@ export default function AdventurePage({ id }: { id: string }) {
 			});
 			hist.push(`HP now ${hp}/${maxHp}`);
 		}
+		let lostAny = false;
 		(o.removeItems || []).forEach((it) => {
 			const i = inv.findIndex(
 				(x) => x.toLowerCase() === String(it).toLowerCase(),
 			);
 			if (i >= 0) {
 				inv.splice(i, 1);
+				lostAny = true;
 				log.push({ kind: "system", text: "Lost: " + it });
 			}
 		});
@@ -490,6 +532,43 @@ export default function AdventurePage({ id }: { id: string }) {
 		}
 		if (o.status === "dead") status = "dead";
 		else if (o.status === "victory") status = "victory";
+
+		/* Sound the turn. Cues are staggered so a busy round — blow landed,
+		 * damage taken, loot, level — reads as a sequence rather than a mush. */
+		const S = sfx();
+		if (status === "dead") {
+			S.death();
+		} else {
+			let at = 0;
+			if (!s.enemy && enemy) {
+				S.enemyAppear(at);
+				at += 0.5;
+			}
+			if (enemy && s.enemy && enemy.hp < s.enemy.hp) {
+				S.attack(at);
+				S.enemyHit(at + 0.1);
+				at += 0.32;
+			}
+			if (flash === "damage") {
+				S.hurt(at);
+				at += 0.28;
+			} else if (flash === "heal") {
+				S.heal(at);
+				at += 0.28;
+			}
+			if (lostAny) {
+				S.lose(at);
+				at += 0.2;
+			}
+			if ((o.addItems || []).length) {
+				S.loot(at);
+				at += 0.3;
+			}
+			// A level-up subsumes the XP blip that would otherwise precede it.
+			if (notice) S.levelUp(at);
+			else if (typeof o.xpDelta === "number" && o.xpDelta > 0) S.xp(at);
+			if (status === "victory") S.victory(at + 0.35);
+		}
 
 		const hasCheck = !!o.check && status === "playing";
 		const choices = (hasCheck ? [] : o.choices || [])
@@ -539,6 +618,7 @@ export default function AdventurePage({ id }: { id: string }) {
 		const dc = Number(check.dc) || 12;
 		const skill = String(check.skill || "Ability");
 		set({ diceOverlay: { skill, ability, dc, phase: "rolling", face: 1, mod: m } });
+		sfx().diceRoll();
 		let t = 0;
 		clearInterval(diceIv.current);
 		diceIv.current = window.setInterval(() => {
@@ -565,6 +645,12 @@ export default function AdventurePage({ id }: { id: string }) {
 		const success = total >= dc;
 		const nat =
 			roll === 20 ? " (natural 20!)" : roll === 1 ? " (natural 1!)" : "";
+		// The die lands, then the verdict — a beat apart so both register.
+		sfx().diceLand();
+		if (roll === 20) sfx().crit(0.14);
+		else if (roll === 1) sfx().fumble(0.14);
+		else if (success) sfx().success(0.14);
+		else sfx().failure(0.14);
 		set((prev) => ({
 			diceOverlay: prev.diceOverlay
 				? { ...prev.diceOverlay, phase: "result", face: roll, roll, total, success }
@@ -586,7 +672,9 @@ export default function AdventurePage({ id }: { id: string }) {
 		}, 1450);
 	}
 
-	/* --------------------------- typewriter --------------------------- */
+	/* --------------------------- typewriter --------------------------- *
+	 * Silent: a fixed fast tick. Spoken: the text is a subtitle track, so the
+	 * audio's own clock decides the pace and the words land with the voice. */
 	function startTyping(idx: number) {
 		clearInterval(typeIv.current);
 		const e = ref.current.log[idx];
@@ -596,6 +684,13 @@ export default function AdventurePage({ id }: { id: string }) {
 			afterType();
 			return;
 		}
+		if (ref.current.voice && !narrator().unavailable) speakAndType(full);
+		else timedType(full);
+	}
+
+	/** Reveal `full` on a timer, picking up wherever `typed` already is. */
+	function timedType(full: string) {
+		clearInterval(typeIv.current);
 		typeIv.current = window.setInterval(() => {
 			const next = ref.current.typed + 3;
 			if (next >= full.length) {
@@ -607,6 +702,55 @@ export default function AdventurePage({ id }: { id: string }) {
 			}
 		}, 18);
 	}
+
+	/* Reading speed to guess at while the clip is still synthesizing, so the
+	 * first words appear during the wait instead of after it. */
+	const SPOKEN_CHARS_PER_SEC = 13;
+
+	function speakAndType(full: string) {
+		const startedAt = performance.now();
+		let duration = 0; // set once playback actually begins
+
+		clearInterval(typeIv.current);
+		typeIv.current = window.setInterval(() => {
+			let target: number;
+			if (duration > 0) {
+				const p = narrator().progress();
+				target = p === null ? ref.current.typed : Math.ceil(full.length * p);
+			} else {
+				// Hold one character back: the line must not "finish" before the
+				// voice that is meant to be reading it has said a word.
+				const elapsed = (performance.now() - startedAt) / 1000;
+				target = Math.min(
+					Math.floor(elapsed * SPOKEN_CHARS_PER_SEC),
+					full.length - 1,
+				);
+			}
+			// Monotonic — the text never rewinds when the clocks disagree.
+			const next = Math.max(ref.current.typed, Math.min(target, full.length));
+			if (next !== ref.current.typed) set({ typed: next });
+		}, 33);
+
+		narrator().speak(full, {
+			onStart: (d) => {
+				duration = d;
+				set({ speaking: true });
+			},
+			onEnd: () => {
+				clearInterval(typeIv.current);
+				set({ speaking: false });
+				// If it never spoke (no key, network, blocked autoplay), finish the
+				// line silently rather than leaving the player staring at half a
+				// sentence.
+				if (duration <= 0) timedType(full);
+				else {
+					set({ typed: full.length, typing: false });
+					afterType();
+				}
+			},
+		});
+	}
+
 	function afterType() {
 		const pc = pendingCheck.current;
 		pendingCheck.current = null;
@@ -615,9 +759,46 @@ export default function AdventurePage({ id }: { id: string }) {
 	function skipTyping() {
 		if (!ref.current.typing) return;
 		clearInterval(typeIv.current);
+		narratorRef.current?.stop();
 		const e = ref.current.log[ref.current.typingIndex];
-		set({ typed: e && "text" in e ? e.text.length : 0, typing: false });
+		set({
+			typed: e && "text" in e ? e.text.length : 0,
+			typing: false,
+			speaking: false,
+		});
 		afterType();
+	}
+
+	function toggleSfx() {
+		const on = !ref.current.sfx;
+		writeSfxPref(on);
+		set({ sfx: on });
+		sfx().enabled = on;
+		// This click is also the gesture that unlocks the AudioContext.
+		if (on) sfx().preview();
+	}
+
+	/** Header toggle. Turning voice on counts as the user gesture that lets us
+	 * play audio later, once a turn resolves outside any click handler. */
+	function toggleVoice() {
+		const on = !ref.current.voice;
+		writeVoicePref(on);
+		set({ voice: on });
+		if (on) {
+			narrator().unavailable = false;
+			narrator().unlock();
+			return;
+		}
+		narratorRef.current?.stop();
+		set({ speaking: false });
+		// Don't strand a half-spoken line — let it type itself out.
+		if (ref.current.typing) {
+			const e = ref.current.log[ref.current.typingIndex];
+			const full = e && "text" in e ? e.text : "";
+			clearInterval(typeIv.current);
+			if (full) timedType(full);
+			else set({ typing: false });
+		}
 	}
 
 	/* ============================== RENDER ============================== */
@@ -1021,6 +1202,62 @@ export default function AdventurePage({ id }: { id: string }) {
 						Offline demo GM
 					</div>
 				)}
+				<button
+					type="button"
+					className={"hr-voice" + (s.sfx ? " hr-voice-on" : "")}
+					onClick={toggleSfx}
+					aria-pressed={s.sfx}
+					title={
+						s.sfx ? "Mute dice and effects" : "Play dice and effects"
+					}
+					style={{
+						fontFamily: PIRATA,
+						fontSize: 13,
+						letterSpacing: ".06em",
+						border: `1px solid ${s.sfx ? GOLD : "rgba(236,229,214,.4)"}`,
+						background: "transparent",
+						padding: "3px 9px",
+						color: s.sfx ? GOLD : "#cdbf9f",
+						cursor: "pointer",
+						display: "flex",
+						alignItems: "center",
+						gap: 6,
+					}}
+				>
+					<Waveform on={s.sfx} />
+					SFX
+				</button>
+				<button
+					type="button"
+					className={
+						"hr-voice" +
+						(s.voice ? " hr-voice-on" : "") +
+						(s.speaking ? " hr-voice-speaking" : "")
+					}
+					onClick={toggleVoice}
+					aria-pressed={s.voice}
+					title={
+						s.voice
+							? "Silence the Game Master"
+							: "Let the Game Master read aloud"
+					}
+					style={{
+						fontFamily: PIRATA,
+						fontSize: 13,
+						letterSpacing: ".06em",
+						border: `1px solid ${s.voice ? GOLD : "rgba(236,229,214,.4)"}`,
+						background: "transparent",
+						padding: "3px 9px",
+						color: s.voice ? GOLD : "#cdbf9f",
+						cursor: "pointer",
+						display: "flex",
+						alignItems: "center",
+						gap: 6,
+					}}
+				>
+					<Speaker on={s.voice} />
+					VOICE
+				</button>
 				<div
 					style={{
 						fontFamily: PIRATA,
@@ -1603,6 +1840,84 @@ function D20({ size, fontSize }: { size: number; fontSize: number }) {
 		>
 			20
 		</div>
+	);
+}
+
+/** Bar-meter glyph for the effects toggle — deliberately not a speaker, so it
+ * doesn't read as a duplicate of the narration control beside it. */
+function Waveform({ on }: { on: boolean }) {
+	const bars: [number, number][] = [
+		[2, 5],
+		[5.5, 9],
+		[9, 12],
+		[12.5, 6],
+	];
+	return (
+		<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
+			{bars.map(([x, h], i) => (
+				<rect
+					key={i}
+					x={x}
+					y={(16 - h) / 2}
+					width="1.6"
+					height={h}
+					rx="0.8"
+					fill="currentColor"
+					opacity={on ? 1 : 0.5}
+				/>
+			))}
+			{!on && (
+				<path
+					d="M2 14 14 2"
+					stroke="currentColor"
+					strokeWidth="1.3"
+					strokeLinecap="round"
+				/>
+			)}
+		</svg>
+	);
+}
+
+/** Speaker glyph for the voice toggle; the two arcs animate while speaking. */
+function Speaker({ on }: { on: boolean }) {
+	return (
+		<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
+			<path
+				d="M7 2.5 4 5.5H2v5h2l3 3z"
+				fill="currentColor"
+				stroke="currentColor"
+				strokeWidth="1.1"
+				strokeLinejoin="round"
+			/>
+			{on ? (
+				<>
+					<path
+						className="hr-voice-wave"
+						d="M10 5.6a3.4 3.4 0 0 1 0 4.8"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="1.3"
+						strokeLinecap="round"
+					/>
+					<path
+						className="hr-voice-wave"
+						d="M12.3 3.6a6.4 6.4 0 0 1 0 8.8"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="1.3"
+						strokeLinecap="round"
+					/>
+				</>
+			) : (
+				<path
+					d="m10.4 5.8 4 4.4M14.4 5.8l-4 4.4"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="1.3"
+					strokeLinecap="round"
+				/>
+			)}
+		</svg>
 	);
 }
 

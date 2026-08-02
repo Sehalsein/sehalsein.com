@@ -1,0 +1,77 @@
+/*
+ * Host chrome for the software-rendered shooter. The canvas is a fixed 320x200
+ * pixel buffer; everything here is about blowing that up to fill the screen
+ * without smoothing it, and the touch controls the engine injects on phones.
+ */
+
+.dm-host {
+	position: fixed;
+	inset: 0;
+	overflow: hidden;
+	background: #05050a;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+	user-select: none;
+	touch-action: none;
+	cursor: crosshair;
+}
+
+.dm-canvas {
+	/* 320x200 is a 16:10 buffer displayed at 4:3, exactly as it was in 1993. */
+	width: min(100vw, calc(100vh * 4 / 3));
+	height: min(75vw, 100vh);
+	display: block;
+	image-rendering: pixelated;
+	image-rendering: crisp-edges;
+	background: #000;
+}
+
+/* Scanline + vignette overlay. Purely cosmetic, and cheap: one static gradient. */
+.dm-host::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background:
+		repeating-linear-gradient(
+			to bottom,
+			rgba(0, 0, 0, 0) 0px,
+			rgba(0, 0, 0, 0) 2px,
+			rgba(0, 0, 0, 0.16) 3px
+		),
+		radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.55) 100%);
+	mix-blend-mode: multiply;
+}
+
+/* Touch controls, created imperatively by engine/Input.ts on coarse pointers. */
+.dm-touch-btn {
+	position: absolute;
+	z-index: 30;
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	border: 1px solid rgba(255, 255, 255, 0.28);
+	background: rgba(10, 10, 14, 0.45);
+	color: rgba(255, 255, 255, 0.8);
+	font-family: inherit;
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	backdrop-filter: blur(4px);
+	touch-action: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.dm-touch-btn-on {
+	background: rgba(206, 54, 44, 0.55);
+	border-color: rgba(255, 255, 255, 0.55);
+	color: #fff;
+}
+
+@media (pointer: coarse) {
+	.dm-host {
+		cursor: default;
+	}
+}
