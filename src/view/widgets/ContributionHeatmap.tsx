@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ContributionsResponse } from "@/app/api/github/contributions/route";
+import type { ContributionsResponse } from "@/src/types/api";
 
 type State =
 	| { status: "loading" }

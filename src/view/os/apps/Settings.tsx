@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PALETTE_NAMES } from "@/src/data/terminal";
+import { PALETTE_NAMES, type PaletteName } from "@/src/data/terminal";
 import { useSystemPrefs, type WallId } from "../hooks/useSystemPrefs";
 
 const PALETTES = PALETTE_NAMES;
@@ -99,8 +99,8 @@ export default function Settings() {
 }
 
 type AppearanceProps = {
-	palette: string;
-	setPalette: (p: string) => void;
+	palette: PaletteName;
+	setPalette: (p: PaletteName) => void;
 	crt: "on" | "off";
 	toggleCrt: () => void;
 	wall: WallId;

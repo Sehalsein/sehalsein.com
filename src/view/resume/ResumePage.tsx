@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
+import Link from "@/src/components/AppLink";
 import { Download, Github, Linkedin, Mail, Smartphone } from "lucide-react";
 import { RESUME_DATA } from "@/src/data/resume";
 
@@ -15,13 +14,13 @@ export default function ResumePage() {
 			<div className="mx-auto max-w-[720px]">
 				{/* Header */}
 				<header className="mb-10 flex items-start gap-5">
-					<Image
+					<img
 						src={RESUME_DATA.photo}
 						alt={RESUME_DATA.name}
 						width={72}
 						height={72}
 						className="rounded-full w-[72px] h-[72px] object-cover shrink-0 border border-term-rule"
-						priority
+						fetchPriority="high"
 					/>
 					<div className="flex-1 min-w-0">
 						<div className="text-[11px] tracking-[0.12em] uppercase mb-2 text-term-faint">

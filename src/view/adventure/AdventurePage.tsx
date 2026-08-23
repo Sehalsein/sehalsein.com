@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useAppNavigate } from "@/src/hooks/useAppNavigate";
 import {
 	STAT_KEYS,
 	STAT_ARRAY,
@@ -145,7 +143,7 @@ const PLAY_EMBERS: [string, number, string, number, number][] = [
 /* ================================================================== */
 
 export default function AdventurePage({ id }: { id: string }) {
-	const router = useRouter();
+	const navigate = useAppNavigate();
 	const [mounted, setMounted] = useState(false);
 	const [state, setReactState] = useState<GameState>(INITIAL);
 	const ref = useRef<GameState>(state);
@@ -173,10 +171,10 @@ export default function AdventurePage({ id }: { id: string }) {
 	const logEl = useRef<HTMLDivElement>(null);
 	const inputEl = useRef<HTMLInputElement>(null);
 
-	const goTitle = useCallback(() => router.push("/adventure"), [router]);
+	const goTitle = useCallback(() => navigate("/adventure"), [navigate]);
 	const goNew = useCallback(
-		() => router.push("/adventure/" + newAdventureId()),
-		[router],
+		() => navigate("/adventure/" + newAdventureId()),
+		[navigate],
 	);
 
 	/* ---- lifecycle: load this adventure's save, autoscroll, persist ---- */

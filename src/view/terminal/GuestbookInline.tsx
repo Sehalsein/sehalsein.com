@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { GuestbookEntryDTO } from "@/app/api/guestbook/route";
+import type { GuestbookEntryDTO } from "@/src/types/api";
 
 type State =
 	| { status: "loading" }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useTheme } from "next-themes";
 import { create } from "zustand";
+import { usePalette } from "@/src/view/ThemeProvider";
 
 const CRT_KEY = "os-crt";
 const WALL_KEY = "os-wall";
@@ -46,7 +46,7 @@ const usePrefsStore = create<PrefsStore>((set, get) => ({
 }));
 
 export function useSystemPrefs() {
-	const { theme: palette, setTheme: setPalette } = useTheme();
+	const { theme: palette, setTheme: setPalette } = usePalette();
 	const crt = usePrefsStore((s) => s.crt);
 	const wall = usePrefsStore((s) => s.wall);
 	const hydrated = usePrefsStore((s) => s.hydrated);

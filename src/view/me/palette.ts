@@ -8,7 +8,7 @@
  * Change detection is a MutationObserver rather than `useTheme()`, because the
  * stage lives outside React's tree entirely. An observer keeps it self-contained
  * and catches every writer of the attribute — the palette strip on this page,
- * another route's switcher, next-themes' cross-tab sync, or a probe calling
+ * another route's switcher, the shared palette provider, or a probe calling
  * `setAttribute` — instead of only the one React subtree we happen to wire up.
  */
 
@@ -43,8 +43,8 @@ export function readPalette(): MePalette {
 export function watchPalette(onChange: (palette: MePalette) => void): () => void {
 	let frame = 0;
 	const observer = new MutationObserver(() => {
-		// next-themes writes the attribute synchronously and swaps a style node
-		// alongside it; deferring a frame collapses that churn into one read
+		// Palette changes can update several CSS values together; deferring a
+		// frame collapses that work into one computed-style read.
 		cancelAnimationFrame(frame);
 		frame = requestAnimationFrame(() => onChange(readPalette()));
 	});

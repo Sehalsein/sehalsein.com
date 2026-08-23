@@ -1,9 +1,0 @@
-// Root-level fallback mirror for OpenID discovery — recommended by the docs
-// since some clients hardcode /.well-known/openid-configuration ignoring the
-// issuer path.
-import { oauthProviderOpenIdConfigMetadata } from "@better-auth/oauth-provider";
-import { auth } from "@/src/lib/auth";
-
-export const runtime = "nodejs";
-
-export const GET = oauthProviderOpenIdConfigMetadata(auth);

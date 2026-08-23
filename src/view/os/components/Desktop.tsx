@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { ContributionsResponse } from "@/app/api/github/contributions/route";
+import type { ContributionsResponse } from "@/src/types/api";
 import { useClock } from "../hooks/useClock";
 import { useDraggable } from "../hooks/useDraggable";
 

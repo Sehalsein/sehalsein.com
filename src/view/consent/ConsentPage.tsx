@@ -1,13 +1,11 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import Link from "@/src/components/AppLink";
+import { useAppNavigate } from "@/src/hooks/useAppNavigate";
 import { authClient, useSession } from "@/src/lib/authClient";
 
 export default function ConsentPage() {
-	const router = useRouter();
-	const params = useSearchParams();
+	const navigate = useAppNavigate();
+	const params = new URLSearchParams(window.location.search);
 	const { data: session, isPending } = useSession();
 	const [submitting, setSubmitting] = useState<false | "accept" | "deny">(
 		false,
@@ -19,9 +17,9 @@ export default function ConsentPage() {
 
 	useEffect(() => {
 		if (!isPending && !session) {
-			router.replace("/guestbook?callbackURL=/consent");
+			navigate("/guestbook?callbackURL=/consent", true);
 		}
-	}, [isPending, session, router]);
+	}, [isPending, navigate, session]);
 
 	const decide = async (accept: boolean) => {
 		setSubmitting(accept ? "accept" : "deny");
