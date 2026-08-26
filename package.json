@@ -2,6 +2,10 @@
   "name": "sehalsein.com",
   "version": "2.0.0",
   "private": true,
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && tsc --noEmit",
@@ -67,6 +71,7 @@
   "devDependencies": {
     "@better-auth/cli": "^1.4.21",
     "@cloudflare/vite-plugin": "^1.53.1",
+    "@netlify/vite-plugin-tanstack-start": "1.3.18",
     "@tailwindcss/postcss": "^4.2.2",
     "@tweakpane/core": "^2.0.5",
     "@types/bad-words": "^3.0.3",
@@ -76,6 +81,7 @@
     "@types/three": "^0.184.1",
     "@vitejs/plugin-react": "^6.1.0",
     "drizzle-kit": "^0.31.10",
+    "nitro": "3.0.260610-beta",
     "playwright": "^1.60.0",
     "postcss": "^8.5.10",
     "tailwindcss": "^4.2.2",
