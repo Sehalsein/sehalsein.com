@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nitro",
+  "framework": "tanstack-start",
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install --frozen-lockfile"
 }
