@@ -10,6 +10,10 @@ export default function Notes() {
 	return (
 		<div className="app-notes">
 			<div className="list">
+				<header className="notes-list-header">
+					<span>Personal</span>
+					<strong>Now notes</strong>
+				</header>
 				{NOW_SECTIONS.map((n, i) => (
 					<button
 						type="button"
@@ -23,11 +27,17 @@ export default function Notes() {
 				))}
 			</div>
 			<div className="body">
-				<h1>{note.title}</h1>
-				<div className="meta">updated {NOW_LAST_UPDATED}</div>
-				<ul className="pl-5 text-[13px] leading-[1.65] text-[color:var(--ink)]">
+				<div className="notes-paper-head">
+					<div>
+						<span className="notes-kicker">Current focus</span>
+						<h1>{note.title}</h1>
+					</div>
+					<div className="meta">updated {NOW_LAST_UPDATED}</div>
+				</div>
+				<ul className="notes-items">
 					{note.items.map((item) => (
-						<li key={item} className="mb-1.5">
+						<li key={item}>
+							<span aria-hidden="true" />
 							{item}
 						</li>
 					))}

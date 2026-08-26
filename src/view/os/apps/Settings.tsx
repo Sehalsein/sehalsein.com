@@ -1,5 +1,6 @@
 "use client";
 
+import { Info, Monitor, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { PALETTE_NAMES, type PaletteName } from "@/src/data/terminal";
 import { useSystemPrefs, type WallId } from "../hooks/useSystemPrefs";
@@ -65,17 +66,18 @@ export default function Settings() {
 			<nav className="nav" aria-label="Settings sections">
 				{(
 					[
-						["appearance", "Appearance"],
-						["general", "General"],
-						["about", "About"],
+						["appearance", "Appearance", Monitor],
+						["general", "General", SlidersHorizontal],
+						["about", "About", Info],
 					] as const
-				).map(([id, label]) => (
+				).map(([id, label, Icon]) => (
 					<button
 						type="button"
 						key={id}
 						className={`item${section === id ? " active" : ""}`}
 						onClick={() => setSection(id)}
 					>
+						<Icon aria-hidden="true" />
 						{label}
 					</button>
 				))}
@@ -117,7 +119,11 @@ function AppearanceSection({
 }: AppearanceProps) {
 	return (
 		<>
-			<h2>Appearance</h2>
+			<header className="settings-header">
+				<span>Personalize</span>
+				<h2>Appearance</h2>
+				<p>Make the workspace feel like yours.</p>
+			</header>
 			<div className="row">
 				<div className="label">Colorscheme</div>
 				<div className="swatches">
@@ -179,10 +185,16 @@ function AppearanceSection({
 function GeneralSection() {
 	return (
 		<>
-			<h2>General</h2>
-			<p className="text-[12px] text-[color:var(--dim)]">
-				nothing to see here — yet.
-			</p>
+			<header className="settings-header">
+				<span>Workspace</span>
+				<h2>General</h2>
+				<p>Small details that shape how the desktop behaves.</p>
+			</header>
+			<div className="settings-info-list">
+				<div><span>External links</span><strong>Open in new tab</strong></div>
+				<div><span>Motion</span><strong>Follow system preference</strong></div>
+				<div><span>Window restore</span><strong>Off</strong></div>
+			</div>
 		</>
 	);
 }
@@ -190,10 +202,20 @@ function GeneralSection() {
 function AboutSection() {
 	return (
 		<>
-			<h2>About this OS</h2>
-			<p className="text-[12.5px] leading-[1.6] text-[color:var(--ink)]">
-				sehalOS · a desktop environment that happens to be a portfolio.
-			</p>
+			<header className="settings-header">
+				<span>System</span>
+				<h2>About sehalOS</h2>
+				<p>A desktop environment that happens to be a portfolio.</p>
+			</header>
+			<div className="settings-about-card">
+				<div className="settings-os-mark">S</div>
+				<div><strong>sehalOS</strong><span>Version 2.0 · TanStack Start</span></div>
+			</div>
+			<div className="settings-info-list">
+				<div><span>Designed by</span><strong>Sehal Sein</strong></div>
+				<div><span>Runtime</span><strong>Cloudflare ready</strong></div>
+				<div><span>Source</span><strong>Open on GitHub ↗</strong></div>
+			</div>
 		</>
 	);
 }

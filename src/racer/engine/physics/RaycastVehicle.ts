@@ -199,7 +199,9 @@ export class RaycastVehicle {
 
 		// --- steering (speed-sensitive, smoothed; returns to center faster) ---
 		const steerLimit = this.maxSteer / (1 + Math.abs(forwardSpeed) * tuning.stats.steerSpeedFalloff);
-		const steerTarget = clamp(input.steer, -1, 1) * steerLimit;
+		// Input uses -left/+right, while positive rotation around Three.js' Y axis
+		// turns our +Z-facing wheel to the left. Convert at the physics boundary.
+		const steerTarget = -clamp(input.steer, -1, 1) * steerLimit;
 		const returning = Math.abs(steerTarget) < Math.abs(this.steer) || steerTarget * this.steer < 0;
 		const steerRate = (returning ? 16 : 9) * dt;
 		this.steer += clamp(steerTarget - this.steer, -steerRate, steerRate);

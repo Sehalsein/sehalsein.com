@@ -2,60 +2,57 @@
 
 import { useEffect, useState } from "react";
 
-const BOOT_LINES = [
-	"loading /etc/sehalos/init.conf",
-	"mounting /home/sehal on /",
-	"starting system.keyboard",
-	"starting system.display",
-	"starting system.network",
-	"starting shell.service",
-	"initializing desktop environment",
-	"welcome, sehal",
-];
+const STEPS = ["Workspace", "Preferences", "Applications"];
 
 type Props = { onDone: () => void };
 
 export default function BootScreen({ onDone }: Props) {
-	const [shown, setShown] = useState(0);
+	const [step, setStep] = useState(0);
 	const [fading, setFading] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
-		let i = 0;
-		const tick = () => {
-			if (cancelled) return;
-			setShown(i + 1);
-			i++;
-			if (i < BOOT_LINES.length) {
-				setTimeout(tick, 130 + Math.random() * 120);
-			} else {
-				setTimeout(() => {
-					if (cancelled) return;
-					setFading(true);
-					setTimeout(() => !cancelled && onDone(), 400);
-				}, 400);
-			}
-		};
-		setTimeout(tick, 130);
+		const timers: number[] = [];
+
+		STEPS.forEach((_, index) => {
+			timers.push(
+				window.setTimeout(() => {
+					if (!cancelled) setStep(index + 1);
+				}, 220 + index * 240),
+			);
+		});
+
+		timers.push(
+			window.setTimeout(() => {
+				if (cancelled) return;
+				setFading(true);
+				timers.push(window.setTimeout(() => !cancelled && onDone(), 360));
+			}, 1040),
+		);
+
 		return () => {
 			cancelled = true;
+			timers.forEach((timer) => window.clearTimeout(timer));
 		};
 	}, [onDone]);
 
 	return (
 		<div className={`boot-screen${fading ? " done" : ""}`}>
-			<div className="logo">sehalOS</div>
-			<div className="lines">
-				{BOOT_LINES.slice(0, shown).map((line, i) => (
-					<div key={line} className="l">
-						<span className="text-[color:var(--faint)]">
-							[ {String(i * 0.13 + 0.01).padStart(5, "0")} ]
-						</span>
-						<span className="ok">[ OK ]</span> {line}
-					</div>
+			<div className="boot-brand" aria-label="sehalOS">
+				<span>S</span>
+				<strong>sehalOS</strong>
+			</div>
+			<p>Preparing your workspace</p>
+			<div className="boot-progress" aria-label="Loading workspace">
+				<span style={{ width: `${(step / STEPS.length) * 100}%` }} />
+			</div>
+			<div className="boot-steps" aria-hidden="true">
+				{STEPS.map((label, index) => (
+					<span key={label} className={index < step ? "ready" : ""}>
+						{label}
+					</span>
 				))}
 			</div>
-			<div className="bar" />
 		</div>
 	);
 }

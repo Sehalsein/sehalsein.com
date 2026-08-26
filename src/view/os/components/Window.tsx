@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	type KeyboardEvent,
 	type PointerEvent as RPointerEvent,
 	type ReactNode,
 	useCallback,
@@ -112,6 +113,26 @@ export default function Window({ window: w, title, icon, children }: Props) {
 		resizeState.current = null;
 	}, []);
 
+	const onResizeKeyDown = useCallback(
+		(e: KeyboardEvent<HTMLDivElement>) => {
+			const step = e.shiftKey ? 40 : 10;
+			if (e.key === "ArrowLeft") {
+				setSize(w.instanceId, {
+					width: Math.max(280, w.size.width - step),
+					height: w.size.height,
+				});
+				e.preventDefault();
+			} else if (e.key === "ArrowRight") {
+				setSize(w.instanceId, {
+					width: w.size.width + step,
+					height: w.size.height,
+				});
+				e.preventDefault();
+			}
+		},
+		[w.instanceId, w.size.height, w.size.width, setSize],
+	);
+
 	const className = [
 		"os-window",
 		isFocused ? "focused" : "",
@@ -183,12 +204,16 @@ export default function Window({ window: w, title, icon, children }: Props) {
 			<div
 				className="resize"
 				role="separator"
-				aria-label="Resize window"
+				aria-label={`Resize ${title} window`}
 				aria-orientation="vertical"
+				aria-valuemin={280}
+				aria-valuenow={w.size.width}
+				tabIndex={0}
 				onPointerDown={onResizePointerDown}
 				onPointerMove={onResizePointerMove}
 				onPointerUp={onResizePointerUp}
 				onPointerCancel={onResizePointerUp}
+				onKeyDown={onResizeKeyDown}
 			/>
 		</div>
 	);

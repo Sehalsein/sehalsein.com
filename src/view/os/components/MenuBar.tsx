@@ -1,6 +1,6 @@
 "use client";
 
-import { Command, Wifi } from "lucide-react";
+import { BatteryMedium, Search, Wifi } from "lucide-react";
 import { APPS } from "../apps/registry";
 import { useClock } from "../hooks/useClock";
 import { useOSStore } from "./Window/store";
@@ -18,7 +18,7 @@ export default function MenuBar({ onHelp }: Props) {
 	const focusedApp = focused ? windows[focused]?.appId : undefined;
 	const appName = focusedApp
 		? APPS[focusedApp as keyof typeof APPS].name
-		: "Finder";
+		: "Desktop";
 
 	const time = now ? `${pad(now.getHours())}:${pad(now.getMinutes())}` : "—";
 	const date = now
@@ -31,45 +31,29 @@ export default function MenuBar({ onHelp }: Props) {
 
 	return (
 		<header className="menubar" role="banner">
-			<span className="logo" aria-hidden="true">
-				<Command />
+			<span className="logo" aria-label="sehalOS">
+				<span className="logo-mark" aria-hidden="true">S</span>
+				<span>sehalOS</span>
 			</span>
+			<span className="brand-sep" aria-hidden="true" />
 			<span className="app-name" aria-label="Focused application">
 				{appName}
 			</span>
-			<nav aria-label="Application menu" className="contents">
-				<button type="button" className="menu">
-					File
-				</button>
-				<button type="button" className="menu">
-					Edit
-				</button>
-				<button type="button" className="menu">
-					View
-				</button>
-				<button type="button" className="menu" onClick={onHelp}>
-					Help
-				</button>
-			</nav>
 			<span className="spacer" />
 			<div className="status" aria-label="System status">
-				<span className="batt" aria-label="Battery at 72 percent">
-					<span className="cell" aria-hidden="true">
-						<span className="fill" />
-					</span>
-					72%
-				</span>
-				<span aria-label="Network connected">
+				<button type="button" className="menu search-menu" onClick={onHelp}>
+					<Search aria-hidden="true" />
+					<span>Search</span>
+					<kbd className="kbd">⌘ K</kbd>
+				</button>
+				<span className="status-icon" aria-label="Network connected">
 					<Wifi aria-hidden="true" />
 				</span>
-				<span>
-					<span className="dot" aria-hidden="true" />
-					online
+				<span className="status-icon" aria-label="Battery at 72 percent">
+					<BatteryMedium aria-hidden="true" />
 				</span>
-				<kbd className="kbd">⌘&nbsp;K</kbd>
-				<span className="sep" aria-hidden="true" />
-				<time dateTime={now?.toISOString()}>{date}</time>
-				<time dateTime={now?.toISOString()}>{time}</time>
+				<time className="menubar-date" dateTime={now?.toISOString()}>{date}</time>
+				<time className="menubar-time" dateTime={now?.toISOString()}>{time}</time>
 			</div>
 		</header>
 	);

@@ -72,12 +72,12 @@ export function useSystemPrefs() {
 export function wallpaperFor(wall: WallId): string {
 	switch (wall) {
 		case "1":
-			return "linear-gradient(135deg, color-mix(in srgb, var(--blue) 25%, var(--bg)), var(--bg) 70%)";
+			return "radial-gradient(900px 640px at 72% 18%, color-mix(in srgb, var(--blue) 30%, transparent), transparent 66%), linear-gradient(145deg, color-mix(in srgb, var(--bg) 90%, #172440), var(--bg))";
 		case "2":
-			return "var(--bg)";
+			return "linear-gradient(145deg, color-mix(in srgb, var(--bg) 94%, #ffffff), var(--bg))";
 		case "3":
-			return "radial-gradient(ellipse at center, color-mix(in srgb, var(--amber) 20%, var(--bg)), var(--bg))";
+			return "radial-gradient(1000px 720px at 86% 12%, color-mix(in srgb, var(--amber) 24%, transparent), transparent 64%), radial-gradient(760px 620px at 8% 96%, color-mix(in srgb, var(--mag) 18%, transparent), transparent 68%), var(--bg)";
 		default:
-			return "radial-gradient(1200px 700px at 78% 22%, color-mix(in srgb, var(--green) 10%, transparent), transparent 60%), radial-gradient(900px 600px at 10% 90%, color-mix(in srgb, var(--mag) 12%, transparent), transparent 60%), radial-gradient(600px 500px at 50% 55%, color-mix(in srgb, var(--blue) 8%, transparent), transparent 60%), var(--bg)";
+			return "radial-gradient(1100px 700px at 82% 14%, color-mix(in srgb, var(--blue) 22%, transparent), transparent 62%), radial-gradient(820px 660px at 7% 96%, color-mix(in srgb, var(--mag) 14%, transparent), transparent 68%), linear-gradient(145deg, color-mix(in srgb, var(--bg) 92%, #17233c), var(--bg))";
 	}
 }

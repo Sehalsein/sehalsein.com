@@ -271,9 +271,12 @@ export default function AI({ instanceId }: Props) {
 	return (
 		<div className="app-ai">
 			<div className="hdr">
-				<span className="mark">✦</span>
-				<span className="title">ai</span>
-				<span className="meta">fresh session</span>
+				<span className="mark">S</span>
+				<div>
+					<span className="title">Ask about Sehal</span>
+					<span className="subtitle">Portfolio assistant</span>
+				</div>
+				<span className="meta"><i aria-hidden="true" /> fresh session</span>
 			</div>
 			<div className="scroll" ref={scrollRef}>
 				{rows.map((row) => {
@@ -331,12 +334,27 @@ export default function AI({ instanceId }: Props) {
 						</div>
 					);
 				})}
+				{messages.length === 0 ? (
+					<div className="ai-suggestions">
+						<span>Try asking</span>
+						{[
+							"What has Sehal built?",
+							"Tell me about DGymBook",
+							"What does he care about?",
+						].map((prompt) => (
+							<button key={prompt} type="button" onClick={() => handleSubmit(prompt)}>
+								{prompt}<span>↗</span>
+							</button>
+						))}
+					</div>
+				) : null}
 			</div>
 			<div className="inrow">
-				<span className="p">›</span>
+				<span className="p">✦</span>
 				<input
 					ref={inputRef}
 					type="search"
+					name="ai-prompt"
 					placeholder={
 						isLoading
 							? "streaming — esc or ctrl+c to cancel"
@@ -352,7 +370,7 @@ export default function AI({ instanceId }: Props) {
 					onChange={(e) => setInput(e.target.value)}
 					onKeyDown={onKeyDown}
 				/>
-				<span className="hint">enter to send</span>
+				<span className="hint">Enter ↵</span>
 			</div>
 		</div>
 	);
