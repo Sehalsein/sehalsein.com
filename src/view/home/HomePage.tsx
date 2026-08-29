@@ -1,79 +1,78 @@
 import Link from "@/src/components/AppLink";
 import { RESUME_DATA } from "@/src/data/resume";
-import { type CSSProperties, useEffect, useRef } from "react";
+import {
+	type CSSProperties,
+	lazy,
+	startTransition,
+	Suspense,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
+import HomeStyleToggle, {
+	type HomeLayout,
+} from "@/src/view/home/HomeStyleToggle";
+import {
+	EXPERIMENTS,
+	type ExperimentVisualName,
+	WORK,
+} from "@/src/view/home/homeData";
 import "./home.css";
 
-const WORK = [
-	{
-		period: "2025—now",
-		company: "Planned",
-		role: "Engineering Lead",
-		description:
-			"My current day job. I lead engineering work across the event platform and help the team make good technical decisions without slowing down.",
-	},
-	{
-		period: "2022—now",
-		company: "DGymBook",
-		role: "Co-founder",
-		description:
-			"A gym-management idea I helped turn into a real product used by more than 50,000 people. I built much of the product and the systems behind it.",
-	},
-	{
-		period: "2024",
-		company: "Mino Games",
-		role: "Senior Software Engineer",
-		description:
-			"I spent 2024 working on game backends, a Twitch extension, and internal tools for localization and analytics.",
-	},
-] as const;
-
-const EXPERIMENTS = [
-	{
-		href: "/racer",
-		name: "racer",
-		category: "physics playground",
-		description:
-			"Procedural circuits, vehicle physics, drifting, drafting, and drivers that try to ruin your lap.",
-		visual: "racer",
-	},
-	{
-		href: "/doom",
-		name: "doom",
-		category: "graphics experiment",
-		description:
-			"A software-rendered shooter with raycast walls, billboard sprites, and sound made at runtime.",
-		visual: "doom",
-	},
-	{
-		href: "/adventure",
-		name: "hollowreach",
-		category: "generative storytelling",
-		description:
-			"A persistent tabletop story where an AI game master remembers your character, choices, and mistakes.",
-		visual: "adventure",
-	},
-	{
-		href: "/os",
-		name: "sehalOS",
-		category: "interface experiment",
-		description:
-			"A small desktop environment with real windows, apps, Spotlight, and a source-code browser.",
-		visual: "os",
-	},
-	{
-		href: "/terminal",
-		name: "terminal",
-		category: "alternate homepage",
-		description:
-			"This website reimagined as a command line, complete with themes, a guestbook, and a few secrets.",
-		visual: "terminal",
-	},
-] as const;
+const SketchHome = lazy(() => import("@/src/view/home/SketchHome"));
+const HOME_LAYOUT_KEY = "home-layout";
 
 const revealDelay = (index: number) =>
 	({ "--reveal-delay": `${index * 50}ms` }) as CSSProperties;
 
 export default function HomePage() {
+	const [layout, setLayout] = useState<HomeLayout>("readme");
+	const [preferencesReady, setPreferencesReady] = useState(false);
+
+	useEffect(() => {
+		const restored = document.documentElement.dataset.homeLayout;
+		if (restored === "sketch") setLayout("sketch");
+		setPreferencesReady(true);
+	}, []);
+
+	const changeLayout = useCallback((nextLayout: HomeLayout) => {
+		document.documentElement.dataset.homeLayout = nextLayout;
+		try {
+			window.localStorage.setItem(HOME_LAYOUT_KEY, nextLayout);
+		} catch {
+			// Storage can be unavailable in strict privacy modes; the toggle still works.
+		}
+		startTransition(() => setLayout(nextLayout));
+	}, []);
+
+	if (layout === "sketch") {
+		return (
+			<Suspense fallback={<div className="home-sketch-loading" aria-hidden="true" />}>
+				<SketchHome layout={layout} onLayoutChange={changeLayout} />
+			</Suspense>
+		);
+	}
+
+	return (
+		<ReadmeHome
+			layout={layout}
+			onLayoutChange={changeLayout}
+			preferencesReady={preferencesReady}
+		/>
+	);
+}
+
+type HomeLayoutProps = {
+	layout: HomeLayout;
+	onLayoutChange: (layout: HomeLayout) => void;
+};
+
+function ReadmeHome({
+	layout,
+	onLayoutChange,
+	preferencesReady,
+}: HomeLayoutProps & { preferencesReady: boolean }) {
 	const pageRef = useRef<HTMLElement>(null);
 
 	useEffect(() => {
@@ -186,8 +185,12 @@ export default function HomePage() {
 	}, []);
 
 	return (
-		<main className="home-readme" ref={pageRef}>
-			<Header />
+		<main
+			className="home-readme"
+			data-layout-pending={!preferencesReady}
+			ref={pageRef}
+		>
+			<Header layout={layout} onLayoutChange={onLayoutChange} />
 			<Hero />
 			<Work />
 			<Experiments />
@@ -197,7 +200,7 @@ export default function HomePage() {
 	);
 }
 
-function Header() {
+function Header({ layout, onLayoutChange }: HomeLayoutProps) {
 	return (
 		<div className="readme-header-shell">
 			<header className="readme-header readme-wrap readme-mono">
@@ -210,6 +213,11 @@ function Header() {
 					<a href="#experiments" data-section-link>experiments</a>
 					<a href="#notes" data-section-link>notes</a>
 					<Link href="/resume">resume</Link>
+					<HomeStyleToggle
+						layout={layout}
+						onChange={onLayoutChange}
+						tone="clean"
+					/>
 				</nav>
 			</header>
 		</div>
@@ -352,7 +360,7 @@ function Experiments() {
 function ExperimentVisual({
 	visual,
 }: {
-	visual: (typeof EXPERIMENTS)[number]["visual"];
+	visual: ExperimentVisualName;
 }) {
 	if (visual === "racer") {
 		return (

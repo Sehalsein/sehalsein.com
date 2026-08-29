@@ -10,10 +10,14 @@ import faviconUrl from "../../app/favicon.ico?url";
 import ThemeProvider from "@/src/view/ThemeProvider";
 import Analytics from "@/src/view/Analytics";
 
-const restorePalette = `
+const restorePreferences = `
 try {
   var palette = localStorage.getItem('terminal-palette') || 'default';
   document.documentElement.dataset.palette = palette;
+  var homeLayout = localStorage.getItem('home-layout') || 'readme';
+  if (homeLayout === 'readme' || homeLayout === 'sketch') {
+    document.documentElement.dataset.homeLayout = homeLayout;
+  }
 } catch (_) {}
 `;
 
@@ -46,7 +50,7 @@ export const Route = createRootRoute({
 			},
 			{
 				rel: "stylesheet",
-				href: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700&family=Pirata+One&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap",
+				href: "https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700&family=Patrick+Hand&family=Pirata+One&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap",
 			},
 		],
 	}),
@@ -67,7 +71,7 @@ function RootDocument({ children }: { children: ReactNode }) {
 		<html lang="en" suppressHydrationWarning>
 			<head>
 				<HeadContent />
-				<script dangerouslySetInnerHTML={{ __html: restorePalette }} />
+				<script dangerouslySetInnerHTML={{ __html: restorePreferences }} />
 			</head>
 			<body className="bg-term-bg text-term-ink">
 				<ThemeProvider>

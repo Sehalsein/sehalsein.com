@@ -57,6 +57,69 @@ html:has(.home-readme) {
 	background: var(--readme-link);
 }
 
+html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
+	visibility: hidden;
+}
+
+.home-sketch-loading {
+	min-height: 100vh;
+	background:
+		repeating-linear-gradient(0deg, transparent 0 31px, rgba(49, 93, 120, 0.1) 31px 32px),
+		#f3eddb;
+}
+
+.home-style-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	white-space: nowrap;
+}
+
+.home-style-toggle > span {
+	margin-right: 2px;
+	font-size: 0.72em;
+}
+
+.home-style-toggle button {
+	min-height: 30px;
+	padding: 3px 7px;
+	cursor: pointer;
+}
+
+.home-style-toggle--clean {
+	padding: 2px;
+	border: 1px solid var(--readme-rule);
+	border-radius: 3px;
+	color: var(--readme-muted);
+	background: var(--readme-panel);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		"Liberation Mono", monospace;
+	font-size: 0.66rem;
+}
+
+.home-style-toggle--clean > span {
+	padding-left: 5px;
+}
+
+.home-style-toggle--clean button {
+	border: 0;
+	border-radius: 2px;
+	color: inherit;
+	background: transparent;
+	font: inherit;
+	transition: color 160ms ease, background-color 160ms ease;
+}
+
+.home-style-toggle--clean button[aria-pressed="true"] {
+	color: var(--readme-bg);
+	background: var(--readme-link);
+}
+
+.home-style-toggle--clean button:hover:not([aria-pressed="true"]) {
+	color: var(--readme-ink);
+	background: color-mix(in srgb, var(--readme-link) 8%, transparent);
+}
+
 .readme-wrap {
 	width: min(calc(100% - 48px), 1020px);
 	margin-inline: auto;
@@ -133,7 +196,8 @@ html:has(.home-readme) {
 .readme-header nav {
 	justify-self: end;
 	display: flex;
-	gap: 20px;
+	gap: 16px;
+	align-items: center;
 }
 
 .readme-header nav a {
@@ -254,18 +318,9 @@ html:has(.home-readme) {
 	text-decoration-color: currentColor;
 }
 
-.readme-terminal-link span {
-	display: inline-block;
-	transition: transform 160ms ease;
-}
-
-.readme-terminal-link:hover span {
-	transform: translateX(4px);
-}
-
 .readme-photo-frame {
 	position: relative;
-	aspect-ratio: 1;
+	aspect-ratio: 960 / 643;
 	overflow: hidden;
 	background: var(--readme-panel);
 	clip-path: inset(0 0 100% 0);
@@ -286,7 +341,7 @@ html:has(.home-readme) {
 	height: 118%;
 	display: block;
 	object-fit: cover;
-	object-position: center 28%;
+	object-position: center;
 	filter: grayscale(1) contrast(1.04);
 	transform: translate3d(0, calc(var(--portrait-shift) - 8%), 0) scale(1.045);
 	transform-origin: center center;
@@ -1260,6 +1315,18 @@ html:has(.home-readme) {
 }
 
 @media (max-width: 850px) {
+	.readme-location {
+		display: none;
+	}
+
+	.readme-header {
+		grid-template-columns: 1fr auto;
+	}
+
+	.readme-header nav a:nth-child(3) {
+		display: none;
+	}
+
 	.readme-lab-grid {
 		grid-template-rows: 380px 340px 250px;
 	}
@@ -1302,6 +1369,14 @@ html:has(.home-readme) {
 	.readme-header nav a:nth-child(2),
 	.readme-header nav a:nth-child(3) {
 		display: none;
+	}
+
+	.home-style-toggle--clean > span {
+		display: none;
+	}
+
+	.home-style-toggle--clean {
+		font-size: 0.61rem;
 	}
 
 	.readme-hero {
@@ -1423,7 +1498,6 @@ html:has(.home-readme) {
 		transition: none !important;
 	}
 
-	.readme-terminal-link span,
 	.readme-work-row,
 	.readme-work-row > *,
 	.readme-lab-copy,
