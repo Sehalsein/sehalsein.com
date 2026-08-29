@@ -98,7 +98,9 @@ export class AISystem implements System {
 			const yaw = Math.atan2(fx, fz);
 			const desiredYaw = Math.atan2(targetX - pos.x, targetZ - pos.z);
 			const headingError = wrapAngle(desiredYaw - yaw);
-			const rawSteer = clamp(headingError * 1.6, -1, 1);
+			// Positive yaw is a left turn in the vehicle's +Z-forward coordinate
+			// system, while DriveInput intentionally uses -left/+right.
+			const rawSteer = -clamp(headingError * 1.6, -1, 1);
 			const lagFactor = clamp01(dt / Math.max(profile.reactionTime, dt));
 			ai.smoothedSteer += (rawSteer - ai.smoothedSteer) * lagFactor;
 

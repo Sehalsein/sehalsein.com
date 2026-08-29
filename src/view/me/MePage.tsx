@@ -1,15 +1,16 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import Link from "@/src/components/AppLink";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { createClientOnlyFn } from "@tanstack/react-start";
 import { PALETTE_NAMES, type PaletteName } from "@/src/data/terminal";
 import { RESUME_DATA } from "@/src/data/resume";
+import { usePalette } from "@/src/view/ThemeProvider";
 import type { PoseId } from "./poses";
 import "./me.css";
 
-const MeStage = dynamic(() => import("./MeStage"), { ssr: false });
+const loadMeStage = createClientOnlyFn(() => import("./MeStage"));
+const MeStage = lazy(loadMeStage);
 
 /**
  * Swatch colours are hardcoded because a palette's variables only exist once
@@ -63,7 +64,9 @@ export default function MePage({ availablePoses }: { availablePoses: PoseId[] })
 				<div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,420px)] md:gap-12">
 					{/* the canvas comes first on mobile — it's the hook */}
 					<div className="order-1 md:order-2">
-						<MeStage availablePoses={availablePoses} />
+						<Suspense fallback={<div className="aspect-square" />}>
+							<MeStage availablePoses={availablePoses} />
+						</Suspense>
 						<PaletteStrip />
 					</div>
 
@@ -123,7 +126,7 @@ function Section({ title, items }: { title: string; items: string[] }) {
 }
 
 function PaletteStrip() {
-	const { theme, setTheme } = useTheme();
+	const { theme, setTheme } = usePalette();
 	const [mounted, setMounted] = useState(false);
 	const [motion, setMotion] = useState(true);
 

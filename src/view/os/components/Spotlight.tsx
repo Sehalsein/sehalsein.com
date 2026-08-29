@@ -56,6 +56,7 @@ export default function Spotlight({ onClose, onOpen }: Props) {
 					<input
 						ref={inputRef}
 						type="search"
+						name="spotlight-search"
 						placeholder="Search apps, projects, commands…"
 						autoComplete="off"
 						autoCorrect="off"

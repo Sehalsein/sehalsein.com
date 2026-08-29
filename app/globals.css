@@ -1,4 +1,5 @@
-@import 'tailwindcss';
+/* Keep this path explicit so provider SSR builds resolve Tailwind consistently. */
+@import '../node_modules/tailwindcss/index.css';
 
 /* Streamdown — let Tailwind detect the markdown utility classes it emits. */
 @source "../node_modules/streamdown/dist/*.js";

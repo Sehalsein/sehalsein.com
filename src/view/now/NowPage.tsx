@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/src/components/AppLink";
 import {
 	NOW_LAST_UPDATED,
 	NOW_SECTIONS,

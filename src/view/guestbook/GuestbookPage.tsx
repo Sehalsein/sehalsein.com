@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/src/components/AppLink";
 import { signIn, signOut, useSession } from "@/src/lib/authClient";
-import type { GuestbookEntryDTO } from "@/app/api/guestbook/route";
+import type { GuestbookEntryDTO } from "@/src/types/api";
 
 const MAX = 200;
 
@@ -175,7 +175,6 @@ export default function GuestbookPage() {
 									className="flex gap-3 items-start pb-4 border-b border-dashed border-term-rule"
 								>
 									{entry.avatarUrl ? (
-										// eslint-disable-next-line @next/next/no-img-element
 										<img
 											src={entry.avatarUrl}
 											alt={entry.githubLogin}

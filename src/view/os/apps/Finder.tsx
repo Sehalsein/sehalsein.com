@@ -49,7 +49,11 @@ export default function Finder() {
 	return (
 		<div className="app-finder">
 			<div className="side">
-				<div className="hdr">Favorites</div>
+				<div className="finder-brand">
+					<span>P</span>
+					<div><strong>Projects</strong><small>Sehal Sein</small></div>
+				</div>
+				<div className="hdr">Library</div>
 				<button
 					type="button"
 					className={`it${section === "all" ? " active" : ""}`}
@@ -65,11 +69,18 @@ export default function Finder() {
 					Current
 				</button>
 				<div className="hdr">Tags</div>
-				<div className="it">full-stack</div>
-				<div className="it">platform</div>
-				<div className="it">infrastructure</div>
+				<div className="finder-tag"><i className="blue" /> full-stack</div>
+				<div className="finder-tag"><i className="violet" /> platform</div>
+				<div className="finder-tag"><i className="mint" /> infrastructure</div>
 			</div>
 			<div className="col">
+				<header className="finder-toolbar">
+					<div>
+						<span className="finder-kicker">Portfolio archive</span>
+						<h2>{section === "current" ? "Current work" : "All projects"}</h2>
+					</div>
+					<span className="finder-count">{items.length} projects</span>
+				</header>
 				<div className="grid">
 					{items.map((p) => (
 						<button
@@ -86,18 +97,23 @@ export default function Finder() {
 							>
 								{p.company[0].toUpperCase()}
 							</div>
-							<div className="nm">{p.company}</div>
-							<div className="mt">
-								{p.year} · {p.role}
+							<div className="item-copy">
+								<div className="nm">{p.company}</div>
+								<div className="mt">{p.role}</div>
+								<div className="yr">{p.year}</div>
 							</div>
+							<span className="item-open" aria-hidden="true">↗</span>
 						</button>
 					))}
 				</div>
 				{selected && (
 					<div className="detail">
-						<h3>{selected.company}</h3>
-						<div className="d">
-							{selected.year} · {selected.role}
+						<div>
+							<span className="finder-kicker">Selected project</span>
+							<h3>{selected.company}</h3>
+							<div className="d">
+								{selected.year} · {selected.role}
+							</div>
 						</div>
 						<p>{selected.desc}</p>
 					</div>

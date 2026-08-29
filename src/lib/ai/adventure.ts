@@ -1,13 +1,4 @@
-import * as ai from "ai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { wrapAISDK } from "braintrust";
-import { MODEL_ID, FALLBACK_MODELS } from "./chat";
-
-const wrapped = wrapAISDK(ai);
-
-const openrouter = createOpenRouter({
-	apiKey: process.env.OPEN_ROUTER_KEY,
-});
+import { MODEL_ID, FALLBACK_MODELS, getAiRuntime } from "./chat";
 
 /* The Game Master of "Hollowreach" — a single-player tabletop fantasy RPG.
  * It returns ONE raw JSON object per turn; the client renders + animates it. */
@@ -23,6 +14,7 @@ export const MAX_OUTPUT_TOKENS = 1024;
 
 /** Run one Game Master turn and return its raw text (expected to be JSON). */
 export async function completeAdventure(prompt: string): Promise<string> {
+	const { wrapped, openrouter } = getAiRuntime();
 	const result = wrapped.generateText({
 		model: openrouter(MODEL_ID),
 		system: ADVENTURE_SYSTEM_PROMPT,

@@ -3,16 +3,23 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { initLogger, wrapAISDK } from "braintrust";
 import { RESUME_DATA } from "@/src/data/resume";
 
-initLogger({
-	projectName: "sehalsein.com",
-	apiKey: process.env.BRAINTRUST_API_KEY,
-});
+let runtime: {
+	wrapped: typeof ai;
+	openrouter: ReturnType<typeof createOpenRouter>;
+} | null = null;
 
-const wrapped = wrapAISDK(ai);
-
-const openrouter = createOpenRouter({
-	apiKey: process.env.OPEN_ROUTER_KEY,
-});
+export function getAiRuntime() {
+	if (runtime) return runtime;
+	const braintrustKey = process.env.BRAINTRUST_API_KEY;
+	if (braintrustKey) {
+		initLogger({ projectName: "sehalsein.com", apiKey: braintrustKey });
+	}
+	runtime = {
+		wrapped: wrapAISDK(ai),
+		openrouter: createOpenRouter({ apiKey: process.env.OPEN_ROUTER_KEY }),
+	};
+	return runtime;
+}
 
 // All-free routing: try MODEL_ID first (quickest), then FALLBACK_MODELS in
 // order when one is rate-limited or down. OpenRouter caps the fallback list
@@ -67,6 +74,7 @@ export type ChatMessage = {
 export const MAX_OUTPUT_TOKENS = 2048;
 
 export function streamChat(opts: { messages: ChatMessage[] }) {
+	const { wrapped, openrouter } = getAiRuntime();
 	return wrapped.streamText({
 		model: openrouter(MODEL_ID),
 		system: SYSTEM_PROMPT,
@@ -82,6 +90,7 @@ export function streamChat(opts: { messages: ChatMessage[] }) {
 }
 
 export async function completeChat(question: string): Promise<string> {
+	const { wrapped, openrouter } = getAiRuntime();
 	const result = wrapped.generateText({
 		model: openrouter(MODEL_ID),
 		system: SYSTEM_PROMPT,

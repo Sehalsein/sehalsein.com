@@ -11,7 +11,7 @@ import ContributionsInline from "./ContributionsInline";
 import GuestbookInline from "./GuestbookInline";
 import Copyable from "./Copyable";
 import { authClient } from "@/src/lib/authClient";
-import { useTheme } from "next-themes";
+import { usePalette } from "@/src/view/ThemeProvider";
 import type { PaletteName } from "@/src/data/terminal";
 import {
 	PROJECTS,
@@ -42,7 +42,7 @@ function nextId() {
 }
 
 export default function TerminalPage({ chrome = true }: { chrome?: boolean } = {}) {
-	const { theme, setTheme } = useTheme();
+	const { theme, setTheme } = usePalette();
 	const palette = (theme as PaletteName | undefined) ?? "default";
 	const [crt, setCrtState] = useState(false);
 	const [cwd, setCwd] = useState("~");
@@ -65,7 +65,7 @@ export default function TerminalPage({ chrome = true }: { chrome?: boolean } = {
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const screenRef = useRef<HTMLDivElement>(null);
 
-	// Restore non-palette preferences (palette itself is managed by next-themes).
+	// Restore non-palette preferences (the shared provider owns colour).
 	useEffect(() => {
 		const savedCrt = localStorage.getItem("terminal-crt");
 		if (savedCrt === "true") setCrtState(true);

@@ -1,521 +1,482 @@
-"use client";
-
-import Link from "next/link";
-import type { ReactNode } from "react";
+import Link from "@/src/components/AppLink";
 import { RESUME_DATA } from "@/src/data/resume";
+import { type CSSProperties, useEffect, useRef } from "react";
+import "./home.css";
 
-type Project = {
-	href: string;
-	label: string;
-	title: string;
-	description: string;
-	preview: ReactNode;
-};
-
-const PROJECTS: Project[] = [
+const WORK = [
 	{
-		href: "/terminal",
-		label: "terminal",
-		title: "interactive shell",
+		period: "2025—now",
+		company: "Planned",
+		role: "Engineering Lead",
 		description:
-			"A fake CLI homepage. Type commands, switch colorschemes, chat with the AI, sign the guestbook.",
-		preview: <TerminalPreview />,
+			"My current day job. I lead engineering work across the event platform and help the team make good technical decisions without slowing down.",
 	},
 	{
-		href: "/adventure",
-		label: "adventure",
-		title: "text adventure",
+		period: "2022—now",
+		company: "DGymBook",
+		role: "Co-founder",
 		description:
-			"An AI Game Master narrates a branching story. Pick a genre, track your life, inventory, and map as every choice shapes the tale.",
-		preview: <AdventurePreview />,
+			"A gym-management idea I helped turn into a real product used by more than 50,000 people. I built much of the product and the systems behind it.",
+	},
+	{
+		period: "2024",
+		company: "Mino Games",
+		role: "Senior Software Engineer",
+		description:
+			"I spent 2024 working on game backends, a Twitch extension, and internal tools for localization and analytics.",
+	},
+] as const;
+
+const EXPERIMENTS = [
+	{
+		href: "/racer",
+		name: "racer",
+		category: "physics playground",
+		description:
+			"Procedural circuits, vehicle physics, drifting, drafting, and drivers that try to ruin your lap.",
+		visual: "racer",
 	},
 	{
 		href: "/doom",
-		label: "doom",
-		title: "browser doom",
+		name: "doom",
+		category: "graphics experiment",
 		description:
-			"A software-rendered shooter — raycast walls, billboarded sprites, synthesized sound. Every texture and animation is generated at boot; nothing is downloaded.",
-		preview: <DoomPreview />,
+			"A software-rendered shooter with raycast walls, billboard sprites, and sound made at runtime.",
+		visual: "doom",
 	},
 	{
-		href: "/racer",
-		label: "racer",
-		title: "iso racer",
+		href: "/adventure",
+		name: "hollowreach",
+		category: "generative storytelling",
 		description:
-			"Isometric arcade racing on circuits generated from a seed. Drift for boost, draft the leader, and share the link — the same seed rebuilds the same track.",
-		preview: <RacerPreview />,
+			"A persistent tabletop story where an AI game master remembers your character, choices, and mistakes.",
+		visual: "adventure",
 	},
 	{
 		href: "/os",
-		label: "os",
-		title: "sehalOS",
+		name: "sehalOS",
+		category: "interface experiment",
 		description:
-			"A windowed desktop environment that doubles as a portfolio. Dock, spotlight, editor browsing real source from github.",
-		preview: <OsPreview />,
+			"A small desktop environment with real windows, apps, Spotlight, and a source-code browser.",
+		visual: "os",
 	},
 	{
-		href: "/resume",
-		label: "resume",
-		title: "resume",
+		href: "/terminal",
+		name: "terminal",
+		category: "alternate homepage",
 		description:
-			"Printable, terminal-styled CV. Hit ⌘P to send it to paper.",
-		preview: <ResumePreview />,
+			"This website reimagined as a command line, complete with themes, a guestbook, and a few secrets.",
+		visual: "terminal",
 	},
-	{
-		href: "/now",
-		label: "now",
-		title: "what I'm doing now",
-		description:
-			"What I'm working on, reading, and thinking about this month. Updated periodically.",
-		preview: <NowPreview />,
-	},
-	{
-		href: "/guestbook",
-		label: "guestbook",
-		title: "guestbook",
-		description:
-			"Sign in with GitHub, leave a note. Like the old web.",
-		preview: <GuestbookPreview />,
-	},
-];
+] as const;
+
+const revealDelay = (index: number) =>
+	({ "--reveal-delay": `${index * 50}ms` }) as CSSProperties;
 
 export default function HomePage() {
+	const pageRef = useRef<HTMLElement>(null);
+
+	useEffect(() => {
+		const page = pageRef.current;
+		if (!page) return;
+
+		const revealElements = Array.from(
+			page.querySelectorAll<HTMLElement>("[data-reveal]"),
+		);
+		const reducedMotion = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
+
+		if (reducedMotion) {
+			for (const element of revealElements) element.classList.add("is-visible");
+		} else {
+			for (const element of revealElements) {
+				if (element.getBoundingClientRect().top < window.innerHeight * 0.92) {
+					element.classList.add("is-visible");
+				}
+			}
+			page.classList.add("has-reveal-motion");
+		}
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (!entry.isIntersecting) continue;
+					entry.target.classList.add("is-visible");
+					observer.unobserve(entry.target);
+				}
+			},
+			{ rootMargin: "0px 0px -8%", threshold: 0.08 },
+		);
+
+		for (const element of revealElements) {
+			if (!reducedMotion && !element.classList.contains("is-visible")) {
+				observer.observe(element);
+			}
+		}
+
+		const portrait = page.querySelector<HTMLElement>("[data-parallax]");
+		const navLinks = Array.from(
+			page.querySelectorAll<HTMLAnchorElement>("[data-section-link]"),
+		);
+		const navSections = navLinks.flatMap((link) => {
+			const id = link.hash.slice(1);
+			const section = document.getElementById(id);
+			return section ? [{ id, link, section }] : [];
+		});
+		let animationFrame = 0;
+		let activeSection = "";
+
+		const updateScrollEffects = () => {
+			animationFrame = 0;
+			const scrollTop = window.scrollY;
+			const scrollRange = Math.max(
+				1,
+				document.documentElement.scrollHeight - window.innerHeight,
+			);
+			page.style.setProperty(
+				"--scroll-progress",
+				Math.min(1, scrollTop / scrollRange).toFixed(4),
+			);
+			page.classList.toggle("is-scrolled", scrollTop > 18);
+
+			if (!reducedMotion && portrait) {
+				const rect = portrait.getBoundingClientRect();
+				const distance = rect.top + rect.height / 2 - window.innerHeight / 2;
+				const shift = Math.max(
+					-24,
+					Math.min(24, (-distance / window.innerHeight) * 38),
+				);
+				page.style.setProperty("--portrait-shift", `${shift.toFixed(2)}px`);
+			}
+
+			let nextActiveSection = "";
+			for (const item of navSections) {
+				if (item.section.getBoundingClientRect().top <= window.innerHeight * 0.38) {
+					nextActiveSection = item.id;
+				}
+			}
+
+			if (nextActiveSection !== activeSection) {
+				activeSection = nextActiveSection;
+				for (const item of navSections) {
+					const isActive = item.id === activeSection;
+					item.link.classList.toggle("is-active", isActive);
+					if (isActive) item.link.setAttribute("aria-current", "location");
+					else item.link.removeAttribute("aria-current");
+				}
+			}
+		};
+
+		const requestScrollUpdate = () => {
+			if (animationFrame) return;
+			animationFrame = window.requestAnimationFrame(updateScrollEffects);
+		};
+
+		requestScrollUpdate();
+		window.addEventListener("scroll", requestScrollUpdate, { passive: true });
+		window.addEventListener("resize", requestScrollUpdate);
+
+		return () => {
+			observer.disconnect();
+			window.removeEventListener("scroll", requestScrollUpdate);
+			window.removeEventListener("resize", requestScrollUpdate);
+			if (animationFrame) window.cancelAnimationFrame(animationFrame);
+		};
+	}, []);
+
 	return (
-		<main className="min-h-screen bg-term-bg text-term-ink antialiased">
-			<div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-12 md:gap-14 md:px-10 md:py-20">
-				<Hero />
-				<ProjectGrid />
-				<Footer />
-			</div>
+		<main className="home-readme" ref={pageRef}>
+			<Header />
+			<Hero />
+			<Work />
+			<Experiments />
+			<Notes />
+			<Footer />
 		</main>
 	);
 }
 
-function Hero() {
+function Header() {
 	return (
-		<header className="flex flex-col gap-3">
-			<p className="text-[11px] uppercase tracking-[0.24em] text-term-dim">
-				sehalsein.com
-			</p>
-			<h1 className="text-3xl font-medium tracking-tight text-term-ink md:text-4xl">
-				{RESUME_DATA.name}
-			</h1>
-			<p className="max-w-2xl text-sm leading-relaxed text-term-dim md:text-[15px]">
-				Senior software engineer in {RESUME_DATA.location}. Co-founded
-				DGymBook, now building platform at Planned. This site is a set of
-				small experiments — pick whichever looks interesting.
-			</p>
-			<nav
-				aria-label="Social links"
-				className="mt-1 flex flex-wrap gap-x-5 gap-y-2 text-[12px]"
-			>
-				<a
-					href={`mailto:${RESUME_DATA.email}`}
-					className="text-term-blue underline-offset-4 hover:text-term-green hover:underline"
-				>
-					{RESUME_DATA.email}
-				</a>
-				{RESUME_DATA.social.map((s) => (
-					<a
-						key={s.name}
-						href={s.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-term-blue underline-offset-4 hover:text-term-green hover:underline"
-					>
-						{s.name.toLowerCase()} ↗
-					</a>
-				))}
-			</nav>
-		</header>
+		<div className="readme-header-shell">
+			<header className="readme-header readme-wrap readme-mono">
+				<Link href="/" className="readme-name" aria-label="Sehal Sein, home">
+					<span aria-hidden="true">●</span> sehal sein
+				</Link>
+				<span className="readme-location">montreal, canada</span>
+				<nav aria-label="Primary navigation">
+					<a href="#work" data-section-link>work</a>
+					<a href="#experiments" data-section-link>experiments</a>
+					<a href="#notes" data-section-link>notes</a>
+					<Link href="/resume">resume</Link>
+				</nav>
+			</header>
+		</div>
 	);
 }
 
-function ProjectGrid() {
+function Hero() {
+	const github = RESUME_DATA.social.find((item) => item.name === "Github")?.url;
+	const linkedin = RESUME_DATA.social.find(
+		(item) => item.name === "LinkedIn",
+	)?.url;
+
 	return (
-		<section aria-labelledby="projects-heading" className="flex flex-col gap-6">
-			<div className="flex items-end justify-between gap-6">
-				<h2
-					id="projects-heading"
-					className="text-[11px] uppercase tracking-[0.24em] text-term-dim"
-				>
-					projects
-				</h2>
-				<span className="text-[11px] text-term-faint">
-					{PROJECTS.length} entries
-				</span>
+		<section className="readme-hero readme-wrap" aria-labelledby="home-title">
+			<div className="readme-hero-copy">
+				<p className="readme-path readme-mono">/home/sehal</p>
+				<div className="readme-title-clip">
+					<h1 id="home-title">Hi, I&apos;m Sehal.</h1>
+				</div>
+				<p className="readme-lede">
+					I&apos;m an engineer in Montreal. These days I lead engineering at
+					Planned and work on DGymBook, a company I co-founded.
+				</p>
+				<p className="readme-about">
+					I started building software professionally in 2018 and still like the
+					part where a blank file becomes something another person can use. Most
+					of my work lives somewhere between product decisions, architecture,
+					and helping a team ship. I make small browser games on the side.
+				</p>
+				<div className="readme-links readme-mono">
+					<a href={`mailto:${RESUME_DATA.email}`}>email</a>
+					{github ? (
+						<a href={github} target="_blank" rel="noreferrer">
+							github
+						</a>
+					) : null}
+					{linkedin ? (
+						<a href={linkedin} target="_blank" rel="noreferrer">
+							linkedin
+						</a>
+					) : null}
+				</div>
 			</div>
-			<ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{PROJECTS.map((p, i) => (
-					<li
-						key={p.href}
-						className="home-card"
-						style={{ animationDelay: `${i * 50}ms` }}
-					>
-						<ProjectCard project={p} />
-					</li>
-				))}
-			</ul>
+
+			<div className="readme-aside">
+				<figure className="readme-photo" data-parallax>
+					<div className="readme-photo-frame">
+						<img
+							src={RESUME_DATA.photo}
+							alt="Sehal smiling at his desk, surrounded by computer monitors"
+							width="960"
+							height="643"
+						/>
+					</div>
+					<figcaption className="readme-mono">
+						<span aria-hidden="true">↳</span> this is me.
+					</figcaption>
+				</figure>
+				<div className="readme-now readme-mono">
+					<p>right now:</p>
+					<ul>
+						<li>building at Planned</li>
+						<li>working on DGymBook</li>
+						<li>making small games</li>
+					</ul>
+				</div>
+			</div>
 		</section>
 	);
 }
 
-function ProjectCard({ project }: { project: Project }) {
+function Work() {
 	return (
-		<Link
-			href={project.href}
-			className="home-card-link group flex h-full flex-col gap-4 rounded-lg border border-term-rule bg-term-bg2/40 p-4 hover:border-term-green focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-term-green focus-visible:ring-offset-2 focus-visible:ring-offset-term-bg"
-		>
-			<div
-				aria-hidden="true"
-				className="flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-md border border-term-rule bg-term-bg"
-			>
-				{project.preview}
+		<section className="readme-section readme-wrap" id="work">
+			<SectionHeading path="work.txt" title="Where I’ve worked" />
+			<div className="readme-work-list">
+				{WORK.map((item, index) => (
+					<article
+						className="readme-work-row"
+						data-reveal
+						style={revealDelay(index)}
+						key={item.company}
+					>
+						<time className="readme-mono">{item.period}</time>
+						<h3>
+							{item.company}
+							<span>{item.role}</span>
+						</h3>
+						<p>{item.description}</p>
+					</article>
+				))}
 			</div>
-			<div className="flex flex-col gap-2">
-				<div className="flex items-baseline justify-between gap-3">
-					<span className="text-[11px] uppercase tracking-[0.2em] text-term-dim">
-						/{project.label}
-					</span>
-					<span className="text-term-blue transition-colors group-hover:text-term-green">
-						open →
-					</span>
-				</div>
-				<h3 className="text-[15px] font-medium text-term-ink">
-					{project.title}
-				</h3>
-				<p className="text-[12.5px] leading-relaxed text-term-dim">
-					{project.description}
+			<p className="readme-older-work readme-mono">
+				There&apos;s more in the <Link href="/resume">full resume →</Link>
+			</p>
+		</section>
+	);
+}
+
+function Experiments() {
+	return (
+		<section className="readme-section readme-experiments" id="experiments">
+			<div className="readme-wrap">
+				<SectionHeading path="~/experiments" title="Things I made for fun" />
+				<p className="readme-experiment-note" data-reveal>
+					I use side projects to learn by making. Every one of these runs here
+					in the browser—nothing is a static case study.
 				</p>
+				<div className="readme-lab-grid">
+					{EXPERIMENTS.map((experiment, index) => (
+						<Link
+							className={`readme-lab-card is-${experiment.visual}`}
+							data-reveal
+							href={experiment.href}
+							key={experiment.name}
+							style={revealDelay(index)}
+						>
+							<div className="readme-lab-preview">
+								<span className="readme-lab-index readme-mono">
+									{String(index + 1).padStart(2, "0")}
+								</span>
+								<ExperimentVisual visual={experiment.visual} />
+							</div>
+							<div className="readme-lab-copy">
+								<div>
+									<span className="readme-mono">{experiment.category}</span>
+									<h3>{experiment.name}</h3>
+								</div>
+								<p>{experiment.description}</p>
+								<i aria-hidden="true">↗</i>
+							</div>
+						</Link>
+					))}
+				</div>
 			</div>
-		</Link>
+		</section>
+	);
+}
+
+function ExperimentVisual({
+	visual,
+}: {
+	visual: (typeof EXPERIMENTS)[number]["visual"];
+}) {
+	if (visual === "racer") {
+		return (
+			<div className="readme-visual readme-visual-racer" aria-hidden="true">
+				<div className="readme-racer-track">
+					<i />
+					<i />
+				</div>
+				<img src="/car/f1.png" alt="" width="500" height="500" />
+				<div className="readme-racer-speed readme-mono">
+					<strong>184</strong> km/h
+				</div>
+				<span className="readme-racer-lap readme-mono">P2 · LAP 2/3</span>
+			</div>
+		);
+	}
+
+	if (visual === "doom") {
+		return (
+			<div className="readme-visual readme-visual-doom" aria-hidden="true">
+				<div className="readme-doom-corridor">
+					<i className="readme-doom-wall-left" />
+					<i className="readme-doom-wall-right" />
+					<span className="readme-doom-crosshair" />
+				</div>
+				<div className="readme-doom-hud readme-mono">
+					<strong>100%</strong>
+					<span>ARMOR 50</span>
+					<span>AMMO 24</span>
+				</div>
+			</div>
+		);
+	}
+
+	if (visual === "adventure") {
+		return (
+			<div className="readme-visual readme-visual-adventure" aria-hidden="true">
+				<div className="readme-adventure-sheet">
+					<span className="readme-mono">THE WHISPERING WOODS</span>
+					<strong>Hollowreach</strong>
+					<p>A path forks beneath the black pines. Something watches.</p>
+					<div><i>1</i> enter the cave</div>
+					<div><i>2</i> follow the river</div>
+				</div>
+			</div>
+		);
+	}
+
+	if (visual === "os") {
+		return (
+			<div className="readme-visual readme-visual-os" aria-hidden="true">
+				<div className="readme-os-menu readme-mono">
+					<span>◆ &nbsp; sehalOS</span>
+					<span>10:24</span>
+				</div>
+				<div className="readme-os-window">
+					<header><i /><i /><i /><span className="readme-mono">projects/</span></header>
+					<div><b /><b /><b /><b /></div>
+				</div>
+				<div className="readme-os-dock"><i /><i /><i /><i /><i /></div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="readme-visual readme-visual-terminal readme-mono" aria-hidden="true">
+			<div className="readme-terminal-bar"><i /><i /><i /><span>~/sehal</span></div>
+			<div className="readme-terminal-lines">
+				<p><b>›</b> whoami</p>
+				<p>sehal sein — engineer / builder / occasional game maker</p>
+				<p><b>›</b> ls experiments/</p>
+				<p><span>racer</span>&nbsp; doom &nbsp;<span>hollowreach</span>&nbsp; sehalOS</p>
+				<p><b>›</b> <i /></p>
+			</div>
+		</div>
+	);
+}
+
+function Notes() {
+	return (
+		<section className="readme-section readme-wrap" id="notes">
+			<SectionHeading path="notes/" title="A little more about me" />
+			<div className="readme-notes-grid" data-reveal>
+				<div>
+					<h3 className="readme-mono">things I care about</h3>
+					<ul>
+						<li>software that is useful before it is impressive</li>
+						<li>systems people can understand and change</li>
+						<li>teams that can move quickly without burning out</li>
+					</ul>
+				</div>
+				<div>
+					<h3 className="readme-mono">usually on my desk</h3>
+					<ul>
+						<li>TypeScript, Go, React, and PostgreSQL</li>
+						<li>a notebook full of boxes and arrows</li>
+						<li>one side project that got out of hand</li>
+					</ul>
+				</div>
+			</div>
+		</section>
 	);
 }
 
 function Footer() {
 	return (
-		<footer className="mt-auto flex flex-wrap gap-x-5 gap-y-2 border-t border-dashed border-term-rule pt-5 text-[11px] text-term-faint">
-			<Link
-				href="/terminal"
-				className="text-term-blue underline-offset-4 hover:underline"
-			>
-				→ terminal
-			</Link>
-			<Link
-				href="/os"
-				className="text-term-blue underline-offset-4 hover:underline"
-			>
-				→ os
-			</Link>
-			<Link
-				href="/adventure"
-				className="text-term-blue underline-offset-4 hover:underline"
-			>
-				→ adventure
-			</Link>
-			<Link
-				href="/doom"
-				className="text-term-blue underline-offset-4 hover:underline"
-			>
-				→ doom
-			</Link>
-			<Link
-				href="/racer"
-				className="text-term-blue underline-offset-4 hover:underline"
-			>
-				→ racer
-			</Link>
-			<Link
-				href="/resume"
-				className="text-term-blue underline-offset-4 hover:underline"
-			>
-				→ resume
-			</Link>
-			<span>© {new Date().getFullYear()}</span>
+		<footer className="readme-footer readme-wrap" data-reveal>
+			<p>If something here made you curious, send me a note.</p>
+			<a className="readme-email readme-mono" href={`mailto:${RESUME_DATA.email}`}>
+				{RESUME_DATA.email}
+			</a>
+			<div className="readme-footer-line readme-mono">
+				<span>last updated: 2026-08-23</span>
+				<span>built in montreal</span>
+			</div>
 		</footer>
 	);
 }
 
-/* ─── Previews ─────────────────────────────────────────────────── */
-
-function TerminalPreview() {
+function SectionHeading({ path, title }: { path: string; title: string }) {
 	return (
-		<div className="grid h-full w-full grid-rows-[18px_1fr] bg-term-bg font-mono text-[10px] text-term-ink">
-			<div className="flex items-center gap-1.5 border-b border-term-rule px-2">
-				<span className="h-2 w-2 rounded-full bg-[#ff5f56]" />
-				<span className="h-2 w-2 rounded-full bg-[#ffbd2e]" />
-				<span className="h-2 w-2 rounded-full bg-[#27c93f]" />
-				<span className="ml-auto text-[9px] text-term-faint">
-					~/sehal
-				</span>
-			</div>
-			<div className="flex flex-col gap-1 px-3 py-2.5">
-				<div>
-					<span className="text-term-green">›</span>{" "}
-					<span className="text-term-dim">whoami</span>
-				</div>
-				<div className="text-term-ink">sehal sein — senior software engineer</div>
-				<div className="mt-1">
-					<span className="text-term-green">›</span>{" "}
-					<span className="text-term-dim">cat about.md</span>
-				</div>
-				<div className="text-term-dim">
-					builds things that <span className="text-term-green">matter</span>.
-				</div>
-				<div className="mt-1">
-					<span className="text-term-green">›</span>{" "}
-					<span className="inline-block h-[10px] w-1.5 animate-[blink_1.05s_steps(1)_infinite] bg-term-ink align-middle" />
-				</div>
-			</div>
-		</div>
-	);
-}
-
-function DoomPreview() {
-	return (
-		<div className="grid h-full w-full grid-rows-[1fr_22px] bg-[#0b0a0e]">
-			{/* A suggestion of a corridor: floor, ceiling, and two lit walls. */}
-			<div className="relative overflow-hidden">
-				<div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-[#181722] to-[#2a2734]" />
-				<div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#241d1a] to-[#3a2f28]" />
-				<div
-					className="absolute inset-y-0 left-0 w-[30%] bg-[#4a4438]"
-					style={{ clipPath: "polygon(0 0, 100% 26%, 100% 74%, 0 100%)" }}
-				/>
-				<div
-					className="absolute inset-y-0 right-0 w-[30%] bg-[#5a5142]"
-					style={{ clipPath: "polygon(0 26%, 100% 0, 100% 100%, 0 74%)" }}
-				/>
-				{/* Crosshair */}
-				<div className="absolute left-1/2 top-1/2 h-[7px] w-[1px] -translate-x-1/2 -translate-y-1/2 bg-[#8fd08a]" />
-				<div className="absolute left-1/2 top-1/2 h-[1px] w-[7px] -translate-x-1/2 -translate-y-1/2 bg-[#8fd08a]" />
-			</div>
-			<div className="flex items-center gap-3 border-t border-[#3e3a3e] bg-[#1a181c] px-2 font-mono text-[9px] leading-none">
-				<span className="text-[#60be58]">100%</span>
-				<span className="text-term-faint">armor</span>
-				<span className="text-[#e2ded2]">50</span>
-				<span className="ml-auto flex gap-[3px]">
-					<span className="h-2.5 w-1.5 bg-[#ce362c]" />
-					<span className="h-2.5 w-1.5 bg-[#4a76e8]" />
-				</span>
-			</div>
-		</div>
-	);
-}
-
-function RacerPreview() {
-	return (
-		<div className="relative h-full w-full overflow-hidden bg-[#8fbe79]">
-			{/* A slice of circuit seen from the isometric camera: kerbed road
-			    ribbon running diagonally with the field strung out along it. */}
-			<div
-				className="absolute -inset-y-[45%] left-[8%] w-[52%] rotate-[32deg] bg-[#b34a44]"
-				style={{ borderRadius: "2px" }}
-			>
-				<div className="absolute inset-x-[7%] inset-y-0 bg-[#cfe0b8]" />
-				<div className="absolute inset-x-[13%] inset-y-0 bg-[#3f434f]" />
-				<div className="absolute inset-x-[13%] inset-y-0 border-x border-white/70" />
-				<div className="absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-[repeating-linear-gradient(to_bottom,rgba(255,255,255,0.85)_0_7px,transparent_7px_16px)]" />
-				{/* cars, nose-up the road */}
-				<span className="absolute left-[30%] top-[36%] h-3 w-2 rounded-[2px] bg-[#4a76e8] shadow-[0_1px_0_rgba(0,0,0,0.35)]" />
-				<span className="absolute left-[58%] top-[43%] h-3 w-2 rounded-[2px] bg-[#5cbf62] shadow-[0_1px_0_rgba(0,0,0,0.35)]" />
-				<span className="absolute left-[32%] top-[52%] h-3 w-2 rounded-[2px] bg-[#ce6a3c] shadow-[0_1px_0_rgba(0,0,0,0.35)]" />
-				{/* the player, a step behind and lit yellow like the minimap dot */}
-				<span className="absolute left-[57%] top-[60%] h-3.5 w-2.5 rounded-[2px] bg-[#ffd84d] shadow-[0_1px_0_rgba(0,0,0,0.4)]" />
-			</div>
-			{/* pines dotted over the grass */}
-			<span className="absolute left-[70%] top-[16%] h-0 w-0 border-x-[6px] border-b-[13px] border-x-transparent border-b-[#3f7a4a]" />
-			<span className="absolute left-[84%] top-[46%] h-0 w-0 border-x-[5px] border-b-[11px] border-x-transparent border-b-[#356b41]" />
-			<span className="absolute left-[6%] top-[74%] h-0 w-0 border-x-[5px] border-b-[11px] border-x-transparent border-b-[#3f7a4a]" />
-			{/* minimap */}
-			<svg
-				viewBox="0 0 40 40"
-				className="absolute right-1.5 top-1.5 h-9 w-9 rounded border border-white/25 bg-black/35"
-			>
-				<path
-					d="M14 6 C27 4 36 10 34 18 C32 25 22 23 20 28 C18 33 10 36 7 30 C4 24 6 8 14 6 Z"
-					fill="none"
-					stroke="rgba(255,255,255,0.9)"
-					strokeWidth="2.5"
-					strokeLinejoin="round"
-				/>
-				<circle cx="33" cy="19" r="2.6" fill="#ffd84d" />
-			</svg>
-			{/* speed read-out */}
-			<div className="absolute bottom-1.5 left-1.5 rounded border border-white/15 bg-black/45 px-1.5 py-0.5 font-mono leading-none text-white">
-				<span className="text-[13px] font-bold tabular-nums">184</span>
-				<span className="ml-0.5 text-[7px] opacity-70">km/h</span>
-			</div>
-			<div className="absolute bottom-1.5 right-1.5 font-mono text-[7px] tracking-[0.14em] text-white/80">
-				LAP 2/3 · P2
-			</div>
-		</div>
-	);
-}
-
-function AdventurePreview() {
-	return (
-		<div className="flex h-full w-full flex-col gap-2 bg-term-bg p-3 text-[10px]">
-			{/* HUD: life bar + location */}
-			<div className="flex items-center gap-2">
-				<span className="text-[11px] leading-none">❤️</span>
-				<div className="h-1.5 flex-1 overflow-hidden rounded-full bg-term-rule">
-					<div className="h-full w-[72%] rounded-full bg-term-green" />
-				</div>
-				<span className="tabular-nums text-term-green">72</span>
-			</div>
-			<div className="flex items-center gap-1.5 text-[9px] text-term-dim">
-				<span className="text-term-amber">📍</span>
-				<span>the whispering woods</span>
-			</div>
-			{/* narration */}
-			<p className="leading-relaxed text-term-ink">
-				A gnarled path forks beneath the black pines. Something{" "}
-				<span className="text-term-green">watches</span> from the dark.
-			</p>
-			{/* choices */}
-			<div className="mt-auto flex flex-col gap-1">
-				{["enter the cave", "follow the river"].map((c, i) => (
-					<div
-						key={c}
-						className="flex items-center gap-1.5 rounded border border-term-rule px-1.5 py-1"
-					>
-						<span className="grid h-3.5 w-3.5 place-items-center rounded border border-term-green/50 text-[8px] text-term-green">
-							{i + 1}
-						</span>
-						<span className="text-term-dim">{c}</span>
-					</div>
-				))}
-			</div>
-		</div>
-	);
-}
-
-function OsPreview() {
-	return (
-		<div className="relative h-full w-full overflow-hidden bg-term-bg">
-			<div
-				className="absolute inset-0 opacity-60"
-				style={{
-					background:
-						"radial-gradient(circle at 20% 20%, rgba(158,206,106,0.15), transparent 55%), radial-gradient(circle at 80% 80%, rgba(122,162,247,0.15), transparent 55%)",
-				}}
-			/>
-			<div className="absolute left-0 right-0 top-0 flex h-4 items-center gap-2 border-b border-term-rule bg-term-bg2/80 px-2 text-[8px] text-term-dim">
-				<span className="text-term-green">◆</span>
-				<span className="text-term-ink">Finder</span>
-				<span className="ml-auto">100%</span>
-			</div>
-			<div className="absolute left-[14%] top-[32%] h-[40%] w-[46%] rounded border border-term-rule bg-term-bg2 shadow-lg">
-				<div className="flex items-center gap-1 border-b border-term-rule px-1.5 py-1">
-					<span className="h-1.5 w-1.5 rounded-full bg-[#ff5f56]" />
-					<span className="h-1.5 w-1.5 rounded-full bg-[#ffbd2e]" />
-					<span className="h-1.5 w-1.5 rounded-full bg-[#27c93f]" />
-				</div>
-				<div className="flex flex-col gap-1 p-1.5 text-[7px] text-term-dim">
-					<div className="h-1 w-3/4 rounded-sm bg-term-rule" />
-					<div className="h-1 w-1/2 rounded-sm bg-term-rule" />
-					<div className="h-1 w-5/6 rounded-sm bg-term-rule" />
-				</div>
-			</div>
-			<div className="absolute right-[8%] top-[22%] h-[32%] w-[36%] rounded border border-term-rule bg-term-bg2 shadow-lg">
-				<div className="flex items-center gap-1 border-b border-term-rule px-1.5 py-1">
-					<span className="h-1.5 w-1.5 rounded-full bg-[#ff5f56]" />
-					<span className="h-1.5 w-1.5 rounded-full bg-[#ffbd2e]" />
-					<span className="h-1.5 w-1.5 rounded-full bg-[#27c93f]" />
-				</div>
-				<div className="grid grid-cols-3 gap-1 p-1.5">
-					<div className="h-2.5 rounded-sm bg-term-green/40" />
-					<div className="h-2.5 rounded-sm bg-term-amber/40" />
-					<div className="h-2.5 rounded-sm bg-term-blue/40" />
-					<div className="h-2.5 rounded-sm bg-term-mag/40" />
-					<div className="h-2.5 rounded-sm bg-term-cyan/40" />
-					<div className="h-2.5 rounded-sm bg-term-red/40" />
-				</div>
-			</div>
-			<div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 rounded-md border border-term-rule bg-term-bg2/90 px-1.5 py-1">
-				<span className="h-3 w-3 rounded-sm bg-term-green/60" />
-				<span className="h-3 w-3 rounded-sm bg-term-blue/60" />
-				<span className="h-3 w-3 rounded-sm bg-term-amber/60" />
-				<span className="h-3 w-3 rounded-sm bg-term-mag/60" />
-				<span className="h-3 w-3 rounded-sm bg-term-cyan/60" />
-			</div>
-		</div>
-	);
-}
-
-function ResumePreview() {
-	return (
-		<div className="flex h-full w-full flex-col gap-1.5 bg-term-bg p-4 text-[9px]">
-			<p className="text-term-ink">
-				<span className="font-semibold">Sehal Sein</span>{" "}
-				<span className="text-term-dim">— sr software engineer</span>
-			</p>
-			<p className="text-term-faint">montreal · canada</p>
-			<div className="mt-1.5 flex flex-col gap-1 border-t border-dashed border-term-rule pt-1.5">
-				<p className="text-term-green">▌ experience</p>
-				<div className="flex flex-col gap-0.5 pl-2">
-					<p className="text-term-ink">Planned · platform</p>
-					<p className="text-term-ink">DGymBook · co-founder</p>
-					<p className="text-term-ink">Mino Games · sr swe</p>
-					<p className="text-term-dim">…</p>
-				</div>
-			</div>
-			<div className="mt-1 flex flex-col gap-0.5 border-t border-dashed border-term-rule pt-1.5">
-				<p className="text-term-green">▌ skills</p>
-				<p className="text-term-dim">
-					typescript · go · python · postgres · aws
-				</p>
-			</div>
-		</div>
-	);
-}
-
-function NowPreview() {
-	return (
-		<div className="flex h-full w-full flex-col gap-1.5 bg-term-bg p-4 text-[10px]">
-			<p className="text-[8px] uppercase tracking-[0.2em] text-term-dim">
-				now — apr 2026
-			</p>
-			<p className="text-term-green">▌ working on</p>
-			<ul className="flex flex-col gap-0.5 pl-2 text-term-ink">
-				<li>platform eng at Planned</li>
-				<li>scaling DGymBook past 50k users</li>
-				<li>this site + guestbook + MCP</li>
-			</ul>
-			<p className="mt-0.5 text-term-amber">▌ reading</p>
-			<ul className="flex flex-col gap-0.5 pl-2 text-term-dim">
-				<li>DDIA (re-read)</li>
-				<li>rich hickey talks</li>
-			</ul>
-		</div>
-	);
-}
-
-function GuestbookPreview() {
-	return (
-		<div className="flex h-full w-full flex-col gap-1.5 bg-term-bg p-4 text-[10px]">
-			<p className="text-[8px] uppercase tracking-[0.2em] text-term-dim">
-				guestbook
-			</p>
-			<div className="flex flex-col gap-1">
-				<p className="text-term-ink">
-					great site.{" "}
-					<span className="text-term-green">— @anon-dev</span>
-				</p>
-				<p className="text-term-ink">
-					the snake game hit.{" "}
-					<span className="text-term-green">— @pixel</span>
-				</p>
-				<p className="text-term-dim">
-					can you add dark mode for the dark mode?{" "}
-					<span className="text-term-green">— @jk</span>
-				</p>
-			</div>
-			<div className="mt-auto flex items-center gap-1 border-t border-dashed border-term-rule pt-1 text-term-faint">
-				<span className="text-term-green">›</span>
-				<span>sign in with github to leave a note…</span>
-			</div>
-		</div>
+		<header className="readme-section-head" data-reveal>
+			<span className="readme-mono">{path}</span>
+			<h2>{title}</h2>
+		</header>
 	);
 }

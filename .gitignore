@@ -19,6 +19,10 @@
 
 # production
 /build
+/dist
+/.output
+/.wrangler
+/.pnpm-store
 
 # misc
 .DS_Store
@@ -34,6 +38,9 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# netlify
+.netlify
 
 # typescript
 *.tsbuildinfo

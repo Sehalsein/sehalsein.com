@@ -182,6 +182,13 @@ export default function Snake() {
 
 	return (
 		<div className="app-snake">
+			<header className="snake-header">
+				<div>
+					<span>Arcade</span>
+					<h2>Snake</h2>
+				</div>
+				<p>Use the arrow keys. Don&apos;t hit the wall.</p>
+			</header>
 			<div className="hud">
 				<span>
 					SCORE <b>{score}</b>
@@ -193,14 +200,16 @@ export default function Snake() {
 					SPEED <b>{speed}x</b>
 				</span>
 			</div>
-			<canvas
-				ref={canvasRef}
-				width={SIZE}
-				height={SIZE}
-				tabIndex={0}
-				aria-label="snake game"
-			/>
-			<div className="tip">arrow keys · space to pause · click inside first</div>
+			<div className="snake-board">
+				<canvas
+					ref={canvasRef}
+					width={SIZE}
+					height={SIZE}
+					tabIndex={0}
+					aria-label="snake game"
+				/>
+			</div>
+			<div className="tip"><kbd>↑ ↓ ← →</kbd> move <span /> <kbd>space</kbd> pause</div>
 		</div>
 	);
 }

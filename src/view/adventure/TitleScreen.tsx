@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useAppNavigate } from "@/src/hooks/useAppNavigate";
 import {
 	listSaves,
 	deleteSave,
@@ -49,7 +47,7 @@ const ROOT_STYLE: React.CSSProperties = {
 };
 
 export default function TitleScreen() {
-	const router = useRouter();
+	const navigate = useAppNavigate();
 	const [saves, setSaves] = useState<SaveMeta[]>([]);
 
 	useEffect(() => {
@@ -57,12 +55,12 @@ export default function TitleScreen() {
 	}, []);
 
 	const startNew = useCallback(() => {
-		router.push("/adventure/" + newAdventureId());
-	}, [router]);
+		navigate("/adventure/" + newAdventureId());
+	}, [navigate]);
 
 	const open = useCallback(
-		(id: string) => router.push("/adventure/" + id),
-		[router],
+		(id: string) => navigate("/adventure/" + id),
+		[navigate],
 	);
 
 	const remove = useCallback((id: string) => {

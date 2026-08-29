@@ -42,24 +42,11 @@ export default function OSShell() {
 
 	const onBootDone = useCallback(() => {
 		setBooted(true);
-		setTimeout(() => {
-			const requested = new URLSearchParams(window.location.search).get(
-				"open",
-			);
-			if (requested && requested in APPS) {
-				openApp(requested as AppId, APPS[requested as AppId].defaultSize, {
-					position: { x: 160, y: 90 },
-				});
-				return;
-			}
-			openApp("about", APPS.about.defaultSize, {
-				position: { x: 80, y: 70 },
-			});
-			openApp("finder", APPS.finder.defaultSize, {
-				position: { x: 220, y: 120 },
-			});
-		}, 600);
-	}, [openApp]);
+		const requested = new URLSearchParams(window.location.search).get("open");
+		if (requested && requested in APPS) {
+			launch(requested as AppId, { position: { x: 160, y: 90 } });
+		}
+	}, [launch]);
 
 	const closeSpotlight = useCallback(() => setSpotlightOpen(false), []);
 	const toggleSpotlight = useCallback(() => setSpotlightOpen((s) => !s), []);
@@ -93,17 +80,24 @@ export default function OSShell() {
 	}, []);
 
 	return (
-		<div
-			className="os-root"
-			data-crt={crt}
-			onContextMenu={onDesktopContextMenu}
-		>
+		<>
+			<a className="os-skip-link" href="#os-workspace">
+				Skip to workspace
+			</a>
+			<main
+				id="os-workspace"
+				className="os-root"
+				data-crt={crt}
+				tabIndex={-1}
+				aria-label="Sehal OS workspace"
+				onContextMenu={onDesktopContextMenu}
+			>
 			<div
 				className="desktop"
 				id="desktop"
 				style={{ background: wallpaperFor(wall) }}
 			>
-				<Desktop />
+				<Desktop onOpen={launch} />
 			</div>
 			{booted && <MenuBar onHelp={() => setSpotlightOpen(true)} />}
 			{booted && <Dock onOpen={launch} />}
@@ -137,6 +131,7 @@ export default function OSShell() {
 				/>
 			)}
 			{!booted && <BootScreen onDone={onBootDone} />}
-		</div>
+			</main>
+		</>
 	);
 }

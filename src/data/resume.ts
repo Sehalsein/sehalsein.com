@@ -46,7 +46,7 @@ export const RESUME_DATA = {
 			duration: {
 				from: 2025,
 			},
-			position: "Sr Software Engineer",
+			position: "Engineering Lead",
 			description: [],
 		},
 		{

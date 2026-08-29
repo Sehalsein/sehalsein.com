@@ -23,12 +23,12 @@ export default function Mail() {
 
 	const send = () => {
 		if (!from.trim()) {
-			setError("your email is required so I can reply.");
+			setError("Enter your email so I can reply.");
 			fromRef.current?.focus();
 			return;
 		}
 		if (!message.trim()) {
-			setError("add a message before sending.");
+			setError("Add a message before sending.");
 			messageRef.current?.focus();
 			return;
 		}
@@ -51,11 +51,20 @@ export default function Mail() {
 			}}
 			aria-describedby={error ? errorId : undefined}
 		>
-			<h2>New message</h2>
+			<header className="mail-header">
+				<div className="mail-avatar">S</div>
+				<div>
+					<span>Direct line</span>
+					<h2>Send Sehal a note</h2>
+					<p>I usually reply within one or two business days.</p>
+				</div>
+			</header>
+			<div className="mail-form-card">
 			<div className="fld">
-				<label htmlFor={toId}>to</label>
+				<label htmlFor={toId}>To</label>
 				<input
 					id={toId}
+					name="to"
 					type="email"
 					value={RESUME_DATA.email}
 					readOnly
@@ -64,15 +73,16 @@ export default function Mail() {
 			</div>
 			<div className="row">
 				<div className="fld">
-					<label htmlFor={fromId}>from</label>
+					<label htmlFor={fromId}>From</label>
 					<input
 						ref={fromRef}
 						id={fromId}
+						name="from"
 						type="email"
 						inputMode="email"
 						autoComplete="email"
 						spellCheck={false}
-						placeholder="you@example.com"
+						placeholder="you@example.com…"
 						value={from}
 						onChange={(e) => setFrom(e.target.value)}
 						aria-invalid={error !== null && !from.trim()}
@@ -81,34 +91,38 @@ export default function Mail() {
 					/>
 				</div>
 				<div className="fld">
-					<label htmlFor={nameId}>name</label>
+					<label htmlFor={nameId}>Name</label>
 					<input
 						id={nameId}
+						name="name"
 						type="text"
 						autoComplete="name"
-						placeholder="your name"
+						placeholder="Your name…"
 						value={name}
 						onChange={(e) => setName(e.target.value)}
 					/>
 				</div>
 			</div>
 			<div className="fld">
-				<label htmlFor={subjectId}>subject</label>
+				<label htmlFor={subjectId}>Subject</label>
 				<input
 					id={subjectId}
+					name="subject"
 					type="text"
 					autoComplete="off"
-					placeholder="saw your site"
+					placeholder="Saw your site…"
 					value={subject}
 					onChange={(e) => setSubject(e.target.value)}
 				/>
 			</div>
 			<div className="fld">
-				<label htmlFor={messageId}>message</label>
+				<label htmlFor={messageId}>Message</label>
 				<textarea
 					ref={messageRef}
 					id={messageId}
-					placeholder="hey — …"
+					name="message"
+					autoComplete="off"
+					placeholder="Hey — …"
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					aria-invalid={error !== null && !message.trim()}
@@ -116,15 +130,19 @@ export default function Mail() {
 					required
 				/>
 			</div>
-			<button type="submit">send →</button>
+			<div className="mail-actions">
+				<span>⌘ Enter</span>
+				<button type="submit">Send Message <span aria-hidden="true">↗</span></button>
+			</div>
 			<p id={errorId} role="alert" className="ok" aria-live="assertive">
 				{error}
 			</p>
 			<p className="ok" aria-live="polite" aria-atomic="true">
 				{sent ? "✓ sent. thanks — I'll reply within 1–2 business days." : null}
 			</p>
+			</div>
 			<div className="alt">
-				prefer real email?{" "}
+				Prefer your own mail client?{" "}
 				<a href={`mailto:${RESUME_DATA.email}`}>{RESUME_DATA.email}</a> · find
 				me on{" "}
 				{RESUME_DATA.social.map((s, i) => (
