@@ -1,5 +1,5 @@
 /* Regression tests for the Hollowreach GM parser.
- * Run with: pnpm test  (node strips the types natively — no test framework). */
+ * Run with: bun test  (Bun's built-in test runner; no extra framework). */
 
 import { test } from "node:test";
 import assert from "node:assert/strict";

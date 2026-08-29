@@ -62,7 +62,7 @@ export function getAuth(): Auth {
 	return cached;
 }
 
-// Named export for the Better Auth CLI (`pnpm exec better-auth generate`).
+// Named export for the Better Auth CLI (`bunx better-auth generate`).
 export const auth = new Proxy({} as Auth, {
 	get(_target, prop) {
 		return Reflect.get(getAuth() as object, prop);

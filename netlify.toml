@@ -1,5 +1,5 @@
 [build]
-command = "pnpm run build"
+command = "bun run build"
 publish = "dist/client"
 
 [build.environment]
@@ -10,5 +10,5 @@ NODE_VERSION = "24"
 NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
 [dev]
-command = "pnpm dev"
+command = "bun run dev"
 port = 3000

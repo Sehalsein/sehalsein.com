@@ -2,20 +2,23 @@
   "name": "sehalsein.com",
   "version": "2.0.0",
   "private": true,
+  "packageManager": "bun@1.4.0",
   "engines": {
+    "bun": ">=1.4.0",
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build && tsc --noEmit",
-    "preview": "vite preview",
-    "deploy": "pnpm run build && wrangler deploy",
-    "typecheck": "tsc --noEmit",
-    "cf-typegen": "wrangler types",
-    "test": "node --test --disable-warning=MODULE_TYPELESS_PACKAGE_JSON \"src/**/*.test.ts\"",
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "dev": "node ./node_modules/vite/bin/vite.js dev",
+    "build": "node ./node_modules/vite/bin/vite.js build && node ./node_modules/typescript/bin/tsc --noEmit",
+    "preview": "node ./node_modules/vite/bin/vite.js preview",
+    "deploy": "bun run build && node ./node_modules/wrangler/bin/wrangler.js deploy",
+    "typecheck": "node ./node_modules/typescript/bin/tsc --noEmit",
+    "cf-typegen": "node ./node_modules/wrangler/bin/wrangler.js types",
+    "test": "bun test",
+    "db:generate": "node ./node_modules/drizzle-kit/bin.cjs generate",
+    "db:migrate": "node ./node_modules/drizzle-kit/bin.cjs migrate",
+    "db:push": "node ./node_modules/drizzle-kit/bin.cjs push",
+    "db:studio": "node ./node_modules/drizzle-kit/bin.cjs studio"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.170",

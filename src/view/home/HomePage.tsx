@@ -251,9 +251,6 @@ function Hero() {
 							linkedin
 						</a>
 					) : null}
-					<Link href="/terminal" className="readme-terminal-link">
-						open the terminal version <span aria-hidden="true">→</span>
-					</Link>
 				</div>
 			</div>
 
@@ -262,9 +259,9 @@ function Hero() {
 					<div className="readme-photo-frame">
 						<img
 							src={RESUME_DATA.photo}
-							alt="Sehal looking down, wearing glasses"
-							width="450"
-							height="450"
+							alt="Sehal smiling at his desk, surrounded by computer monitors"
+							width="960"
+							height="643"
 						/>
 					</div>
 					<figcaption className="readme-mono">

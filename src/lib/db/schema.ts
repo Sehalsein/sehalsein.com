@@ -1,4 +1,4 @@
-// Better Auth tables are generated via `pnpm exec better-auth generate`.
+// Better Auth tables are generated via `bunx better-auth generate`.
 // App-specific tables (guestbook_entry, rate_limit_bucket) live at the bottom.
 
 import { relations } from "drizzle-orm";

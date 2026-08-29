@@ -6,8 +6,8 @@ as a Cloudflare Worker.
 ## Development
 
 ```bash
-pnpm install
-pnpm dev
+bun install
+bun run dev
 ```
 
 The app uses TanStack Router's generated file routes in `src/routes`. The
@@ -17,11 +17,11 @@ out of SSR and load their engines only in the browser.
 Useful commands:
 
 ```bash
-pnpm build       # Cloudflare production bundle + TypeScript
-pnpm preview     # run the bundle locally in workerd
-pnpm test        # unit tests
-pnpm cf-typegen  # regenerate Cloudflare binding types
-pnpm deploy      # build and deploy with Wrangler
+bun run build       # Cloudflare production bundle + TypeScript
+bun run preview     # run the bundle locally in workerd
+bun test            # unit tests
+bun run cf-typegen  # regenerate Cloudflare binding types
+bun run deploy      # build and deploy with Wrangler
 ```
 
 ## Environment
@@ -39,3 +39,31 @@ Cloudflare Workers runtime. Configure the integrations you use:
 
 For a production Worker, add secrets with `wrangler secret put <NAME>` and set
 public build variables in the Cloudflare build environment.
+
+## Cloudflare deployments
+
+Cloudflare Workers Builds is connected directly to GitHub. Pushes to `main`
+deploy the `sehalsein-com` Worker; non-production branches upload preview
+versions with stable branch aliases and Cloudflare comments their URLs on pull
+requests. GitHub Actions is not used for deployment.
+
+Configure the following in both Cloudflare's **production** and **preview**
+build environments:
+
+- Secrets: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_SECRET`,
+  `GITHUB_TOKEN`, and `OPEN_ROUTER_KEY`
+- Variables: `BETTER_AUTH_URL`, `GITHUB_CLIENT_ID`, and `ADMIN_USER_NAME`
+- Optional variable: `VITE_PUBLIC_POSTHOG_KEY`
+
+Use `bun run db:migrate && bun run build` as the build command. Use the following
+commands for deployment:
+
+- Production: `node ./node_modules/wrangler/bin/wrangler.js deploy --config dist/server/wrangler.json`
+- Preview: `node ./node_modules/wrangler/bin/wrangler.js versions upload --config dist/server/wrangler.json`
+
+Both environments use the same Cloudflare-managed variables and encrypted
+Worker secrets, including the existing Neon production connection.
+
+GitHub OAuth only works on a preview whose callback URL is registered in the
+GitHub OAuth app; normal portfolio and API previewing does not depend on that
+callback.
