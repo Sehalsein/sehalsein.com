@@ -1511,8 +1511,13 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	}
 
 	.readme-header nav a:nth-child(2),
-	.readme-header nav a:nth-child(3) {
+	.readme-header nav a:nth-child(3),
+	.readme-header nav a:nth-child(1) {
 		display: none;
+	}
+
+	.readme-header nav {
+		gap: 8px;
 	}
 
 	.home-style-toggle--clean > span {
@@ -1520,7 +1525,12 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	}
 
 	.home-style-toggle--clean {
-		font-size: 0.61rem;
+		gap: 2px;
+		font-size: 0.58rem;
+	}
+
+	.home-style-toggle--clean button {
+		padding-inline: 5px;
 	}
 
 	.readme-hero {

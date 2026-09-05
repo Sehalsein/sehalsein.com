@@ -14,8 +14,8 @@ const restorePreferences = `
 try {
   var palette = localStorage.getItem('terminal-palette') || 'default';
   document.documentElement.dataset.palette = palette;
-  var homeLayout = localStorage.getItem('home-layout') || 'readme';
-  if (homeLayout === 'readme' || homeLayout === 'sketch') {
+  var homeLayout = localStorage.getItem('home-layout') || 'studio';
+  if (homeLayout === 'readme' || homeLayout === 'sketch' || homeLayout === 'studio') {
     document.documentElement.dataset.homeLayout = homeLayout;
   }
 } catch (_) {}
