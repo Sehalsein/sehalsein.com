@@ -513,7 +513,7 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	margin-top: 46px;
 	display: grid;
 	grid-template-columns: repeat(12, minmax(0, 1fr));
-	grid-template-rows: 420px 360px 280px;
+	grid-template-rows: 420px 360px 320px 280px;
 	gap: 1px;
 	border: 1px solid var(--readme-panel-rule);
 	background: var(--readme-panel-rule);
@@ -548,6 +548,7 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	grid-column: span 7;
 }
 
+.readme-lab-card.is-editor,
 .readme-lab-card.is-terminal {
 	grid-column: span 12;
 	grid-template-rows: 1fr;
@@ -663,6 +664,7 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	grid-row: 1 / span 2;
 }
 
+.readme-lab-card.is-editor .readme-lab-copy,
 .readme-lab-card.is-terminal .readme-lab-copy {
 	grid-template-columns: 1fr;
 	align-content: center;
@@ -670,6 +672,7 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	border-left: 1px solid var(--readme-panel-rule);
 }
 
+.readme-lab-card.is-editor .readme-lab-copy > i,
 .readme-lab-card.is-terminal .readme-lab-copy > i {
 	position: absolute;
 	right: 20px;
@@ -1099,6 +1102,147 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 .readme-os-dock i:nth-child(4) { background: #80c995; }
 .readme-os-dock i:nth-child(5) { background: #b69ced; }
 
+/* Draftroom — the actual paper-and-sidebar rhythm in miniature. */
+.readme-visual-editor {
+	display: grid;
+	grid-template-columns: 72px minmax(0, 1fr);
+	padding: 24px 34px 22px 24px;
+	background:
+		linear-gradient(90deg, transparent 34px, rgba(198, 99, 76, 0.12) 35px, transparent 36px),
+		#e9e7dc;
+}
+
+.readme-editor-rail {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	gap: 16px;
+	padding-top: 17px;
+	border: 1px solid #cbc6b8;
+	border-right: 0;
+	background: #f1eee4;
+}
+
+.readme-editor-rail strong {
+	display: grid;
+	width: 29px;
+	height: 29px;
+	place-items: center;
+	border: 1px solid #aaa596;
+	border-radius: 3px;
+	color: #8e4235;
+	background: #fbfaf4;
+	box-shadow: 2px 2px 0 #d1ccbd;
+	font-family: "JetBrains Mono", monospace;
+	font-size: 0.57rem;
+	letter-spacing: -0.06em;
+	transform: rotate(-1deg);
+}
+
+.readme-editor-rail i {
+	width: 29px;
+	height: 4px;
+	border-radius: 999px;
+	background: #d3cfc2;
+}
+
+.readme-editor-rail i:nth-of-type(2) {
+	width: 20px;
+	background: #c6634c;
+}
+
+.readme-editor-paper {
+	position: relative;
+	min-width: 0;
+	padding: 34px 44px;
+	border: 1px solid #cbc6b8;
+	background:
+		repeating-linear-gradient(0deg, transparent 0 27px, rgba(74, 100, 122, 0.07) 27px 28px),
+		#fbfaf4;
+	box-shadow: 12px 14px 0 rgba(41, 42, 37, 0.1);
+	transform: rotate(-0.35deg);
+	transition: transform 560ms var(--lab-ease);
+}
+
+.readme-lab-card:hover .readme-editor-paper,
+.readme-lab-card:focus-visible .readme-editor-paper {
+	transform: rotate(0deg) translateY(-3px);
+}
+
+.readme-editor-meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	color: #8e4235;
+	font-size: 0.52rem;
+	letter-spacing: 0.08em;
+}
+
+.readme-editor-meta i {
+	width: 34px;
+	height: 5px;
+	border-radius: 999px;
+	background: #efe3a4;
+}
+
+.readme-editor-paper > strong {
+	display: block;
+	max-width: 510px;
+	margin-top: 22px;
+	font-family: "Spectral", Georgia, serif;
+	font-size: clamp(1.75rem, 3.3vw, 3.25rem);
+	font-weight: 500;
+	letter-spacing: -0.045em;
+	line-height: 0.98;
+}
+
+.readme-editor-lines {
+	width: min(76%, 430px);
+	margin-top: 28px;
+}
+
+.readme-editor-lines span {
+	display: block;
+	height: 5px;
+	margin-top: 11px;
+	border-radius: 999px;
+	background: #d2cec1;
+}
+
+.readme-editor-lines span:nth-child(2) { width: 84%; }
+.readme-editor-lines span:nth-child(3) { width: 61%; }
+
+.readme-editor-toolbar {
+	position: absolute;
+	right: 25px;
+	bottom: 22px;
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	padding: 4px;
+	border: 1px solid #ccc7b9;
+	border-radius: 4px;
+	color: #615f58;
+	background: rgba(251, 250, 244, 0.92);
+	box-shadow: 3px 4px 0 rgba(41, 42, 37, 0.08);
+	font-size: 0.55rem;
+}
+
+.readme-editor-toolbar > * {
+	display: grid;
+	width: 24px;
+	height: 22px;
+	place-items: center;
+	font-style: normal;
+}
+
+.readme-editor-toolbar i {
+	color: #fbfaf4;
+	background: #c6634c;
+}
+
 /* Terminal — wide enough to read like a second homepage. */
 .readme-visual-terminal {
 	display: grid;
@@ -1328,7 +1472,7 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	}
 
 	.readme-lab-grid {
-		grid-template-rows: 380px 340px 250px;
+		grid-template-rows: 380px 340px 300px 250px;
 	}
 
 	.readme-lab-card.is-racer,
@@ -1338,16 +1482,16 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 		grid-column: span 6;
 	}
 
-	.readme-lab-card:not(.is-terminal) .readme-lab-copy {
+	.readme-lab-card:not(.is-editor):not(.is-terminal) .readme-lab-copy {
 		grid-template-columns: minmax(0, 1fr) 42px;
 		gap: 10px 16px;
 	}
 
-	.readme-lab-card:not(.is-terminal) .readme-lab-copy > p {
+	.readme-lab-card:not(.is-editor):not(.is-terminal) .readme-lab-copy > p {
 		grid-column: 1;
 	}
 
-	.readme-lab-card:not(.is-terminal) .readme-lab-copy > i {
+	.readme-lab-card:not(.is-editor):not(.is-terminal) .readme-lab-copy > i {
 		grid-column: 2;
 		grid-row: 1 / span 2;
 	}
@@ -1422,12 +1566,14 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	.readme-lab-card.is-doom,
 	.readme-lab-card.is-adventure,
 	.readme-lab-card.is-os,
+	.readme-lab-card.is-editor,
 	.readme-lab-card.is-terminal {
 		grid-column: 1;
 		grid-template-columns: 1fr;
 		grid-template-rows: 245px auto;
 	}
 
+	.readme-lab-card.is-editor .readme-lab-copy,
 	.readme-lab-card.is-terminal .readme-lab-copy {
 		grid-template-columns: minmax(0, 1fr) 42px;
 		gap: 10px 16px;
@@ -1435,6 +1581,7 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 		border-left: 0;
 	}
 
+	.readme-lab-card.is-editor .readme-lab-copy > p,
 	.readme-lab-card.is-terminal .readme-lab-copy > p {
 		grid-column: 1;
 	}
@@ -1444,6 +1591,7 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 		padding: 17px;
 	}
 
+	.readme-lab-card.is-editor .readme-lab-copy > i,
 	.readme-lab-card.is-terminal .readme-lab-copy > i {
 		position: static;
 		grid-column: 2;
@@ -1452,6 +1600,38 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 
 	.readme-visual-racer > img {
 		right: 19%;
+	}
+
+	.readme-visual-editor {
+		grid-template-columns: 48px minmax(0, 1fr);
+		padding: 16px 20px 14px 14px;
+	}
+
+	.readme-editor-rail {
+		gap: 12px;
+		padding-top: 13px;
+	}
+
+	.readme-editor-rail i {
+		width: 22px;
+	}
+
+	.readme-editor-paper {
+		padding: 26px 24px;
+	}
+
+	.readme-editor-paper > strong {
+		margin-top: 18px;
+		font-size: 1.7rem;
+	}
+
+	.readme-editor-lines {
+		width: 100%;
+		margin-top: 20px;
+	}
+
+	.readme-editor-toolbar {
+		display: none;
 	}
 
 	.readme-notes-grid {
@@ -1507,6 +1687,7 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	.readme-doom-wall-left,
 	.readme-doom-wall-right,
 	.readme-adventure-sheet,
+	.readme-editor-paper,
 	.readme-os-window {
 		transition: none !important;
 	}
@@ -1537,6 +1718,11 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	.readme-lab-card:hover .readme-adventure-sheet,
 	.readme-lab-card:focus-visible .readme-adventure-sheet {
 		transform: rotate(-1.5deg) !important;
+	}
+
+	.readme-lab-card:hover .readme-editor-paper,
+	.readme-lab-card:focus-visible .readme-editor-paper {
+		transform: rotate(-0.35deg) !important;
 	}
 
 	.readme-lab-card:hover .readme-doom-wall-left,

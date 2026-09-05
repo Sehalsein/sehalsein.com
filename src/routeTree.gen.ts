@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdventureRouteImport } from './routes/adventure'
 import { Route as ConsentRouteImport } from './routes/consent'
 import { Route as DoomRouteImport } from './routes/doom'
+import { Route as EditorRouteImport } from './routes/editor'
 import { Route as GuestbookRouteImport } from './routes/guestbook'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as NowRouteImport } from './routes/now'
@@ -57,6 +58,11 @@ const ConsentRoute = ConsentRouteImport.update({
 const DoomRoute = DoomRouteImport.update({
   id: '/doom',
   path: '/doom',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditorRoute = EditorRouteImport.update({
+  id: '/editor',
+  path: '/editor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuestbookRoute = GuestbookRouteImport.update({
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/adventure': typeof AdventureRouteWithChildren
   '/consent': typeof ConsentRoute
   '/doom': typeof DoomRoute
+  '/editor': typeof EditorRoute
   '/guestbook': typeof GuestbookRoute
   '/me': typeof MeRoute
   '/now': typeof NowRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/adventure': typeof AdventureRouteWithChildren
   '/consent': typeof ConsentRoute
   '/doom': typeof DoomRoute
+  '/editor': typeof EditorRoute
   '/guestbook': typeof GuestbookRoute
   '/me': typeof MeRoute
   '/now': typeof NowRoute
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/adventure': typeof AdventureRouteWithChildren
   '/consent': typeof ConsentRoute
   '/doom': typeof DoomRoute
+  '/editor': typeof EditorRoute
   '/guestbook': typeof GuestbookRoute
   '/me': typeof MeRoute
   '/now': typeof NowRoute
@@ -291,6 +300,7 @@ export interface FileRouteTypes {
     | '/adventure'
     | '/consent'
     | '/doom'
+    | '/editor'
     | '/guestbook'
     | '/me'
     | '/now'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/adventure'
     | '/consent'
     | '/doom'
+    | '/editor'
     | '/guestbook'
     | '/me'
     | '/now'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/adventure'
     | '/consent'
     | '/doom'
+    | '/editor'
     | '/guestbook'
     | '/me'
     | '/now'
@@ -385,6 +397,7 @@ export interface RootRouteChildren {
   AdventureRoute: typeof AdventureRouteWithChildren
   ConsentRoute: typeof ConsentRoute
   DoomRoute: typeof DoomRoute
+  EditorRoute: typeof EditorRoute
   GuestbookRoute: typeof GuestbookRoute
   MeRoute: typeof MeRoute
   NowRoute: typeof NowRoute
@@ -435,6 +448,13 @@ declare module '@tanstack/react-router' {
       path: '/doom'
       fullPath: '/doom'
       preLoaderRoute: typeof DoomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editor': {
+      id: '/editor'
+      path: '/editor'
+      fullPath: '/editor'
+      preLoaderRoute: typeof EditorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guestbook': {
@@ -681,6 +701,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdventureRoute: AdventureRouteWithChildren,
   ConsentRoute: ConsentRoute,
   DoomRoute: DoomRoute,
+  EditorRoute: EditorRoute,
   GuestbookRoute: GuestbookRoute,
   MeRoute: MeRoute,
   NowRoute: NowRoute,

@@ -662,6 +662,14 @@ html:has(.sketch-home) {
 	grid-column: 6 / span 7;
 }
 
+.sketch-project-card--editor {
+	--project-tilt: -0.35deg;
+	grid-column: 2 / span 10;
+	grid-template-columns: minmax(0, 1fr) 250px;
+	grid-template-rows: 260px;
+	margin-top: 6px;
+}
+
 .sketch-project-card--terminal {
 	--project-tilt: 0.45deg;
 	grid-column: 3 / span 8;
@@ -751,13 +759,23 @@ html:has(.sketch-home) {
 	background-color: #dce3df;
 }
 
+.sketch-project-card--editor .sketch-project-art,
 .sketch-project-card--terminal .sketch-project-art {
 	border-right: 1.7px solid var(--sketch-ink);
 	border-bottom: 0;
+}
+
+.sketch-project-card--editor .sketch-project-art {
+	color: #9a3f35;
+	background-color: #eee7d4;
+}
+
+.sketch-project-card--terminal .sketch-project-art {
 	color: #465c46;
 	background-color: #e0dfd2;
 }
 
+.sketch-project-card--editor .sketch-project-copy,
 .sketch-project-card--terminal .sketch-project-copy {
 	display: flex;
 	flex-direction: column;
@@ -1020,6 +1038,7 @@ html:has(.sketch-home) {
 		gap: 18px;
 	}
 
+	.sketch-project-card--editor,
 	.sketch-project-card--terminal {
 		grid-column: 2 / span 10;
 	}
@@ -1177,16 +1196,19 @@ html:has(.sketch-home) {
 	.sketch-project-card--doom,
 	.sketch-project-card--adventure,
 	.sketch-project-card--os,
+	.sketch-project-card--editor,
 	.sketch-project-card--terminal {
 		grid-column: 1;
 		margin-top: 0;
 	}
 
+	.sketch-project-card--editor,
 	.sketch-project-card--terminal {
 		grid-template-columns: 1fr;
 		grid-template-rows: 225px auto;
 	}
 
+	.sketch-project-card--editor .sketch-project-art,
 	.sketch-project-card--terminal .sketch-project-art {
 		border-right: 0;
 		border-bottom: 1.7px solid var(--sketch-ink);
