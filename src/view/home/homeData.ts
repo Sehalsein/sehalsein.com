@@ -56,6 +56,14 @@ export const EXPERIMENTS = [
 		visual: "os",
 	},
 	{
+		href: "/editor",
+		name: "draftroom",
+		category: "writing tool",
+		description:
+			"A local-first notebook for shaping rough ideas with rich text, slash commands, and a little paper personality.",
+		visual: "editor",
+	},
+	{
 		href: "/terminal",
 		name: "terminal",
 		category: "alternate homepage",

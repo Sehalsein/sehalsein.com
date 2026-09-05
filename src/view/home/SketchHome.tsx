@@ -356,6 +356,24 @@ function SketchDoodle({ visual }: { visual: ExperimentVisualName }) {
 		);
 	}
 
+	if (visual === "editor") {
+		return (
+			<svg className="sketch-doodle" viewBox="0 0 320 180" aria-hidden="true">
+				<rect x="27" y="16" width="266" height="148" rx="3" />
+				<path
+					pathLength="1"
+					d="M62 16v148M42 38h5m-5 19h5m-5 19h5m-5 19h5m-5 19h5m-5 19h5"
+				/>
+				<path
+					pathLength="1"
+					d="M82 43h76M82 64h178M82 81h143M82 104h170M82 121h152M82 143h67"
+				/>
+				<path pathLength="1" d="m226 139 24-24 13 13-24 24-19 5Z" />
+				<path pathLength="1" d="m247 118 12-12 13 13-12 12" />
+			</svg>
+		);
+	}
+
 	return (
 		<svg className="sketch-doodle" viewBox="0 0 320 180" aria-hidden="true">
 			<rect x="18" y="22" width="284" height="136" rx="4" />

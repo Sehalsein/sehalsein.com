@@ -425,6 +425,37 @@ function ExperimentVisual({
 		);
 	}
 
+	if (visual === "editor") {
+		return (
+			<div className="readme-visual readme-visual-editor" aria-hidden="true">
+				<div className="readme-editor-rail">
+					<strong>DR</strong>
+					<i />
+					<i />
+					<i />
+				</div>
+				<div className="readme-editor-paper">
+					<div className="readme-editor-meta readme-mono">
+						<span>FIELD NOTE / 06</span>
+						<i />
+					</div>
+					<strong>Draft something worth keeping.</strong>
+					<div className="readme-editor-lines">
+						<span />
+						<span />
+						<span />
+					</div>
+					<div className="readme-editor-toolbar readme-mono">
+						<b>B</b>
+						<em>I</em>
+						<span>H1</span>
+						<i>+</i>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="readme-visual readme-visual-terminal readme-mono" aria-hidden="true">
 			<div className="readme-terminal-bar"><i /><i /><i /><span>~/sehal</span></div>
