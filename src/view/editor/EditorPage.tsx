@@ -286,6 +286,8 @@ export default function EditorPage() {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 	const [commandMenuOpen, setCommandMenuOpen] = useState(false);
+	const [commandMenuAutoFocusSearch, setCommandMenuAutoFocusSearch] =
+		useState(false);
 	const [commandMenuPosition, setCommandMenuPosition] =
 		useState<CommandMenuPosition>({ top: 12, left: 0 });
 	const [hasPendingChanges, setHasPendingChanges] = useState(false);
@@ -293,6 +295,8 @@ export default function EditorPage() {
 	const activeIdRef = useRef(activeId);
 	const titleInputRef = useRef<HTMLInputElement>(null);
 	const editorShellRef = useRef<HTMLDivElement>(null);
+	const sidebarMenuButtonRef = useRef<HTMLButtonElement>(null);
+	const sidebarCloseButtonRef = useRef<HTMLButtonElement>(null);
 	activeIdRef.current = activeId;
 
 	const activeDocument =
@@ -341,6 +345,7 @@ export default function EditorPage() {
 						$from.parent.textContent.length === 0;
 					if (event.key === "/" && isEmptyParagraph) {
 						event.preventDefault();
+						setCommandMenuAutoFocusSearch(true);
 						const editorShell = editorShellRef.current;
 						if (editorShell) {
 							const caret = view.coordsAtPos($from.pos);
@@ -455,6 +460,17 @@ export default function EditorPage() {
 		return () => window.removeEventListener("keydown", handleShortcut);
 	}, [createDocument]);
 
+	useEffect(() => {
+		if (!sidebarOpen) return;
+		const closeSidebar = (event: KeyboardEvent) => {
+			if (event.key !== "Escape") return;
+			setSidebarOpen(false);
+			window.requestAnimationFrame(() => sidebarMenuButtonRef.current?.focus());
+		};
+		window.addEventListener("keydown", closeSidebar);
+		return () => window.removeEventListener("keydown", closeSidebar);
+	}, [sidebarOpen]);
+
 	const updateTitle = useCallback((title: string) => {
 		const documentId = activeIdRef.current;
 		setDocuments((current) =>
@@ -484,16 +500,24 @@ export default function EditorPage() {
 
 	return (
 		<div
-			className={`draft-app${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
+			className={`draft-app${sidebarCollapsed ? " is-sidebar-collapsed" : ""}${sidebarOpen ? " is-sidebar-open" : ""}`}
 		>
 			<button
 				type="button"
 				className={`draft-sidebar-scrim${sidebarOpen ? " is-visible" : ""}`}
 				aria-label="Close document sidebar"
-				onClick={() => setSidebarOpen(false)}
+				aria-hidden={!sidebarOpen}
+				tabIndex={sidebarOpen ? 0 : -1}
+				onClick={() => {
+					setSidebarOpen(false);
+					window.requestAnimationFrame(() =>
+						sidebarMenuButtonRef.current?.focus(),
+					);
+				}}
 			/>
 
 			<aside
+				id="draft-document-sidebar"
 				className={`draft-sidebar${sidebarOpen ? " is-open" : ""}`}
 				aria-label="Draftroom navigation"
 			>
@@ -510,10 +534,16 @@ export default function EditorPage() {
 						</span>
 					</a>
 					<button
+						ref={sidebarCloseButtonRef}
 						type="button"
 						className="draft-icon-button draft-mobile-close"
 						aria-label="Close sidebar"
-						onClick={() => setSidebarOpen(false)}
+						onClick={() => {
+							setSidebarOpen(false);
+							window.requestAnimationFrame(() =>
+								sidebarMenuButtonRef.current?.focus(),
+							);
+						}}
 					>
 						<X aria-hidden="true" />
 					</button>
@@ -590,10 +620,18 @@ export default function EditorPage() {
 				<header className="draft-topbar">
 					<div className="draft-topbar-left">
 						<button
+							ref={sidebarMenuButtonRef}
 							type="button"
 							className="draft-icon-button draft-menu-button"
 							aria-label="Open document sidebar"
-							onClick={() => setSidebarOpen(true)}
+							aria-controls="draft-document-sidebar"
+							aria-expanded={sidebarOpen}
+							onClick={() => {
+								setSidebarOpen(true);
+								window.requestAnimationFrame(() =>
+									sidebarCloseButtonRef.current?.focus(),
+								);
+							}}
 						>
 							<Menu aria-hidden="true" />
 						</button>
@@ -658,7 +696,12 @@ export default function EditorPage() {
 							<>
 								<FormattingToolbar
 									editor={editor}
+									commandsOpen={commandMenuOpen}
 									onOpenCommands={() => {
+										setCommandMenuAutoFocusSearch(
+											window.matchMedia("(hover: hover) and (pointer: fine)")
+												.matches,
+										);
 										setCommandMenuPosition({ top: 12, left: 0 });
 										setCommandMenuOpen(true);
 									}}
@@ -676,6 +719,7 @@ export default function EditorPage() {
 										<CommandMenu
 											editor={editor}
 											position={commandMenuPosition}
+											autoFocusSearch={commandMenuAutoFocusSearch}
 											onClose={() => setCommandMenuOpen(false)}
 										/>
 									) : null}
@@ -698,9 +742,11 @@ export default function EditorPage() {
 
 function FormattingToolbar({
 	editor,
+	commandsOpen,
 	onOpenCommands,
 }: {
 	editor: Editor;
+	commandsOpen: boolean;
 	onOpenCommands: () => void;
 }) {
 	const formatting = useEditorState({
@@ -866,6 +912,8 @@ function FormattingToolbar({
 				type="button"
 				className="draft-insert-button"
 				onClick={onOpenCommands}
+				aria-expanded={commandsOpen}
+				aria-haspopup="dialog"
 			>
 				<Plus aria-hidden="true" />
 				<span>Insert</span>
@@ -977,15 +1025,18 @@ function InlineToolbar({ editor }: { editor: Editor }) {
 function CommandMenu({
 	editor,
 	position,
+	autoFocusSearch,
 	onClose,
 }: {
 	editor: Editor;
 	position: CommandMenuPosition;
+	autoFocusSearch: boolean;
 	onClose: () => void;
 }) {
 	const [query, setQuery] = useState("");
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const inputRef = useRef<HTMLInputElement>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
 	const filteredCommands = useMemo(() => {
 		const normalizedQuery = query.trim().toLocaleLowerCase();
 		if (!normalizedQuery) return COMMANDS;
@@ -997,8 +1048,9 @@ function CommandMenu({
 	}, [query]);
 
 	useEffect(() => {
-		inputRef.current?.focus();
-	}, []);
+		if (autoFocusSearch) inputRef.current?.focus();
+		else menuRef.current?.focus();
+	}, [autoFocusSearch]);
 
 	useEffect(() => {
 		setSelectedIndex(0);
@@ -1010,11 +1062,6 @@ function CommandMenu({
 	};
 
 	const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
-		if (event.key === "Escape") {
-			event.preventDefault();
-			onClose();
-			editor.chain().focus().run();
-		}
 		if (event.key === "ArrowDown") {
 			event.preventDefault();
 			setSelectedIndex((index) =>
@@ -1039,9 +1086,17 @@ function CommandMenu({
 
 	return (
 		<div
+			ref={menuRef}
 			className="draft-command-menu"
 			role="dialog"
 			aria-label="Insert a block"
+			tabIndex={-1}
+			onKeyDown={(event) => {
+				if (event.key !== "Escape") return;
+				event.preventDefault();
+				onClose();
+				editor.chain().focus().run();
+			}}
 			style={{ top: position.top, left: position.left }}
 		>
 			<div className="draft-command-head">
