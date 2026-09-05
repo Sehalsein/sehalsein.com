@@ -18,7 +18,6 @@ import {
 	AlignLeft,
 	Bold,
 	BookOpen,
-	Check,
 	ChevronDown,
 	Code2,
 	Download,
@@ -41,7 +40,6 @@ import {
 	Quote,
 	Redo2,
 	Search,
-	Sparkles,
 	Strikethrough,
 	Type,
 	Underline,
@@ -74,6 +72,11 @@ type CommandItem = {
 	keywords: string;
 	icon: LucideIcon;
 	action: (editor: Editor) => void;
+};
+
+type CommandMenuPosition = {
+	top: number;
+	left: number;
 };
 
 const DOCUMENTS_KEY = "draftroom.documents.v1";
@@ -283,10 +286,13 @@ export default function EditorPage() {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 	const [commandMenuOpen, setCommandMenuOpen] = useState(false);
+	const [commandMenuPosition, setCommandMenuPosition] =
+		useState<CommandMenuPosition>({ top: 12, left: 0 });
 	const [hasPendingChanges, setHasPendingChanges] = useState(false);
 	const [lastSavedAt, setLastSavedAt] = useState(Date.now());
 	const activeIdRef = useRef(activeId);
 	const titleInputRef = useRef<HTMLInputElement>(null);
+	const editorShellRef = useRef<HTMLDivElement>(null);
 	activeIdRef.current = activeId;
 
 	const activeDocument =
@@ -335,6 +341,19 @@ export default function EditorPage() {
 						$from.parent.textContent.length === 0;
 					if (event.key === "/" && isEmptyParagraph) {
 						event.preventDefault();
+						const editorShell = editorShellRef.current;
+						if (editorShell) {
+							const caret = view.coordsAtPos($from.pos);
+							const shell = editorShell.getBoundingClientRect();
+							const menuWidth = 300;
+							setCommandMenuPosition({
+								top: caret.bottom - shell.top + 8,
+								left: Math.min(
+									Math.max(0, caret.left - shell.left),
+									Math.max(0, shell.width - menuWidth),
+								),
+							});
+						}
 						setCommandMenuOpen(true);
 						return true;
 					}
@@ -487,7 +506,7 @@ export default function EditorPage() {
 						</span>
 						<span>
 							<strong>Draftroom</strong>
-							<small>private workspace</small>
+							<small>field notes</small>
 						</span>
 					</a>
 					<button
@@ -519,13 +538,15 @@ export default function EditorPage() {
 				<div className="draft-sidebar-section">
 					<div className="draft-sidebar-label-row">
 						<span>Pages</span>
-						<span>{documents.length.toString().padStart(2, "0")}</span>
+						<span>{documents.length}</span>
 					</div>
 					<label className="draft-search">
 						<Search aria-hidden="true" />
 						<span className="sr-only">Search pages</span>
 						<input
 							type="search"
+							name="page-search"
+							autoComplete="off"
 							value={searchQuery}
 							onChange={(event) => setSearchQuery(event.target.value)}
 							placeholder="Find a page…"
@@ -557,13 +578,10 @@ export default function EditorPage() {
 				</div>
 
 				<div className="draft-sidebar-footer">
-					<div className="draft-local-stamp" aria-hidden="true">
-						<span>LOCAL</span>
-						<strong>001</strong>
-					</div>
+					<span className="draft-local-dot" aria-hidden="true" />
 					<div>
-						<strong>Your words stay here.</strong>
-						<p>Saved only in this browser.</p>
+						<strong>Local workspace</strong>
+						<p>Your words stay in this browser.</p>
 					</div>
 				</div>
 			</aside>
@@ -599,7 +617,7 @@ export default function EditorPage() {
 					</div>
 
 					<div className="draft-topbar-actions">
-						<span className="draft-save-state" role="status">
+						<span className="draft-save-state" role="status" aria-live="polite">
 							<span className={hasPendingChanges ? "is-saving" : ""} />
 							{hasPendingChanges
 								? "Saving…"
@@ -628,6 +646,8 @@ export default function EditorPage() {
 						<input
 							ref={titleInputRef}
 							className="draft-title-input"
+							name="page-title"
+							autoComplete="off"
 							value={activeDocument.title}
 							onChange={(event) => updateTitle(event.target.value)}
 							placeholder="Untitled"
@@ -638,7 +658,10 @@ export default function EditorPage() {
 							<>
 								<FormattingToolbar
 									editor={editor}
-									onOpenCommands={() => setCommandMenuOpen(true)}
+									onOpenCommands={() => {
+										setCommandMenuPosition({ top: 12, left: 0 });
+										setCommandMenuOpen(true);
+									}}
 								/>
 								<BubbleMenu
 									editor={editor}
@@ -647,11 +670,12 @@ export default function EditorPage() {
 								>
 									<InlineToolbar editor={editor} />
 								</BubbleMenu>
-								<div className="draft-editor-shell">
+								<div ref={editorShellRef} className="draft-editor-shell">
 									<EditorContent editor={editor} />
 									{commandMenuOpen ? (
 										<CommandMenu
 											editor={editor}
+											position={commandMenuPosition}
 											onClose={() => setCommandMenuOpen(false)}
 										/>
 									) : null}
@@ -952,9 +976,11 @@ function InlineToolbar({ editor }: { editor: Editor }) {
 
 function CommandMenu({
 	editor,
+	position,
 	onClose,
 }: {
 	editor: Editor;
+	position: CommandMenuPosition;
 	onClose: () => void;
 }) {
 	const [query, setQuery] = useState("");
@@ -1012,13 +1038,22 @@ function CommandMenu({
 	};
 
 	return (
-		<div className="draft-command-menu" role="dialog" aria-label="Insert a block">
+		<div
+			className="draft-command-menu"
+			role="dialog"
+			aria-label="Insert a block"
+			style={{ top: position.top, left: position.left }}
+		>
 			<div className="draft-command-head">
-				<div>
-					<Sparkles aria-hidden="true" />
-					<span>Turn into</span>
-				</div>
-				<button type="button" onClick={onClose} aria-label="Close insert menu">
+				<span>Add a block</span>
+				<button
+					type="button"
+					onClick={() => {
+						onClose();
+						editor.chain().focus().run();
+					}}
+					aria-label="Close insert menu"
+				>
 					<X aria-hidden="true" />
 				</button>
 			</div>
@@ -1027,6 +1062,8 @@ function CommandMenu({
 				<span className="sr-only">Search block types</span>
 				<input
 					ref={inputRef}
+					name="block-search"
+					autoComplete="off"
 					value={query}
 					onChange={(event) => setQuery(event.target.value)}
 					onKeyDown={handleKeyDown}
@@ -1051,18 +1088,12 @@ function CommandMenu({
 								<strong>{command.label}</strong>
 								<small>{command.description}</small>
 							</span>
-							{index === selectedIndex ? <Check aria-hidden="true" /> : null}
 						</button>
 					);
 				})}
 				{filteredCommands.length === 0 ? (
 					<p>No blocks match “{query}”.</p>
 				) : null}
-			</div>
-			<div className="draft-command-footer">
-				<span><kbd>↑</kbd><kbd>↓</kbd> move</span>
-				<span><kbd>↵</kbd> select</span>
-				<span><kbd>esc</kbd> close</span>
 			</div>
 		</div>
 	);
