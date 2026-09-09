@@ -21,18 +21,21 @@ import {
 import "./home.css";
 
 const SketchHome = lazy(() => import("@/src/view/home/SketchHome"));
+const StudioHome = lazy(() => import("@/src/view/home/StudioHome"));
 const HOME_LAYOUT_KEY = "home-layout";
 
 const revealDelay = (index: number) =>
 	({ "--reveal-delay": `${index * 50}ms` }) as CSSProperties;
 
 export default function HomePage() {
-	const [layout, setLayout] = useState<HomeLayout>("readme");
+	const [layout, setLayout] = useState<HomeLayout>("studio");
 	const [preferencesReady, setPreferencesReady] = useState(false);
 
 	useEffect(() => {
 		const restored = document.documentElement.dataset.homeLayout;
-		if (restored === "sketch") setLayout("sketch");
+		if (restored === "readme" || restored === "sketch" || restored === "studio") {
+			setLayout(restored);
+		}
 		setPreferencesReady(true);
 	}, []);
 
@@ -50,6 +53,18 @@ export default function HomePage() {
 		return (
 			<Suspense fallback={<div className="home-sketch-loading" aria-hidden="true" />}>
 				<SketchHome layout={layout} onLayoutChange={changeLayout} />
+			</Suspense>
+		);
+	}
+
+	if (layout === "studio") {
+		return (
+			<Suspense fallback={<div className="home-studio-loading" aria-hidden="true" />}>
+				<StudioHome
+					layout={layout}
+					onLayoutChange={changeLayout}
+					preferencesReady={preferencesReady}
+				/>
 			</Suspense>
 		);
 	}

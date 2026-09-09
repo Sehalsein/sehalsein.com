@@ -1,0 +1,911 @@
+.sol-ai-page {
+	--sol-paper: #f4f1e8;
+	--sol-panel: #fbfaf6;
+	--sol-ink: #171814;
+	--sol-copy: #4d5048;
+	--sol-muted: #77796f;
+	--sol-line: #d6d4cb;
+	--sol-blue: #1655a6;
+	--sol-yellow: #f6c445;
+	min-height: 100svh;
+	background: var(--sol-paper);
+	color: var(--sol-ink);
+	color-scheme: light;
+	font-family: "Manrope", Arial, Helvetica, sans-serif;
+	font-synthesis: none;
+	overflow: hidden;
+}
+
+html:has(.sol-ai-page),
+body:has(.sol-ai-page) {
+	background: var(--sol-paper);
+}
+
+.sol-ai-page *,
+.sol-ai-page *::before,
+.sol-ai-page *::after {
+	box-sizing: border-box;
+}
+
+.sol-ai-page button,
+.sol-ai-page textarea {
+	font: inherit;
+}
+
+.sol-ai-topbar {
+	height: 72px;
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	align-items: center;
+	gap: 24px;
+	padding: 0 clamp(24px, 3.3vw, 52px);
+	border-bottom: 1px solid var(--sol-line);
+	background: color-mix(in srgb, var(--sol-paper) 92%, transparent);
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 0.68rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	position: relative;
+	z-index: 10;
+	backdrop-filter: blur(16px);
+}
+
+.sol-ai-brand {
+	width: max-content;
+	color: var(--sol-ink);
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-decoration: none;
+	text-transform: lowercase;
+}
+
+.sol-ai-brand span {
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	margin-right: 7px;
+	border-radius: 50%;
+	background: var(--sol-blue);
+	vertical-align: 1px;
+}
+
+.sol-ai-topbar > p {
+	margin: 0;
+	color: var(--sol-muted);
+}
+
+.sol-ai-online {
+	justify-self: end;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--sol-copy);
+}
+
+.sol-ai-online i,
+.sol-ai-character-label strong i {
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #278e5d;
+	box-shadow: 0 0 0 4px rgba(39, 142, 93, 0.12);
+}
+
+.sol-ai-shell {
+	min-height: calc(100svh - 72px);
+	display: grid;
+	grid-template-columns: minmax(390px, 0.92fr) minmax(520px, 1.08fr);
+}
+
+.sol-ai-stage {
+	--pointer-x: 0;
+	--pointer-y: 0;
+	position: relative;
+	min-width: 0;
+	padding: clamp(44px, 6vh, 78px) clamp(34px, 5.2vw, 80px) 28px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	overflow: hidden;
+	border-right: 1px solid var(--sol-line);
+	background:
+		radial-gradient(circle at 18% 15%, rgba(255, 255, 255, 0.78), transparent 31%),
+		radial-gradient(circle at 1px 1px, rgba(23, 24, 20, 0.11) 1px, transparent 0) 0 0 / 24px 24px,
+		var(--sol-paper);
+}
+
+.sol-ai-stage::before {
+	content: "SOL";
+	position: absolute;
+	right: -0.04em;
+	bottom: -0.2em;
+	color: rgba(23, 24, 20, 0.034);
+	font-size: clamp(11rem, 23vw, 25rem);
+	font-weight: 700;
+	letter-spacing: -0.1em;
+	line-height: 0.78;
+	pointer-events: none;
+	transform: translate3d(calc(var(--pointer-x) * -8px), calc(var(--pointer-y) * -8px), 0);
+	transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sol-ai-stage-copy {
+	position: relative;
+	z-index: 2;
+	max-width: 520px;
+	animation: sol-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sol-ai-kicker {
+	margin: 0 0 17px;
+	color: var(--sol-blue);
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 0.69rem;
+	font-weight: 600;
+	letter-spacing: 0.13em;
+	text-transform: uppercase;
+}
+
+.sol-ai-kicker::before {
+	content: "✦";
+	margin-right: 8px;
+}
+
+.sol-ai-stage h1 {
+	margin: 0;
+	font-size: clamp(3.4rem, 6.3vw, 6.8rem);
+	font-weight: 500;
+	letter-spacing: -0.075em;
+	line-height: 0.88;
+}
+
+.sol-ai-stage-copy > p:last-child {
+	max-width: 475px;
+	margin: 26px 0 0;
+	color: var(--sol-copy);
+	font-size: clamp(0.9rem, 1.1vw, 1.02rem);
+	line-height: 1.72;
+}
+
+.sol-ai-character-scene {
+	position: relative;
+	width: min(100%, 470px);
+	height: clamp(300px, 43vh, 470px);
+	margin: 6px auto 0;
+	display: grid;
+	place-items: center;
+	transform: translate3d(calc(var(--pointer-x) * 10px), calc(var(--pointer-y) * 8px), 0);
+	transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+	animation: sol-scene-in 900ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sol-ai-orbit {
+	position: absolute;
+	left: 50%;
+	top: 49%;
+	border: 1px solid rgba(23, 24, 20, 0.15);
+	border-radius: 50%;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+}
+
+.sol-ai-orbit::before,
+.sol-ai-orbit::after {
+	content: "";
+	position: absolute;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--sol-blue);
+	box-shadow: 0 0 0 5px rgba(22, 85, 166, 0.08);
+}
+
+.sol-ai-orbit--outer {
+	width: min(90%, 420px);
+	aspect-ratio: 1;
+	animation: sol-orbit 25s linear infinite;
+}
+
+.sol-ai-orbit--outer::before {
+	left: 13%;
+	top: 13%;
+}
+
+.sol-ai-orbit--outer::after {
+	right: 6%;
+	bottom: 25%;
+	background: var(--sol-yellow);
+}
+
+.sol-ai-orbit--inner {
+	width: min(68%, 310px);
+	aspect-ratio: 1;
+	border-style: dashed;
+	animation: sol-orbit-reverse 18s linear infinite;
+}
+
+.sol-ai-orbit--inner::before {
+	right: 1%;
+	top: 42%;
+}
+
+.sol-ai-orbit--inner::after {
+	display: none;
+}
+
+.sol-character {
+	position: relative;
+	z-index: 2;
+	width: clamp(185px, 24vw, 290px);
+	aspect-ratio: 1;
+	animation: sol-float 4.8s ease-in-out infinite;
+}
+
+.sol-character svg {
+	position: relative;
+	z-index: 1;
+	width: 100%;
+	height: 100%;
+	display: block;
+	overflow: visible;
+}
+
+.sol-character-shadow {
+	position: absolute;
+	left: 50%;
+	bottom: -17%;
+	width: 58%;
+	height: 12%;
+	border-radius: 50%;
+	background: rgba(71, 58, 20, 0.18);
+	filter: blur(13px);
+	transform: translateX(-50%);
+	animation: sol-shadow 4.8s ease-in-out infinite;
+}
+
+.sol-character-body {
+	transform-box: fill-box;
+	transform-origin: center;
+	transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), filter 260ms ease;
+}
+
+.sol-character-face {
+	fill: #16181b;
+	stroke: #16181b;
+	stroke-width: 5;
+	stroke-linecap: round;
+	fill-rule: nonzero;
+	transform: translate(calc(var(--pointer-x, 0) * 3px), calc(var(--pointer-y, 0) * 2px));
+	transition: transform 280ms ease;
+}
+
+.sol-character-heart-eyes,
+.sol-character-thinking-eyes,
+.sol-character-error-eyes,
+.sol-character-mouth {
+	transition: opacity 180ms ease, transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+	transform-origin: center;
+}
+
+.sol-character-thinking-eyes,
+.sol-character-error-eyes,
+.sol-character-mouth--talk,
+.sol-character-mouth--error {
+	opacity: 0;
+}
+
+.sol-character-thinking-eyes,
+.sol-character-error-eyes,
+.sol-character-mouth--smile,
+.sol-character-mouth--error {
+	fill: none;
+}
+
+.sol-character--listening .sol-character-heart-eyes {
+	animation: sol-heartbeat 1.25s ease-in-out infinite;
+}
+
+.sol-character--thinking .sol-character-body {
+	animation: sol-think 1.35s ease-in-out infinite;
+}
+
+.sol-character--thinking .sol-character-heart-eyes,
+.sol-character--thinking .sol-character-mouth--smile,
+.sol-character--speaking .sol-character-mouth--smile,
+.sol-character--error .sol-character-heart-eyes,
+.sol-character--error .sol-character-mouth--smile {
+	opacity: 0;
+}
+
+.sol-character--thinking .sol-character-thinking-eyes,
+.sol-character--speaking .sol-character-mouth--talk,
+.sol-character--error .sol-character-error-eyes,
+.sol-character--error .sol-character-mouth--error {
+	opacity: 1;
+}
+
+.sol-character--speaking .sol-character-mouth--talk {
+	animation: sol-talk 520ms ease-in-out infinite;
+}
+
+.sol-character--speaking .sol-character-body,
+.sol-character--happy .sol-character-body {
+	transform: scale(1.035) rotate(1.5deg);
+}
+
+.sol-character--error .sol-character-body {
+	filter: saturate(0.65);
+	animation: sol-shake 380ms ease-in-out;
+}
+
+.sol-ai-character-label {
+	position: absolute;
+	right: 4%;
+	bottom: 2%;
+	left: 4%;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 20px;
+	padding-top: 11px;
+	border-top: 1px solid rgba(23, 24, 20, 0.17);
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 0.62rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.sol-ai-character-label > span {
+	color: var(--sol-muted);
+}
+
+.sol-ai-character-label strong {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+}
+
+.sol-ai-chat {
+	min-width: 0;
+	height: calc(100svh - 72px);
+	display: flex;
+	flex-direction: column;
+	background: var(--sol-panel);
+}
+
+.sol-ai-chat-header {
+	height: 88px;
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	padding: 0 clamp(28px, 4.2vw, 64px);
+	border-bottom: 1px solid var(--sol-line);
+}
+
+.sol-ai-chat-identity {
+	display: flex;
+	align-items: center;
+	gap: 13px;
+}
+
+.sol-ai-mini-avatar {
+	width: 38px;
+	height: 38px;
+	display: grid;
+	place-items: center;
+	clip-path: polygon(50% 0%, 61% 24%, 85% 15%, 76% 39%, 100% 50%, 76% 61%, 85% 85%, 61% 76%, 50% 100%, 39% 76%, 15% 85%, 24% 61%, 0 50%, 24% 39%, 15% 15%, 39% 24%);
+	background: var(--sol-yellow);
+	color: #6f510c;
+	font-size: 0.7rem;
+}
+
+.sol-ai-chat-identity h2,
+.sol-ai-chat-identity p {
+	margin: 0;
+}
+
+.sol-ai-chat-identity h2 {
+	font-size: 0.92rem;
+	font-weight: 650;
+}
+
+.sol-ai-chat-identity p {
+	margin-top: 2px;
+	color: var(--sol-muted);
+	font-size: 0.72rem;
+}
+
+.sol-ai-clear {
+	padding: 8px 0;
+	border: 0;
+	border-bottom: 1px solid currentColor;
+	background: transparent;
+	color: var(--sol-copy);
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 0.64rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	cursor: pointer;
+	transition: color 160ms ease, opacity 160ms ease;
+}
+
+.sol-ai-clear:hover:not(:disabled) {
+	color: var(--sol-blue);
+}
+
+.sol-ai-clear:disabled {
+	opacity: 0.3;
+	cursor: default;
+}
+
+.sol-ai-thread {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-color: #c8c6bd transparent;
+	scrollbar-width: thin;
+	padding: clamp(32px, 5vh, 52px) clamp(28px, 5vw, 76px) 32px;
+}
+
+.sol-ai-message {
+	max-width: min(82%, 590px);
+	margin-bottom: 28px;
+	display: flex;
+	flex-direction: column;
+	content-visibility: auto;
+	contain-intrinsic-size: auto 92px;
+	animation: sol-message-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sol-ai-message--user {
+	margin-left: auto;
+	align-items: flex-end;
+}
+
+.sol-ai-message-label {
+	margin-bottom: 8px;
+	color: var(--sol-muted);
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 0.61rem;
+	font-weight: 600;
+	letter-spacing: 0.11em;
+	text-transform: uppercase;
+}
+
+.sol-ai-bubble {
+	padding: 15px 18px;
+	border: 1px solid var(--sol-line);
+	border-radius: 4px 18px 18px 18px;
+	background: #fff;
+	box-shadow: 0 9px 27px rgba(48, 46, 38, 0.045);
+	font-size: clamp(0.87rem, 1.05vw, 0.96rem);
+	line-height: 1.72;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.sol-ai-message--user .sol-ai-bubble {
+	border-color: var(--sol-ink);
+	border-radius: 18px 4px 18px 18px;
+	background: var(--sol-ink);
+	color: #f8f6ee;
+	box-shadow: none;
+}
+
+.sol-ai-bubble--thinking {
+	width: 72px;
+	min-height: 52px;
+	display: grid;
+	place-items: center;
+}
+
+.sol-ai-dots {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	height: 18px;
+}
+
+.sol-ai-dots i {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: var(--sol-blue);
+	animation: sol-dot 1s ease-in-out infinite;
+}
+
+.sol-ai-dots i:nth-child(2) {
+	animation-delay: 120ms;
+}
+
+.sol-ai-dots i:nth-child(3) {
+	animation-delay: 240ms;
+}
+
+.sol-ai-caret {
+	display: inline-block;
+	width: 7px;
+	height: 1.05em;
+	margin-left: 3px;
+	background: var(--sol-blue);
+	vertical-align: -0.16em;
+	animation: sol-caret 900ms steps(1) infinite;
+}
+
+.sol-ai-error {
+	max-width: 590px;
+	margin: -5px 0 28px;
+	padding: 14px 16px;
+	display: flex;
+	gap: 12px;
+	border: 1px solid #d8a89f;
+	background: #fff3f0;
+	color: #773328;
+	font-size: 0.78rem;
+	line-height: 1.5;
+}
+
+.sol-ai-error > span {
+	width: 22px;
+	height: 22px;
+	flex: 0 0 auto;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
+	background: #773328;
+	color: #fff;
+	font-family: "JetBrains Mono", monospace;
+}
+
+.sol-ai-error strong,
+.sol-ai-error p {
+	margin: 0;
+}
+
+.sol-ai-error p {
+	margin-top: 2px;
+	opacity: 0.78;
+}
+
+.sol-ai-suggestions {
+	max-width: 590px;
+	margin-top: 38px;
+	padding-top: 20px;
+	border-top: 1px solid var(--sol-line);
+}
+
+.sol-ai-suggestions > p {
+	margin: 0 0 10px;
+	color: var(--sol-muted);
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 0.62rem;
+	letter-spacing: 0.11em;
+	text-transform: uppercase;
+}
+
+.sol-ai-suggestions button {
+	width: 100%;
+	min-height: 42px;
+	padding: 9px 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 20px;
+	border: 0;
+	border-bottom: 1px solid var(--sol-line);
+	background: transparent;
+	color: var(--sol-copy);
+	font-size: 0.8rem;
+	text-align: left;
+	cursor: pointer;
+	transition: color 160ms ease, padding 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sol-ai-suggestions button:hover {
+	padding-left: 8px;
+	color: var(--sol-blue);
+}
+
+.sol-ai-suggestions button span {
+	font-size: 0.9rem;
+}
+
+.sol-ai-composer-wrap {
+	flex: 0 0 auto;
+	padding: 18px clamp(28px, 5vw, 76px) 22px;
+	border-top: 1px solid var(--sol-line);
+	background: color-mix(in srgb, var(--sol-panel) 94%, transparent);
+	backdrop-filter: blur(14px);
+}
+
+.sol-ai-composer {
+	display: flex;
+	align-items: flex-end;
+	gap: 12px;
+	padding: 9px 10px 9px 17px;
+	border: 1px solid #bdbbb2;
+	border-radius: 17px;
+	background: #fff;
+	box-shadow: 0 13px 35px rgba(43, 40, 31, 0.065);
+	transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.sol-ai-composer:focus-within {
+	border-color: var(--sol-blue);
+	box-shadow: 0 0 0 3px rgba(22, 85, 166, 0.1), 0 13px 35px rgba(43, 40, 31, 0.065);
+}
+
+.sol-ai-composer textarea {
+	min-height: 44px;
+	max-height: 132px;
+	flex: 1;
+	resize: none;
+	overflow-y: auto;
+	border: 0;
+	outline: 0;
+	background: transparent;
+	color: var(--sol-ink);
+	font-size: 0.87rem;
+	line-height: 1.55;
+	padding: 11px 0 9px;
+}
+
+.sol-ai-composer textarea::placeholder {
+	color: #96978f;
+}
+
+.sol-ai-composer textarea:disabled {
+	cursor: default;
+}
+
+.sol-ai-send {
+	width: 44px;
+	height: 44px;
+	flex: 0 0 auto;
+	display: grid;
+	place-items: center;
+	border: 0;
+	border-radius: 12px;
+	background: var(--sol-blue);
+	color: #fff;
+	font-size: 1.25rem;
+	cursor: pointer;
+	transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), background 160ms ease, opacity 160ms ease;
+}
+
+.sol-ai-send:hover:not(:disabled) {
+	transform: translateY(-2px);
+	background: #0f468e;
+}
+
+.sol-ai-send:active:not(:disabled) {
+	transform: scale(0.96);
+}
+
+.sol-ai-send:disabled {
+	opacity: 0.28;
+	cursor: default;
+}
+
+.sol-ai-send--stop span {
+	width: 12px;
+	height: 12px;
+	border-radius: 2px;
+	background: #fff;
+}
+
+.sol-ai-composer-meta {
+	margin-top: 8px;
+	display: flex;
+	justify-content: space-between;
+	gap: 20px;
+	color: var(--sol-muted);
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 0.56rem;
+	letter-spacing: 0.02em;
+}
+
+.sol-ai-page button:focus-visible,
+.sol-ai-page textarea:focus-visible,
+.sol-ai-page a:focus-visible {
+	outline: 2px solid var(--sol-blue);
+	outline-offset: 4px;
+}
+
+@keyframes sol-rise {
+	from { opacity: 0; transform: translateY(20px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sol-scene-in {
+	from { opacity: 0; transform: scale(0.9) translateY(30px); }
+	to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes sol-message-in {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sol-orbit {
+	to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes sol-orbit-reverse {
+	to { transform: translate(-50%, -50%) rotate(-360deg); }
+}
+
+@keyframes sol-float {
+	0%, 100% { transform: translateY(0) rotate(-1deg); }
+	50% { transform: translateY(-12px) rotate(1deg); }
+}
+
+@keyframes sol-shadow {
+	0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.2; }
+	50% { transform: translateX(-50%) scale(0.86); opacity: 0.12; }
+}
+
+@keyframes sol-heartbeat {
+	0%, 100% { transform: scale(1); }
+	50% { transform: scale(1.14); }
+}
+
+@keyframes sol-think {
+	0%, 100% { transform: rotate(-2deg); }
+	50% { transform: rotate(3deg) scale(1.02); }
+}
+
+@keyframes sol-talk {
+	0%, 100% { transform: scaleY(0.68); }
+	50% { transform: scaleY(1.25); }
+}
+
+@keyframes sol-shake {
+	0%, 100% { transform: translateX(0); }
+	25% { transform: translateX(-5px) rotate(-2deg); }
+	75% { transform: translateX(5px) rotate(2deg); }
+}
+
+@keyframes sol-dot {
+	0%, 55%, 100% { transform: translateY(0); opacity: 0.35; }
+	25% { transform: translateY(-4px); opacity: 1; }
+}
+
+@keyframes sol-caret {
+	0%, 48% { opacity: 1; }
+	49%, 100% { opacity: 0; }
+}
+
+@media (max-width: 980px) {
+	.sol-ai-page {
+		overflow: visible;
+	}
+
+	.sol-ai-shell {
+		grid-template-columns: 1fr;
+	}
+
+	.sol-ai-stage {
+		min-height: 640px;
+		border-right: 0;
+		border-bottom: 1px solid var(--sol-line);
+	}
+
+	.sol-ai-character-scene {
+		width: min(100%, 540px);
+	}
+
+	.sol-ai-chat {
+		height: min(860px, 100svh);
+		min-height: 700px;
+	}
+}
+
+@media (max-width: 640px) {
+	.sol-ai-topbar {
+		height: 60px;
+		grid-template-columns: 1fr auto;
+		padding-inline: 20px;
+	}
+
+	.sol-ai-topbar > p {
+		display: none;
+	}
+
+	.sol-ai-online {
+		font-size: 0.59rem;
+	}
+
+	.sol-ai-shell {
+		min-height: calc(100svh - 60px);
+	}
+
+	.sol-ai-stage {
+		min-height: 560px;
+		padding: 38px 20px 18px;
+	}
+
+	.sol-ai-stage h1 {
+		font-size: clamp(3.2rem, 17vw, 4.8rem);
+	}
+
+	.sol-ai-stage-copy > p:last-child {
+		margin-top: 20px;
+		font-size: 0.86rem;
+	}
+
+	.sol-ai-character-scene {
+		height: 285px;
+	}
+
+	.sol-character {
+		width: 180px;
+	}
+
+	.sol-ai-character-label {
+		right: 0;
+		left: 0;
+	}
+
+	.sol-ai-chat {
+		height: calc(100svh - 60px);
+		min-height: 640px;
+	}
+
+	.sol-ai-chat-header {
+		height: 76px;
+		padding-inline: 20px;
+	}
+
+	.sol-ai-thread {
+		padding: 28px 20px 24px;
+	}
+
+	.sol-ai-message {
+		max-width: 91%;
+		margin-bottom: 23px;
+	}
+
+	.sol-ai-bubble {
+		padding: 13px 15px;
+		font-size: 0.86rem;
+	}
+
+	.sol-ai-suggestions {
+		margin-top: 28px;
+	}
+
+	.sol-ai-composer-wrap {
+		padding: 13px 14px 16px;
+	}
+
+	.sol-ai-composer-meta span:first-child {
+		display: none;
+	}
+
+	.sol-ai-composer-meta {
+		justify-content: flex-end;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sol-ai-page *,
+	.sol-ai-page *::before,
+	.sol-ai-page *::after {
+		scroll-behavior: auto !important;
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+	}
+
+	.sol-ai-stage::before,
+	.sol-ai-character-scene,
+	.sol-character-face {
+		transform: none !important;
+	}
+}

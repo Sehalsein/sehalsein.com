@@ -1,9 +1,9 @@
-export type HomeLayout = "readme" | "sketch";
+export type HomeLayout = "readme" | "sketch" | "studio";
 
 type HomeStyleToggleProps = {
 	layout: HomeLayout;
 	onChange: (layout: HomeLayout) => void;
-	tone: "clean" | "sketch";
+	tone: "clean" | "sketch" | "studio";
 };
 
 export default function HomeStyleToggle({
@@ -31,6 +31,13 @@ export default function HomeStyleToggle({
 				onClick={() => onChange("sketch")}
 			>
 				sketchbook
+			</button>
+			<button
+				type="button"
+				aria-pressed={layout === "studio"}
+				onClick={() => onChange("studio")}
+			>
+				studio
 			</button>
 		</div>
 	);

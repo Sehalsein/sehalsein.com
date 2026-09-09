@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdventureRouteImport } from './routes/adventure'
+import { Route as AiRouteImport } from './routes/ai'
 import { Route as ConsentRouteImport } from './routes/consent'
 import { Route as DoomRouteImport } from './routes/doom'
 import { Route as EditorRouteImport } from './routes/editor'
@@ -48,6 +49,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdventureRoute = AdventureRouteImport.update({
   id: '/adventure',
   path: '/adventure',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiRoute = AiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConsentRoute = ConsentRouteImport.update({
@@ -199,6 +205,7 @@ const ApiAuthDotwellKnownOpenidConfigurationRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/adventure': typeof AdventureRouteWithChildren
+  '/ai': typeof AiRoute
   '/consent': typeof ConsentRoute
   '/doom': typeof DoomRoute
   '/editor': typeof EditorRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/adventure': typeof AdventureRouteWithChildren
+  '/ai': typeof AiRoute
   '/consent': typeof ConsentRoute
   '/doom': typeof DoomRoute
   '/editor': typeof EditorRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/adventure': typeof AdventureRouteWithChildren
+  '/ai': typeof AiRoute
   '/consent': typeof ConsentRoute
   '/doom': typeof DoomRoute
   '/editor': typeof EditorRoute
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/adventure'
+    | '/ai'
     | '/consent'
     | '/doom'
     | '/editor'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/adventure'
+    | '/ai'
     | '/consent'
     | '/doom'
     | '/editor'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/adventure'
+    | '/ai'
     | '/consent'
     | '/doom'
     | '/editor'
@@ -395,6 +407,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdventureRoute: typeof AdventureRouteWithChildren
+  AiRoute: typeof AiRoute
   ConsentRoute: typeof ConsentRoute
   DoomRoute: typeof DoomRoute
   EditorRoute: typeof EditorRoute
@@ -434,6 +447,13 @@ declare module '@tanstack/react-router' {
       path: '/adventure'
       fullPath: '/adventure'
       preLoaderRoute: typeof AdventureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai': {
+      id: '/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/consent': {
@@ -699,6 +719,7 @@ const ApiAdventureRouteWithChildren = ApiAdventureRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdventureRoute: AdventureRouteWithChildren,
+  AiRoute: AiRoute,
   ConsentRoute: ConsentRoute,
   DoomRoute: DoomRoute,
   EditorRoute: EditorRoute,
