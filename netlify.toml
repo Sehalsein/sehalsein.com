@@ -1,14 +1,10 @@
 [build]
 command = "bun run build"
-publish = "dist/client"
-
+publish = "dist"
 [build.environment]
 NODE_VERSION = "24"
-# This project was previously Next.js, so the Netlify site still has the
-# legacy Next runtime enabled in its dashboard. Skip it in favor of the
-# TanStack Start adapter configured in Vite.
 NETLIFY_NEXT_PLUGIN_SKIP = "true"
-
-[dev]
-command = "bun run dev"
-port = 3000
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200

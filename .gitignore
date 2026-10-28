@@ -5,9 +5,7 @@
 /.pnp
 .pnp.js
 
-# engine (folio-derived 3D app) — local reference/build tool only. The live
-# racer is the Next-native port in src/racer, so the whole engine/ dir is kept
-# on disk but not committed.
+# Local reference material is never part of the application.
 /engine
 
 # testing
@@ -47,3 +45,8 @@ yarn-error.log*
 next-env.d.ts
 
 .env
+
+# Browser verification artifacts
+/artifacts
+/test-results
+/playwright-report

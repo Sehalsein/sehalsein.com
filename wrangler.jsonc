@@ -1,12 +1,11 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "sehalsein-com",
-	"compatibility_date": "2026-08-23",
-	"compatibility_flags": ["nodejs_compat"],
-	"main": "@tanstack/react-start/server-entry",
-	"workers_dev": true,
-	"preview_urls": true,
-	"observability": {
-		"enabled": true
-	}
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "sehalsein-com",
+  "compatibility_date": "2026-09-08",
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+  },
 }
