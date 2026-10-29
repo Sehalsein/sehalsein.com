@@ -1,69 +1,57 @@
-# sehalsein.com
+# Sehal’s room
 
-Sehal Sein's portfolio and browser lab, built with TanStack Start and deployed
-as a Cloudflare Worker.
+A playable bedroom portfolio built with React, Three.js, and original Blender models. The room and character were rebuilt together at metre scale, with a warm oak, terracotta, cream, and teal palette.
 
-## Development
+## Run
 
-```bash
-bun install
+Requires Bun 1.4+, Node 22.12+, and a WebGL-capable browser.
+
+```sh
+bun install --frozen-lockfile
 bun run dev
 ```
 
-The app uses TanStack Router's generated file routes in `src/routes`. The
-homepage, résumé, and `/now` are server-rendered; canvas-heavy experiences opt
-out of SSR and load their engines only in the browser.
+Open `http://localhost:3000`. Production output is the static `dist/` directory.
 
-Useful commands:
-
-```bash
-bun run build       # Cloudflare production bundle + TypeScript
-bun run preview     # run the bundle locally in workerd
-bun test            # unit tests
-bun run cf-typegen  # regenerate Cloudflare binding types
-bun run deploy      # build and deploy with Wrangler
+```sh
+bun run test
+bun run build
+bun run test:browser
+bun run record:room
 ```
 
-## Environment
+Browser checks require a running development server and installed Google Chrome. `test:browser` covers the object interactions, held-prop targets, computer input, responsive monitor, queued exits, and native dialogs. Screenshots and measurements go to `/tmp/studio-all` and `/tmp/studio-viewports`. `STUDIO_QA_DIR` overrides the interaction-check directory.
 
-Server features read their secrets at request time so they work in the
-Cloudflare Workers runtime. Configure the integrations you use:
+`record:room` captures only the local application tab, requesting 60 fps and no audio. The WebM, chapter timings, and frame-time measurements go to `/tmp/studio-recording` by default; `STUDIO_QA_DIR` overrides that directory. Recorded frame times are specific to the test machine and viewport.
 
-- `DATABASE_URL`
-- `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET`
-- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and `GITHUB_TOKEN`
-- `OPEN_ROUTER_KEY`
-- `BRAINTRUST_API_KEY`
-- `ELEVENLABS_API_KEY` and optional `ELEVENLABS_VOICE_ID`
-- `VITE_PUBLIC_POSTHOG_KEY` and optional `VITE_PUBLIC_BASE_URL`
+## Explore
 
-For a production Worker, add secrets with `wrangler secret put <NAME>` and set
-public build variables in the Cloudflare build environment.
+- Walk with WASD or arrow keys, or click/tap a clear patch of floor.
+- Click an object, use the Explore directory, or press E near an object.
+- Drag to orbit; scroll to zoom; Escape to return.
+- Touch controls provide directional movement.
+- About, résumé, and contact remain directly accessible.
 
-## Cloudflare deployments
+At the desk, the character pulls and swivels the chair, sits, and rolls forward. The camera then moves to the desk. Coffee is picked up by the handle, papers become held pages, and the computer opens inside its physical bezel. On a narrow screen, the monitor pivots to portrait. The computer contains work, about, browser-local notes, contact, and a game.
 
-Cloudflare Workers Builds is connected directly to GitHub. Pushes to `main`
-deploy the `sehalsein-com` Worker; non-production branches upload preview
-versions with stable branch aliases and Cloudflare comments their URLs on pull
-requests. GitHub Actions is not used for deployment.
+At the bed, the quilt folds aside, the character gets onto the mattress, and the quilt closes. A dream bubble leads through a dissolve to a quiet dream scene. Escape wakes the character and restores the room. Other interactions include a held notebook and astronaut, a controller and TV, watering a plant, curtains, a lamp, artwork, and wardrobe colors.
 
-Configure the following in both Cloudflare's **production** and **preview**
-build environments:
+## Implementation
 
-- Secrets: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_SECRET`,
-  `GITHUB_TOKEN`, and `OPEN_ROUTER_KEY`
-- Variables: `BETTER_AUTH_URL`, `GITHUB_CLIENT_ID`, and `ADMIN_USER_NAME`
-- Optional variable: `VITE_PUBLIC_POSTHOG_KEY`
+- `scripts/studio/build_scene.py` — original Blender room, furnishings, decor, and quilt morphs.
+- `scripts/studio/build_character.py` — original character, clothing, face, skeleton, and fingers.
+- `src/experience/Studio.ts` — scene lifecycle and coordinated interaction sequences.
+- `src/experience/Actor.ts` — skin controls, foot placement, hand IK, grip, and facial states.
+- `src/experience/navigation.ts` — floor navigation and furniture clearance.
+- `src/experience/camera.ts` — camera paths around furniture.
+- `src/experience/Lighting.ts` — environment lighting, shadows, occlusion, and postprocessing.
+- `src/experience/surfaces.ts` — native HTML controls aligned to physical 3D surfaces.
+- `src/App.tsx`, `src/studio.css` — application shell and visual design.
+- `src/ui/` — computer, content panels, and game.
+- `src/content/profile.ts` — personal content.
 
-Use `bun run db:migrate && bun run build` as the build command. Use the following
-commands for deployment:
+Animations are authored timelines with IK contacts and shared character/prop transforms. Hand-held objects are parented to the hand after grasping and restored to their original transforms on release. Camera paths use furniture bounds; character movement uses a floor obstacle map. These checks complement visual review and do not constitute general physics or cloth simulation.
 
-- Production: `node ./node_modules/wrangler/bin/wrangler.js deploy --config dist/server/wrangler.json`
-- Preview: `node ./node_modules/wrangler/bin/wrangler.js versions upload --config dist/server/wrangler.json`
+The previous room implementation is archived under the locally ignored `artifacts/studio/legacy-source/`. The active build imports `src/experience`. Functional computer, content, and game components from the earlier room are retained and restyled.
 
-Both environments use the same Cloudflare-managed variables and encrypted
-Worker secrets, including the existing Neon production connection.
-
-GitHub OAuth only works on a preview whose callback URL is registered in the
-GitHub OAuth app; normal portfolio and API previewing does not depend on that
-callback.
+See [model build notes](public/models/README.md) for editable Blender sources and lossless compression. Local review videos and `.blend` files are stored under `artifacts/studio/`, excluded from production output.

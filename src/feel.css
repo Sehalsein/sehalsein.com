@@ -1,0 +1,461 @@
+/* Motion and feedback layer for the room UI. Loaded after studio.css. */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- HUD: fade and drift instead of blinking in and out ---------------- */
+.studio-header,
+.studio-footer,
+.studio-controls,
+.studio-actions,
+.studio-caption,
+.nearby-object {
+  transition:
+    opacity 260ms var(--ease-out),
+    translate 420ms var(--ease-out);
+}
+.is-acting .studio-header,
+.studio-view-desk .studio-header,
+.is-screen .studio-header {
+  translate: 0 -10px;
+}
+.is-acting .studio-footer,
+.is-acting .studio-controls,
+.is-acting .nearby-object,
+.studio-view-desk .studio-footer {
+  translate: 0 12px;
+}
+.is-acting.studio-view-room .studio-actions {
+  translate: 0 14px;
+}
+
+.studio-app button {
+  transition:
+    transform 220ms var(--ease-out),
+    scale 140ms var(--ease-out),
+    background-color 200ms ease,
+    color 200ms ease,
+    opacity 200ms ease;
+}
+.studio-app button:not(:disabled):active {
+  scale: 0.96;
+}
+
+/* Action buttons cascade in whenever the view changes. */
+.studio-actions > button {
+  animation: feel-rise 420ms var(--ease-out) both;
+}
+.studio-actions > button:nth-child(2) {
+  animation-delay: 45ms;
+}
+.studio-actions > button:nth-child(3) {
+  animation-delay: 90ms;
+}
+.studio-actions > button > svg:last-child:not(:first-child) {
+  transition: translate 220ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .studio-actions
+    > button:not(:disabled):hover
+    > svg:last-child:not(:first-child) {
+    translate: 2px -2px;
+  }
+  .studio-enter:hover svg {
+    translate: 3px 0;
+  }
+}
+.studio-enter svg {
+  transition: translate 240ms var(--ease-out);
+}
+
+/* Caption: the new line blurs in over the old one. */
+.caption-text {
+  font-weight: inherit;
+  display: inline-block;
+  animation: feel-caption 460ms var(--ease-out) both;
+}
+@keyframes feel-caption {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+    translate: 0 5px;
+  }
+}
+
+.nearby-object {
+  animation: feel-pop 380ms var(--ease-pop) both;
+}
+
+/* ---- Welcome hand-off -------------------------------------------------- */
+.studio-welcome > * {
+  animation: feel-rise 700ms var(--ease-out) both;
+}
+.studio-welcome > :nth-child(2) {
+  animation-delay: 70ms;
+}
+.studio-welcome > :nth-child(3) {
+  animation-delay: 140ms;
+}
+.studio-welcome > :nth-child(4) {
+  animation-delay: 210ms;
+}
+.studio-welcome > :nth-child(5) {
+  animation-delay: 280ms;
+}
+.studio-welcome[data-leaving] {
+  pointer-events: none;
+  animation: feel-leave-left 420ms var(--ease-in-out) both;
+}
+.studio-welcome[data-leaving] > * {
+  animation: none;
+}
+@keyframes feel-leave-left {
+  to {
+    opacity: 0;
+    translate: -32px 0;
+    filter: blur(4px);
+  }
+}
+
+/* ---- Hover tag that trails the cursor ---------------------------------- */
+.hover-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  pointer-events: none;
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px 9px;
+  border-radius: 10px;
+  background: #fbf2e2e6;
+  border: 1px solid #ffffff90;
+  box-shadow:
+    0 10px 30px #5b3a1d24,
+    0 1px 2px #5b3a1d1a;
+  backdrop-filter: blur(10px);
+  color: var(--studio-ink);
+  white-space: nowrap;
+  opacity: 0;
+  scale: 0.94;
+  transform-origin: 0 0;
+  transition:
+    opacity 140ms ease,
+    scale 220ms var(--ease-out);
+}
+.hover-tag.is-on {
+  opacity: 1;
+  scale: 1;
+}
+.hover-tag b {
+  font:
+    italic 15px Georgia,
+    serif;
+  font-weight: 400;
+}
+.hover-tag span {
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  color: #a64b31;
+}
+.is-screen .hover-tag,
+.is-acting .hover-tag {
+  opacity: 0;
+}
+@media (hover: none) {
+  .hover-tag {
+    display: none;
+  }
+}
+
+/* ---- Discovery toast --------------------------------------------------- */
+.discovery-toast {
+  position: absolute;
+  top: 96px;
+  right: 36px;
+  z-index: 14;
+  display: grid;
+  gap: 5px;
+  padding: 14px 18px 15px;
+  min-width: 210px;
+  border-radius: 12px;
+  background: #fbf2e2f0;
+  border: 1px solid #ffffff99;
+  box-shadow: 0 18px 50px #5b3a1d26;
+  backdrop-filter: blur(14px);
+  color: var(--studio-ink);
+  pointer-events: none;
+  animation:
+    feel-toast-in 520ms var(--ease-pop) both,
+    feel-toast-out 260ms var(--ease-out) 2.6s both;
+}
+.discovery-toast .studio-kicker {
+  font-size: 8px;
+  color: #a64b31;
+}
+.discovery-toast strong {
+  font:
+    22px Georgia,
+    serif;
+  font-weight: 400;
+  letter-spacing: -0.5px;
+}
+.discovery-toast small {
+  font-size: 10px;
+  color: #8b7b63;
+}
+@keyframes feel-toast-in {
+  from {
+    opacity: 0;
+    translate: 0 -10px;
+    scale: 0.94;
+  }
+}
+@keyframes feel-toast-out {
+  to {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+.discovery-count b {
+  display: inline-block;
+  font-weight: 400;
+  animation: feel-count 600ms var(--ease-pop);
+}
+@keyframes feel-count {
+  40% {
+    scale: 1.35;
+    color: #a64b31;
+  }
+}
+
+/* ---- Room guide drawer ------------------------------------------------- */
+.studio-guide {
+  animation: feel-drawer-in 480ms var(--ease-drawer) both;
+}
+.studio-guide[data-leaving] {
+  pointer-events: none;
+  animation: feel-drawer-out 200ms var(--ease-out) both;
+}
+.studio-guide > div > button {
+  animation: feel-rise 380ms var(--ease-out) both;
+  animation-delay: calc(120ms + var(--i, 0) * 28ms);
+}
+.studio-guide > div > button > svg {
+  opacity: 0.4;
+  transition:
+    translate 240ms var(--ease-out),
+    opacity 200ms ease;
+}
+.studio-guide > div > button > span:first-child {
+  transition: scale 260ms var(--ease-pop);
+}
+.studio-guide > div > button[data-found] > span:first-child {
+  color: #a64b31;
+}
+@media (hover: hover) and (pointer: fine) {
+  .studio-guide > div > button:not(:disabled):hover {
+    translate: 4px 0;
+  }
+  .studio-guide > div > button:not(:disabled):hover > svg {
+    translate: 2px -2px;
+    opacity: 1;
+  }
+  .studio-guide > div > button:not(:disabled):hover > span:first-child {
+    scale: 1.2;
+  }
+}
+.studio-guide > div > button {
+  transition:
+    translate 260ms var(--ease-out),
+    color 200ms ease;
+}
+@keyframes feel-drawer-in {
+  from {
+    opacity: 0;
+    translate: 28px 0;
+    scale: 0.98;
+  }
+}
+@keyframes feel-drawer-out {
+  to {
+    opacity: 0;
+    translate: 16px 0;
+  }
+}
+
+/* ---- About / résumé sheet ---------------------------------------------- */
+.studio-page {
+  position: fixed;
+  inset: 0;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: block;
+}
+.studio-page::backdrop {
+  background: #2c20141f;
+  backdrop-filter: blur(6px) saturate(1.05);
+  animation: feel-fade 360ms var(--ease-out) both;
+}
+.studio-page[data-leaving]::backdrop {
+  animation: feel-fade-out 200ms var(--ease-out) both;
+}
+.studio-page > .page-sheet {
+  position: relative;
+  max-width: 880px;
+  margin: 72px auto 48px;
+  padding: 72px 40px 48px;
+  background: #f6ead7;
+  border: 1px solid #ffffffa0;
+  border-radius: 20px;
+  box-shadow:
+    0 40px 120px #3e26122e,
+    0 2px 6px #3e26121a;
+  transform-origin: 50% 0;
+  animation: feel-sheet-in 560ms var(--ease-drawer) both;
+}
+.studio-page[data-leaving] .page-sheet {
+  animation: feel-sheet-out 200ms var(--ease-out) both;
+}
+.page-sheet .page-close {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+}
+.page-sheet .page-close svg {
+  transition: translate 220ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .page-sheet .page-close:hover svg {
+    translate: -3px 0;
+  }
+}
+.page-sheet > article > *,
+.page-sheet > * > * {
+  animation: feel-rise 520ms var(--ease-out) both;
+}
+.page-sheet > article > :nth-child(2),
+.page-sheet > * > :nth-child(2) {
+  animation-delay: 60ms;
+}
+.page-sheet > article > :nth-child(3),
+.page-sheet > * > :nth-child(3) {
+  animation-delay: 110ms;
+}
+.page-sheet > article > :nth-child(4),
+.page-sheet > * > :nth-child(4) {
+  animation-delay: 160ms;
+}
+.page-sheet > article > :nth-child(n + 5),
+.page-sheet > * > :nth-child(n + 5) {
+  animation-delay: 210ms;
+}
+.studio-about {
+  margin: 0 auto;
+}
+.studio-about > svg {
+  animation:
+    feel-rise 520ms var(--ease-out) both,
+    feel-twinkle 4s ease-in-out 1s infinite !important;
+}
+.studio-about a {
+  width: fit-content;
+  transition:
+    color 200ms ease,
+    translate 240ms var(--ease-out);
+}
+.studio-about a svg {
+  transition: translate 240ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .studio-about a:hover {
+    color: #a64b31;
+  }
+  .studio-about a:hover svg {
+    translate: 3px -3px;
+  }
+}
+@keyframes feel-sheet-in {
+  from {
+    opacity: 0;
+    translate: 0 48px;
+    scale: 0.97;
+  }
+}
+@keyframes feel-sheet-out {
+  to {
+    opacity: 0;
+    translate: 0 20px;
+    scale: 0.985;
+  }
+}
+@keyframes feel-twinkle {
+  0%,
+  100% {
+    rotate: 0deg;
+    scale: 1;
+  }
+  50% {
+    rotate: 18deg;
+    scale: 1.12;
+  }
+}
+
+/* ---- Shared keyframes -------------------------------------------------- */
+@keyframes feel-rise {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+@keyframes feel-pop {
+  from {
+    opacity: 0;
+    scale: 0.9;
+    translate: 0 6px;
+  }
+}
+@keyframes feel-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes feel-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 800px) {
+  .discovery-toast {
+    top: 78px;
+    right: 16px;
+    left: 16px;
+    min-width: 0;
+  }
+  .page-sheet {
+    margin: 16px 12px 24px;
+    padding: 64px 20px 32px;
+    border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-app *,
+  .studio-page,
+  .studio-page *,
+  .studio-page::backdrop {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+.studio-page[data-leaving] {
+  pointer-events: none;
+}
