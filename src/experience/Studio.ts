@@ -2,6 +2,7 @@ import * as T from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { Actor } from "./Actor";
+const hinge = Actor.hinge;
 import { Lighting } from "./Lighting";
 import { SPOTS, type Spot, type View } from "./objects";
 import {
@@ -41,6 +42,10 @@ type State = {
 };
 type Lens = {
   path: TravelPath;
+  // Velocity carried in from whatever the camera was doing, blended out so a
+  // new move never starts from a dead stop.
+  carry: T.Vector3;
+  carryTarget: T.Vector3;
   from: T.Vector3;
   to: T.Vector3;
   fov: number;
@@ -137,6 +142,12 @@ export class Studio {
     { base: T.Vector3; t: number; strength: number }
   >();
   private jacket = 0;
+  private cameraVelocity = v();
+  private lastCamera = v();
+  private lastTarget = v();
+  private targetVelocity = v();
+  /** Dev/QA: slows the whole simulation for frame-by-frame review. */
+  timeScale = 1;
   private pokes = 0;
   constructor(
     private host: HTMLElement,
@@ -351,6 +362,8 @@ export class Studio {
   private cameraTo(p: T.Vector3, target: T.Vector3, duration = 0.8, fov = 45) {
     this.lens = {
       path: planCameraPath(this.camera.position, p, this.obstacles(), 0.045),
+      carry: this.cameraVelocity.clone().clampLength(0, 4),
+      carryTarget: this.targetVelocity.clone().clampLength(0, 4),
       from: this.lensTarget.clone(),
       to: target.clone(),
       fov: this.camera.fov,
@@ -368,6 +381,39 @@ export class Studio {
       0,
       T.MathUtils.clamp(p.z, -2, 2) * 0.22,
     );
+  }
+  /**
+   * A three-quarter shot over the character's shoulder toward what they're
+   * handling, so small in-room moments read at a glance.
+   */
+  private actionCamera(anchor: T.Vector3, duration = 0.9) {
+    const at = this.actor.root.position.clone().setY(0),
+      toward = anchor.clone().setY(0).sub(at).normalize(),
+      viewer = this.camera.position.clone().setY(0).sub(at).normalize();
+    // Stand back on the viewer's side, swung off the line of action.
+    const side = Math.sign(toward.x * viewer.z - toward.z * viewer.x) || 1;
+    const offset = toward
+      .clone()
+      .negate()
+      .applyAxisAngle(up, side * 1.05)
+      .multiplyScalar(2.3);
+    const target = at.clone().setY(1.0).lerp(anchor, 0.45);
+    for (const swing of [1, -1]) {
+      const eye = at
+        .clone()
+        .add(
+          swing > 0 ? offset : offset.clone().applyAxisAngle(up, -side * 2.1),
+        )
+        .setY(1.95);
+      eye.x = T.MathUtils.clamp(eye.x, -2.5, 3.8);
+      eye.z = T.MathUtils.clamp(eye.z, -2.0, 3.8);
+      try {
+        this.cameraTo(eye, target, duration, 46);
+        return;
+      } catch {
+        // No clear route from this side; try the other.
+      }
+    }
   }
   private roomCamera(duration = 0.85) {
     const f = this.follow();
@@ -550,12 +596,13 @@ export class Studio {
           a.hand(1, hand, contact);
           a.grip[1] = contact * 0.6;
         } else a.grip[1] = 0;
-        const sit = between(t, 1.38, 2.03);
         if (t >= 1.38) {
-          a.root.position.set(T.MathUtils.lerp(0.45, 0.92, sit), 0, -0.65);
+          const { lean, seat } = hinge((t - 1.38) / 0.65);
+          a.root.position.set(T.MathUtils.lerp(0.45, 0.92, seat), 0, -0.65);
           a.root.rotation.y = Math.PI * 1.5;
-          a.pelvis.position.y = T.MathUtils.lerp(0.76, 0.565, sit);
-          a.spine.rotation.x = Math.sin(sit * Math.PI) * 0.23 - 0.03;
+          a.pelvis.position.y = T.MathUtils.lerp(0.76, 0.565, seat);
+          a.spine.rotation.x = lean - 0.03;
+          a.head.rotation.x -= lean * 0.5;
           for (let i = 0; i < 2; i++)
             a.foot(i, v(0.48, 0.11, -0.65 + (i ? 0.1 : -0.1)));
           a.arms.forEach((arm) => (arm.rotation.x = -0.18));
@@ -567,6 +614,8 @@ export class Studio {
           chair.position.z = T.MathUtils.lerp(-0.65, -1.31, swivel);
           a.root.position.set(0.92, 0, chair.position.z);
           a.sit(chair.position, chair.rotation.y + Math.PI);
+          // The cushion gives a little as the weight lands.
+          a.pelvis.position.y -= wobble(t - 2.0, 2.2, 7) * 0.018;
           this.restHands();
         }
         if (t >= 2.77 && !a["model"].userData.deskLens) {
@@ -607,12 +656,15 @@ export class Studio {
         chair.position.z = T.MathUtils.lerp(-1.31, -0.65, roll);
         chair.rotation.y = (between(t, 0.35, 0.95) * Math.PI) / 2;
         this.seated();
-        const stand = between(t, 0.94, 1.67);
         if (t >= 0.94) {
-          a.root.position.set(T.MathUtils.lerp(0.92, 0.44, stand), 0, -0.65);
+          const { lean, seat } = hinge((t - 0.94) / 0.73, true);
+          a.root.position.set(T.MathUtils.lerp(0.44, 0.92, seat), 0, -0.65);
           a.root.rotation.y = Math.PI * 1.5;
-          a.pelvis.position.y = T.MathUtils.lerp(0.565, 0.76, stand);
-          a.spine.rotation.x = Math.sin(stand * Math.PI) * 0.22;
+          a.pelvis.position.y = T.MathUtils.lerp(0.76, 0.565, seat);
+          a.spine.rotation.x = lean;
+          a.head.rotation.x -= lean * 0.5;
+          a.hand(0, a.root.localToWorld(v(-0.2, 0.6, 0.24)), lean * 1.4);
+          a.hand(1, a.root.localToWorld(v(0.2, 0.6, 0.24)), lean * 1.4);
           for (let i = 0; i < 2; i++)
             a.foot(i, v(0.46, 0.11, -0.65 + (i ? 0.1 : -0.1)));
         }
@@ -668,13 +720,7 @@ export class Studio {
       .clone()
       .sub(this.hold.offset.clone().applyQuaternion(handQ));
     a.hand(side, wrist);
-    a.hands[side].quaternion.copy(
-      a.elbows[side]
-        .getWorldQuaternion(new T.Quaternion())
-        .invert()
-        .multiply(handQ),
-    );
-    a.hands[side].updateWorldMatrix(false, true);
+    a.orientHand(side, handQ);
   }
   private detach() {
     if (!this.hold) return;
@@ -815,11 +861,13 @@ export class Studio {
       4.25,
       "The world can wait a moment.",
       (t) => {
-        const sit = between(t, 0.12, 0.85);
-        a.root.position.copy(start).lerp(v(-1.15, 0, -0.44), sit);
+        const sit = between(t, 0.12, 0.85),
+          { lean, seat } = hinge((t - 0.12) / 0.73);
+        a.root.position.copy(start).lerp(v(-1.15, 0, -0.44), seat);
         a.root.rotation.set(0, angle(yaw, Math.PI / 2, between(t, 0, 0.35)), 0);
-        a.pelvis.position.y = T.MathUtils.lerp(0.76, 0.61, sit);
-        a.spine.rotation.x = -0.08 * Math.sin(sit * Math.PI);
+        a.pelvis.position.y = T.MathUtils.lerp(0.76, 0.61, seat);
+        a.spine.rotation.x = lean;
+        a.head.rotation.x -= lean * 0.5;
         // Facing out into the aisle: feet stay beside the bed during the sit.
         for (let i = 0; i < 2; i++)
           a.foot(i, v(-0.82, 0.11, -0.44 + (i ? 0.1 : -0.1)));
@@ -830,15 +878,18 @@ export class Studio {
           lie = between(t, 2.02, 2.8);
         this.quilt(lift * (1 - between(t, 2.65, 3.32)), between(t, 2.15, 2.65));
         if (t >= 0.72) {
-          a.root.position.x = T.MathUtils.lerp(-1.15, -1.91, turn);
-          a.root.position.z = T.MathUtils.lerp(-0.44, -0.6, turn);
-          a.root.position.y = T.MathUtils.lerp(0, 0.7, lie);
-          a.root.rotation.set(
-            (-Math.PI / 2) * lie,
-            angle(Math.PI / 2, 0, turn),
-            0,
-          );
           a.pelvis.position.y = T.MathUtils.lerp(0.61, 0.76, lie);
+          this.recline(
+            v(
+              T.MathUtils.lerp(-1.15, -1.91, turn),
+              0,
+              T.MathUtils.lerp(-0.44, -0.6, turn),
+            ),
+            angle(Math.PI / 2, 0, turn),
+            lie,
+          );
+          // Settle into the mattress after landing.
+          a.pelvis.position.y -= wobble(t - 2.8, 1.8, 5) * 0.02;
           for (let i = 0; i < 2; i++) {
             const startFoot = v(-0.82, 0.11, -0.44 + (i ? 0.1 : -0.1));
             const lifted = v(-1.17, 0.91, -0.33 + (i ? 0.1 : -0.1));
@@ -898,8 +949,30 @@ export class Studio {
       },
     );
   }
+  // Lying down pivots about the hips, not the heels: the pelvis travels from
+  // where it sat to where it rests while the body tips back around it.
+  private recline(base: T.Vector3, yaw: number, lie: number) {
+    const a = this.actor,
+      pelvis = a.pelvis.position.clone(),
+      sitting = pelvis
+        .clone()
+        .applyQuaternion(
+          new T.Quaternion().setFromEuler(new T.Euler(0, yaw, 0)),
+        )
+        .add(base),
+      resting = v(0, 0.76, 0)
+        .applyAxisAngle(v(1, 0, 0), -Math.PI / 2)
+        .add(v(-1.91, 0.7, -0.6)),
+      hip = sitting
+        .lerp(resting, lie)
+        .add(v(0, Math.sin(Math.PI * lie) * 0.07, 0));
+    a.root.rotation.set((-Math.PI / 2) * lie, yaw, 0);
+    a.root.position.copy(hip.sub(pelvis.applyQuaternion(a.root.quaternion)));
+  }
   private sleeping() {
     this.actor.closedEyes = true;
+    this.actor.spine.rotation.x += Math.sin(this.time * 1.05) * 0.03;
+    this.actor.head.rotation.y += Math.sin(this.time * 0.23) * 0.12;
     this.actor.root.position.set(-1.91, 0.7, -0.6);
     this.actor.root.rotation.set(-Math.PI / 2, 0, 0);
     this.actor.arms.forEach((arm, i) => {
@@ -953,6 +1026,7 @@ export class Studio {
       return;
     }
     const fromDream = this.state.view === "dream";
+    let pulled = false;
     this.bubble.visible = false;
     this.play(
       3.0,
@@ -976,19 +1050,23 @@ export class Studio {
         }
         const a = this.actor,
           sit = between(t, 0.45, 1.28),
-          turn = between(t, 1.16, 1.86),
-          stand = between(t, 1.83, 2.55);
-        a.root.rotation.set(
-          (-Math.PI / 2) * (1 - sit),
-          (Math.PI / 2) * turn,
-          0,
-        );
-        a.root.position.set(
-          T.MathUtils.lerp(-1.91, -1.15, turn),
-          0.7 * (1 - sit),
-          T.MathUtils.lerp(-0.6, -0.44, turn),
-        );
+          turn = between(t, 1.16, 1.86);
         a.pelvis.position.y = T.MathUtils.lerp(0.76, 0.61, sit);
+        // A small stretch on the way up.
+        const stretch = window01(t, 0.25, 1.1);
+        a.arms.forEach((arm, i) => {
+          arm.rotation.x -= stretch * 2.3;
+          arm.rotation.z += (i ? 1 : -1) * stretch * 0.35;
+        });
+        this.recline(
+          v(
+            T.MathUtils.lerp(-1.91, -1.15, turn),
+            0,
+            T.MathUtils.lerp(-0.6, -0.44, turn),
+          ),
+          (Math.PI / 2) * turn,
+          1 - sit,
+        );
         this.quilt(
           between(t, 0.3, 0.75) * (1 - between(t, 1.45, 1.95)),
           1 - between(t, 0.4, 1.0),
@@ -1003,21 +1081,30 @@ export class Studio {
               ),
               sit,
             );
-        if (stand > 0) {
-          a.root.position.x = T.MathUtils.lerp(-1.15, -0.88, stand);
-          a.pelvis.position.y = T.MathUtils.lerp(0.61, 0.76, stand);
-          a.spine.rotation.x = Math.sin(stand * Math.PI) * 0.2;
+        if (t >= 1.83) {
+          const { lean, seat } = hinge((t - 1.83) / 0.72, true);
+          a.root.position.x = T.MathUtils.lerp(-0.88, -1.15, seat);
+          a.pelvis.position.y = T.MathUtils.lerp(0.76, 0.61, seat);
+          a.spine.rotation.x = lean;
+          a.head.rotation.x -= lean * 0.5;
+          a.hand(0, a.root.localToWorld(v(-0.24, 0.58, -0.02)), lean * 1.3);
+          a.hand(1, a.root.localToWorld(v(0.24, 0.58, -0.02)), lean * 1.3);
         }
         if (t > 2.55) {
           a.root.position.x = -0.88;
           a.walk(dt, 0);
+        }
+        // Pull back while they rise, rather than after they've finished.
+        if (t > 1.7 && !pulled) {
+          pulled = true;
+          this.roomCamera(1.5);
         }
       },
       () => {
         this.fade(0);
         this.actor.resetGait();
         this.notify({ view: "room", label: "Welcome back." });
-        this.roomCamera();
+        if (!this.lens) this.roomCamera();
       },
     );
   }
@@ -1244,6 +1331,7 @@ export class Studio {
     const target =
       id === "books" ? v(-0.54, 1.05, -1.48) : v(2.08, 1.18, -1.82);
     const facing = id === "books" ? -1.78 : Math.PI;
+    this.actionCamera(from, 1.0);
     this.play(
       1.1,
       SPOTS[id].verb,
@@ -1309,6 +1397,7 @@ export class Studio {
     );
     let toggled = false;
     const wardrobe = id === "wardrobe";
+    this.actionCamera(anchor, 0.8);
     this.play(
       wardrobe ? 1.7 : 0.95,
       SPOTS[id].verb,
@@ -1357,6 +1446,7 @@ export class Studio {
       },
       () => {
         if (wardrobe) this.bump(this.node("Wardrobe"), 0.025);
+        this.roomCamera(1.1);
         this.notify({
           label:
             id === "lamp"
@@ -1501,7 +1591,8 @@ export class Studio {
   private tick = (now: number) => {
     if (this.disposed) return;
     this.frame = requestAnimationFrame(this.tick);
-    const dt = Math.min(0.04, (now - this.last) / 1000 || 0.016);
+    const dt =
+      Math.min(0.04, (now - this.last) / 1000 || 0.016) * this.timeScale;
     this.last = now;
     // Pages over the room only block input; the room keeps living behind them.
     if (document.hidden) return;
@@ -1540,9 +1631,12 @@ export class Studio {
     if (this.lens) {
       const l = this.lens;
       l.t += dt;
-      const t = smoother(l.t / l.duration);
-      this.camera.position.copy(l.path.at(t));
-      this.lensTarget.lerpVectors(l.from, l.to, t);
+      const t = smoother(l.t / l.duration),
+        carry = Math.min(l.t, l.duration) * Math.exp(-9 * l.t);
+      this.camera.position.copy(l.path.at(t)).addScaledVector(l.carry, carry);
+      this.lensTarget
+        .lerpVectors(l.from, l.to, t)
+        .addScaledVector(l.carryTarget, carry);
       this.camera.fov = T.MathUtils.lerp(l.fov, l.targetFov, t);
       if (t === 1) this.lens = null;
       this.camera.updateProjectionMatrix();
@@ -1571,6 +1665,18 @@ export class Studio {
       this.camera.position.lerp(goal, 1 - Math.exp(-dt * 4));
       this.lensTarget.lerp(v(0, 0.86, 0).add(f), 1 - Math.exp(-dt * 4));
     }
+    if (dt > 0) {
+      this.cameraVelocity
+        .copy(this.camera.position)
+        .sub(this.lastCamera)
+        .divideScalar(dt);
+      this.targetVelocity
+        .copy(this.lensTarget)
+        .sub(this.lastTarget)
+        .divideScalar(dt);
+    }
+    this.lastCamera.copy(this.camera.position);
+    this.lastTarget.copy(this.lensTarget);
     this.viewShift = T.MathUtils.damp(
       this.viewShift,
       this.entered ? 0 : 1,
@@ -1588,9 +1694,10 @@ export class Studio {
     this.camera.lookAt(this.lensTarget);
     this.camera.updateMatrixWorld();
     a.updateLens(this.camera.position);
+    a.engage(this.hold ? 0.7 : 1);
     a.lookTarget = this.lookTarget();
     a.life(dt, !this.action && view === "room" && !this.hold);
-    a.sync();
+    a.sync(dt);
     this.feel(dt);
     if (this.bubble.visible)
       this.bubble.position.y = 1.4 + Math.sin(this.time * 2) * 0.025;
@@ -1693,7 +1800,7 @@ export class Studio {
       a.root.rotation.y = angle(
         a.root.rotation.y,
         Math.atan2(delta.x, delta.z),
-        1 - Math.exp(-dt * 14),
+        1 - Math.exp(-dt * 9),
       );
     a.walk(dt, delta.length() / dt);
     if (!this.path.length && this.pending) {
@@ -2087,6 +2194,8 @@ export class Studio {
           v(0, 0.25 + size * 0.6 + easeOut(t) * size * 0.8 + i * size * 0.4, 0),
         );
       e.sprite.scale.setScalar(back(e.t / 0.32, 2.4) * size);
+      // From behind the eyes an emote would fill the screen.
+      e.sprite.visible = head.distanceTo(this.camera.position) > 1.2;
       m.opacity = 1 - smoother((t - 0.7) / 0.3);
       m.rotation = Math.sin(e.t * 5) * 0.08 * (1 - t);
       if (t < 1) return true;

@@ -2,7 +2,7 @@ import * as T from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { solveLimb } from "./ik";
-import { Spring } from "./motion";
+import { Spring, smoother } from "./motion";
 
 const v = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
 function joint(parent: T.Object3D, name: string, p: T.Vector3) {
@@ -63,9 +63,28 @@ export class Actor {
   private bank = new Spring(0, 30, 9);
   private lastSpeed = 0;
   private lastYaw = 0;
+  // Hand IK requests this frame, kept so the torso can join a reach and the
+  // arm can be re-solved from the same starting pose afterwards.
+  private reaches: ({
+    target: T.Vector3;
+    weight: number;
+    arm: T.Quaternion;
+    elbow: T.Quaternion;
+    orient: T.Quaternion | null;
+  } | null)[] = [null, null];
+  private spread = [0, 0];
+  // Inertialized blending: a pose that jumps between frames is absorbed into
+  // an offset that decays, so authored phase changes never pop.
+  private blend: {
+    p: T.Vector3[];
+    q: T.Quaternion[];
+    offP: T.Vector3[];
+    offQ: T.Quaternion[];
+  } | null = null;
   /** World point the head (and, when free, the chest) turns toward. */
   lookTarget: T.Vector3 | null = null;
   private headClose = { value: 0 };
+  private bodyClose = { value: 0 };
   async load() {
     const asset = await new GLTFLoader()
       .setMeshoptDecoder(MeshoptDecoder)
@@ -111,6 +130,7 @@ export class Actor {
           m.onBeforeCompile = (s) => {
             s.uniforms.closeLens = this.close;
             s.uniforms.hideHead = this.headClose;
+            s.uniforms.hideBody = this.bodyClose;
             s.vertexShader =
               "attribute float studioHeight; attribute float studioArm; varying float vStudioHeight; varying float vStudioArm;\n" +
               s.vertexShader;
@@ -119,11 +139,11 @@ export class Actor {
               "#include <begin_vertex>\nvStudioHeight=studioHeight;vStudioArm=studioArm;",
             );
             s.fragmentShader =
-              "uniform float closeLens; uniform float hideHead; varying float vStudioHeight; varying float vStudioArm;\n" +
+              "uniform float closeLens; uniform float hideHead; uniform float hideBody; varying float vStudioHeight; varying float vStudioArm;\n" +
               s.fragmentShader;
             s.fragmentShader = s.fragmentShader.replace(
               "#include <clipping_planes_fragment>",
-              "#include <clipping_planes_fragment>\nfloat headDither=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(.06711056,.00583715))));\nif((vStudioHeight > 1.22 && headDither < hideHead) || (closeLens > .5 && length(vViewPosition) < .30 && vStudioArm < .5)) discard;",
+              "#include <clipping_planes_fragment>\nfloat headDither=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(.06711056,.00583715))));\nif((vStudioHeight > 1.22 && headDither < hideHead) || (headDither < hideBody && (vStudioArm < .5 || closeLens < .5)) || (closeLens > .5 && length(vViewPosition) < .30 && vStudioArm < .5)) discard;",
             );
           };
         }
@@ -154,6 +174,7 @@ export class Actor {
   }
   reset(time: number) {
     this.closedEyes = false;
+    this.reaches = [null, null];
     this.controls.forEach((o, i) => {
       o.position.copy(this.rest[i]);
       o.quaternion.identity();
@@ -224,19 +245,110 @@ export class Actor {
   }
   updateLens(position: T.Vector3) {
     const center = this.head.localToWorld(v(0, 0.11, 0.02));
+    // A camera passing through the torso dissolves it instead of clipping.
+    const chest = this.spine.localToWorld(v(0, 0.12, 0));
+    this.bodyClose.value =
+      1 - T.MathUtils.smoothstep(position.distanceTo(chest), 0.42, 0.85);
     this.headClose.value =
       1 - T.MathUtils.smoothstep(position.distanceTo(center), 0.5, 0.67);
   }
   hand(side: number, target: T.Vector3, weight = 1) {
+    let r = this.reaches[side];
+    if (!r)
+      r = this.reaches[side] = {
+        target: v(),
+        weight: 0,
+        arm: this.arms[side].quaternion.clone(),
+        elbow: this.elbows[side].quaternion.clone(),
+        orient: null,
+      };
+    r.target.copy(target);
+    r.weight = weight;
+    r.orient = null;
+    this.solveHand(side, target, weight);
+  }
+  private solveHand(side: number, target: T.Vector3, weight: number) {
+    // Hands arrive from slightly above and leave the same way, instead of
+    // sliding along a straight line into the contact point.
+    const approach = weight * (1 - weight) * 4 * 0.055;
+    const goal =
+      approach > 0 ? target.clone().setY(target.y + approach) : target;
     const pole = this.root.localToWorld(v(side ? 0.58 : -0.58, 0.88, 0.25));
     solveLimb(
       this.arms[side],
       this.elbows[side],
       this.hands[side],
-      target,
+      goal,
       pole,
       weight,
     );
+  }
+  /** Sets the hand's world rotation (for held props) after IK. */
+  orientHand(side: number, world: T.Quaternion) {
+    this.hands[side].quaternion.copy(
+      this.elbows[side]
+        .getWorldQuaternion(new T.Quaternion())
+        .invert()
+        .multiply(world),
+    );
+    this.hands[side].updateWorldMatrix(false, true);
+    if (this.reaches[side]) this.reaches[side]!.orient = world.clone();
+  }
+  /**
+   * The torso joins a reach: it leans toward far or low targets and turns
+   * toward the side doing the work. Arms are then re-solved from their
+   * pre-IK pose so contacts stay exact.
+   */
+  engage(amount = 1) {
+    let lean = 0,
+      twist = 0,
+      any = false;
+    this.root.updateMatrixWorld(true);
+    const shoulder = this.pelvis.position.y + 0.39;
+    for (let side = 0; side < 2; side++) {
+      const r = this.reaches[side];
+      this.spread[side] = r ? r.weight * (1 - r.weight) * 4 : 0;
+      if (!r || r.weight < 0.01) continue;
+      any = true;
+      const local = this.root.worldToLocal(r.target.clone());
+      const far = Math.max(0, Math.hypot(local.x * 0.6, local.z) - 0.28);
+      const low = Math.max(0, shoulder - 0.22 - local.y);
+      lean += (far * 0.8 + low * 0.5) * r.weight;
+      twist += Math.atan2(local.x, Math.max(0.2, local.z)) * 0.28 * r.weight;
+    }
+    if (!any || amount <= 0) return;
+    lean = T.MathUtils.clamp(lean, 0, 0.34) * amount;
+    twist = T.MathUtils.clamp(twist, -0.32, 0.32) * amount;
+    this.spine.rotation.x += lean;
+    this.spine.rotation.y += twist;
+    this.head.rotation.x -= lean * 0.45;
+    this.head.rotation.y -= twist * 0.5;
+    this.spine.updateWorldMatrix(true, true);
+    for (let side = 0; side < 2; side++) {
+      const r = this.reaches[side];
+      if (!r || r.weight < 0.01) continue;
+      this.arms[side].quaternion.copy(r.arm);
+      this.elbows[side].quaternion.copy(r.elbow);
+      this.solveHand(side, r.target, r.weight);
+      if (r.orient) {
+        const orient = r.orient;
+        this.orientHand(side, orient);
+      }
+    }
+  }
+  /**
+   * Hip-hinge weight transfer for sitting (0 standing → 1 seated) and for
+   * rising (0 seated → 1 standing). The chest travels forward over the knees
+   * before the hips move, which is what reads as weight.
+   */
+  static hinge(progress: number, rising = false) {
+    const t = Math.max(0, Math.min(1, progress));
+    if (rising) {
+      const lean = Math.sin(Math.PI * Math.pow(t, 0.65)) * 0.5;
+      return { lean, seat: 1 - smoother((t - 0.24) / 0.76) };
+    }
+    const lean = Math.sin(Math.PI * Math.pow(t, 1.2)) * 0.42;
+    return { lean, seat: smoother((t - 0.12) / 0.88) };
   }
   foot(side: number, target: T.Vector3, weight = 1) {
     solveLimb(
@@ -325,19 +437,33 @@ export class Actor {
       dt,
     );
     this.pelvis.position.y +=
-      (Math.sin(phase * Math.PI) * 0.016 - 0.012) * pace;
-    this.pelvis.rotation.y = swing * 0.075 * pace;
+      (Math.sin(phase * Math.PI) * 0.026 - 0.016) * pace;
+    this.pelvis.rotation.y = swing * 0.11 * pace;
     this.pelvis.rotation.z = -swing * 0.03 + bank;
-    this.spine.rotation.y = -swing * 0.13 * pace;
+    this.spine.rotation.y = -swing * 0.2 * pace;
     this.spine.rotation.x += lean;
     this.spine.rotation.z += bank * 0.6;
-    this.head.rotation.x -= lean * 0.75;
+    this.head.rotation.x -=
+      lean * 0.75 - Math.sin(phase * Math.PI * 2) * 0.02 * pace;
+    this.head.rotation.y += swing * 0.08 * pace;
+    // Turning in place, a planted foot must not end up on the other side of
+    // the body: it pivots outward instead, so the legs never cross.
+    this.root.updateMatrixWorld(true);
+    this.stance.forEach((p, i) => {
+      const local = this.root.worldToLocal(p.clone()),
+        side = i ? 1 : -1;
+      if (local.x * side < 0.06) {
+        local.x = side * 0.06;
+        const y = p.y;
+        p.copy(this.root.localToWorld(local)).setY(y);
+      }
+    });
     this.stance.forEach((p, i) => this.foot(i, p));
     this.arms.forEach((a, i) => {
       const s = (this.step ? swing * (i ? -1 : 1) : 0) * pace;
-      a.rotation.x = s * 0.34 - 0.04;
+      a.rotation.x = s * 0.52 - 0.04;
       a.rotation.z += (i ? 1 : -1) * pace * 0.04;
-      this.elbows[i].rotation.x -= pace * 0.18 + Math.max(0, s) * 0.22;
+      this.elbows[i].rotation.x -= pace * 0.22 + Math.max(0, s) * 0.42;
     });
   }
   sit(
@@ -348,9 +474,14 @@ export class Actor {
     footDistance = 0.31,
   ) {
     this.root.rotation.set(0, yaw, 0);
-    this.pelvis.position.y = T.MathUtils.lerp(0.76, hip, blend);
-    this.pelvis.position.z = T.MathUtils.lerp(0, -0.04, blend);
-    this.spine.rotation.x = -0.05;
+    const hinge =
+      blend >= 1 || blend <= 0 ? { lean: 0, seat: blend } : Actor.hinge(blend);
+    const lean = hinge.lean;
+    this.pelvis.position.y = T.MathUtils.lerp(0.76, hip, hinge.seat);
+    this.pelvis.position.z =
+      T.MathUtils.lerp(0, -0.04, hinge.seat) - lean * 0.12;
+    this.spine.rotation.x = -0.05 + lean;
+    this.head.rotation.x -= lean * 0.5;
     for (let i = 0; i < 2; i++) {
       const local = v(i ? 0.1 : -0.1, 0.11, footDistance);
       const target = local
@@ -360,7 +491,76 @@ export class Actor {
       this.foot(i, target, blend);
     }
   }
-  sync() {
+  private settle(dt: number) {
+    const parts = [this.root, ...this.controls];
+    if (!this.blend) {
+      this.blend = {
+        p: parts.map((o) => o.position.clone()),
+        q: parts.map((o) => o.quaternion.clone()),
+        offP: parts.map(() => v()),
+        offQ: parts.map(() => new T.Quaternion()),
+      };
+      return;
+    }
+    const b = this.blend,
+      decay = 1 - Math.exp(-dt / 0.085),
+      jumpP = Math.max(0.035, 2.6 * dt),
+      jumpQ = Math.max(0.12, 14 * dt),
+      identity = new T.Quaternion();
+    parts.forEach((o, i) => {
+      // Arms that are holding or reaching keep exact contact.
+      const arm = i >= 4 && i <= 9 ? (i < 7 ? 0 : 1) : -1;
+      if (
+        arm >= 0 &&
+        (this.grip[arm] > 0.05 || (this.reaches[arm]?.weight ?? 0) > 0.3)
+      ) {
+        b.offP[i].set(0, 0, 0);
+        b.offQ[i].identity();
+      } else if (
+        o.position.distanceTo(b.p[i]) > jumpP ||
+        b.q[i].angleTo(o.quaternion) > jumpQ
+      ) {
+        // Keep the shown pose continuous: final_prev = off ∘ prev.
+        b.offP[i].add(b.p[i]).sub(o.position);
+        b.offQ[i].multiply(b.q[i]).multiply(o.quaternion.clone().invert());
+      }
+      b.p[i].copy(o.position);
+      b.q[i].copy(o.quaternion);
+      b.offP[i].multiplyScalar(1 - decay);
+      b.offQ[i].slerp(identity, decay);
+    });
+    // Joint offsets apply in place; joints are rebuilt every frame.
+    for (let i = 1; i < parts.length; i++) {
+      parts[i].position.add(b.offP[i]);
+      parts[i].quaternion.premultiply(b.offQ[i]);
+    }
+    // The root is authored state that sequences read back, so its offset is
+    // carried by the pelvis (everything visible hangs from it) instead.
+    if (b.offP[0].lengthSq() > 1e-8 || b.offQ[0].angleTo(identity) > 1e-4) {
+      const authored = new T.Matrix4().compose(
+          this.root.position,
+          this.root.quaternion,
+          new T.Vector3(1, 1, 1),
+        ),
+        shown = new T.Matrix4().compose(
+          this.root.position.clone().add(b.offP[0]),
+          b.offQ[0].clone().multiply(this.root.quaternion),
+          new T.Vector3(1, 1, 1),
+        ),
+        pelvis = new T.Matrix4().compose(
+          this.pelvis.position,
+          this.pelvis.quaternion,
+          new T.Vector3(1, 1, 1),
+        );
+      authored
+        .invert()
+        .multiply(shown)
+        .multiply(pelvis)
+        .decompose(this.pelvis.position, this.pelvis.quaternion, v());
+    }
+  }
+  sync(dt = 0) {
+    if (dt > 0) this.settle(dt);
     const closed = this.closedEyes || this.blink;
     this.lids.visible = closed && this.headClose.value < 0.5;
     this.eyeParts.forEach((o) => (o.visible = !closed));
@@ -392,14 +592,16 @@ export class Actor {
           const name = `finger${i}_${f}_${j}`,
             b = this.bones.get(name);
           if (b)
-            b.quaternion
-              .copy(this.fingerRest.get(name)!)
-              .multiply(
-                new T.Quaternion().setFromAxisAngle(
-                  v(1, 0, 0),
-                  -this.grip[i] * (j === 1 ? 1.25 : 0.85),
-                ),
-              );
+            b.quaternion.copy(this.fingerRest.get(name)!).multiply(
+              new T.Quaternion().setFromAxisAngle(
+                v(1, 0, 0),
+                // Fingers open a little on the way in, then close.
+                -(
+                  this.grip[i] -
+                  this.spread[i] * 0.3 * (1 - Math.min(1, this.grip[i] * 4))
+                ) * (j === 1 ? 1.25 : 0.85),
+              ),
+            );
         }
     for (let i = 0; i < 2; i++) {
       const b = this.bones.get(`thumb${i}`);
