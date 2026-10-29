@@ -2,6 +2,7 @@ import * as T from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { solveLimb } from "./ik";
+import { Spring } from "./motion";
 
 const v = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
 function joint(parent: T.Object3D, name: string, p: T.Vector3) {
@@ -54,6 +55,16 @@ export class Actor {
   } | null = null;
   private lastSide = 0;
   private close = { value: 0 };
+  private blinkTimer = 2.2;
+  private blinkLeft = 0;
+  private lookYaw = new Spring(0, 70, 14);
+  private lookPitch = new Spring(0, 70, 14);
+  private lean = new Spring(0, 40, 11);
+  private bank = new Spring(0, 30, 9);
+  private lastSpeed = 0;
+  private lastYaw = 0;
+  /** World point the head (and, when free, the chest) turns toward. */
+  lookTarget: T.Vector3 | null = null;
   private headClose = { value: 0 };
   async load() {
     const asset = await new GLTFLoader()
@@ -143,17 +154,70 @@ export class Actor {
   }
   reset(time: number) {
     this.closedEyes = false;
-    this.blink = time % 4.7 > 4.57;
     this.controls.forEach((o, i) => {
       o.position.copy(this.rest[i]);
       o.quaternion.identity();
     });
-    this.spine.rotation.x = Math.sin(time * 1.8) * 0.006;
-    this.pelvis.position.y += Math.sin(time * 1.8) * 0.002;
-    this.head.rotation.y = Math.sin(time * 0.42) * 0.035;
-    this.arms[0].rotation.z = -0.075;
-    this.arms[1].rotation.z = 0.075;
-    this.elbows.forEach((a) => (a.rotation.x = -0.14));
+    // Idle is layered, not looped: breath, a slow weight shift between feet and
+    // a counter-tilt through the chest, each on unrelated periods.
+    const breath = Math.sin(time * 1.55),
+      shift = Math.sin(time * 0.29) + 0.35 * Math.sin(time * 0.71 + 1.3);
+    this.spine.rotation.x = breath * 0.013;
+    this.pelvis.position.y += breath * 0.0025 - Math.abs(shift) * 0.004;
+    this.pelvis.position.x = shift * 0.011;
+    this.pelvis.rotation.z = shift * 0.016;
+    this.spine.rotation.z = -shift * 0.012;
+    this.head.rotation.z = shift * 0.01;
+    this.head.rotation.y = Math.sin(time * 0.42) * 0.03;
+    this.arms[0].rotation.z = -0.075 - breath * 0.012 + shift * 0.01;
+    this.arms[1].rotation.z = 0.075 + breath * 0.012 + shift * 0.01;
+    this.arms.forEach((a) => (a.position.y += breath * 0.004));
+    this.elbows.forEach(
+      (a, i) => (a.rotation.x = -0.16 - Math.sin(time * 0.37 + i) * 0.03),
+    );
+  }
+  /**
+   * Secondary motion applied after the authored pose: blinks on an irregular
+   * clock, and a sprung head turn toward `lookTarget`. `free` lets the chest
+   * follow the head a little when no hand is pinned by IK.
+   */
+  life(dt: number, free: boolean, weight = 1) {
+    this.blinkTimer -= dt;
+    if (this.blinkTimer <= 0) {
+      this.blinkLeft = 0.12;
+      this.blinkTimer = Math.random() < 0.2 ? 0.22 : 1.8 + Math.random() * 3.6;
+    }
+    this.blinkLeft -= dt;
+    this.blink = this.blinkLeft > 0;
+    let yaw = 0,
+      pitch = 0;
+    if (this.lookTarget && weight > 0) {
+      this.root.updateMatrixWorld(true);
+      const local = this.spine
+        .worldToLocal(this.lookTarget.clone())
+        .sub(this.head.position)
+        .sub(v(0, 0.12, 0));
+      const turn = Math.atan2(local.x, local.z);
+      // Past the shoulder the head gives up rather than snapping around.
+      const reach = 1 - T.MathUtils.smoothstep(Math.abs(turn), 1.5, 2.3);
+      yaw = T.MathUtils.clamp(turn, -1.05, 1.05) * reach * weight;
+      pitch =
+        T.MathUtils.clamp(
+          -Math.atan2(local.y, Math.hypot(local.x, local.z)),
+          -0.42,
+          0.5,
+        ) *
+        reach *
+        weight;
+    }
+    const y = this.lookYaw.step(yaw, dt),
+      x = this.lookPitch.step(pitch, dt);
+    this.head.rotation.y += y * (free ? 0.78 : 1);
+    this.head.rotation.x += x;
+    if (free) {
+      this.spine.rotation.y += y * 0.22;
+      this.spine.rotation.x += x * 0.12;
+    }
   }
   setFirstPerson(on: boolean) {
     this.close.value = on ? 1 : 0;
@@ -194,6 +258,8 @@ export class Actor {
   resetGait() {
     this.stance = [];
     this.step = null;
+    this.lastSpeed = 0;
+    this.lastYaw = this.root.rotation.y;
   }
   walk(dt: number, speed: number) {
     const desired = [-1, 1].map((s) =>
@@ -235,24 +301,44 @@ export class Actor {
       this.stance[s.side].y += Math.sin(t * Math.PI) * 0.085;
       if (t === 1) this.step = null;
     }
-    this.pelvis.position.y -= Math.min(speed, 1.5) * 0.009;
-    this.pelvis.rotation.z =
-      (this.step
-        ? Math.sin((this.step.t / this.step.duration) * Math.PI) *
-          (this.step.side ? 1 : -1)
-        : 0) * 0.026;
-    this.stance.forEach((p, i) => this.foot(i, p));
-    this.arms.forEach(
-      (a, i) =>
-        (a.rotation.x =
-          (this.step
-            ? Math.sin((this.step.t / this.step.duration) * Math.PI) *
-              (this.step.side === i ? 1 : -1)
-            : 0) *
-            Math.min(speed, 1.5) *
-            0.19 -
-          0.04),
+    const pace = Math.min(speed, 1.6) / 1.6,
+      phase = this.step ? Math.min(1, this.step.t / this.step.duration) : 0,
+      swing = this.step
+        ? Math.sin(phase * Math.PI) * (this.step.side ? -1 : 1)
+        : 0;
+    // Lean into acceleration and into turns; both settle on springs so a stop
+    // rocks back slightly instead of freezing upright.
+    const accel = (speed - this.lastSpeed) / Math.max(0.001, dt);
+    this.lastSpeed = speed;
+    const yawRate =
+      Math.atan2(
+        Math.sin(this.root.rotation.y - this.lastYaw),
+        Math.cos(this.root.rotation.y - this.lastYaw),
+      ) / Math.max(0.001, dt);
+    this.lastYaw = this.root.rotation.y;
+    const lean = this.lean.step(
+      pace * 0.075 + T.MathUtils.clamp(accel, -6, 6) * 0.006,
+      dt,
     );
+    const bank = this.bank.step(
+      T.MathUtils.clamp(yawRate * pace, -5, 5) * -0.012,
+      dt,
+    );
+    this.pelvis.position.y +=
+      (Math.sin(phase * Math.PI) * 0.016 - 0.012) * pace;
+    this.pelvis.rotation.y = swing * 0.075 * pace;
+    this.pelvis.rotation.z = -swing * 0.03 + bank;
+    this.spine.rotation.y = -swing * 0.13 * pace;
+    this.spine.rotation.x += lean;
+    this.spine.rotation.z += bank * 0.6;
+    this.head.rotation.x -= lean * 0.75;
+    this.stance.forEach((p, i) => this.foot(i, p));
+    this.arms.forEach((a, i) => {
+      const s = (this.step ? swing * (i ? -1 : 1) : 0) * pace;
+      a.rotation.x = s * 0.34 - 0.04;
+      a.rotation.z += (i ? 1 : -1) * pace * 0.04;
+      this.elbows[i].rotation.x -= pace * 0.18 + Math.max(0, s) * 0.22;
+    });
   }
   sit(
     seat: T.Vector3,

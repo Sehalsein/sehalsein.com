@@ -3,4 +3,5 @@ import App from "./App";
 import "./style.css";
 import "./immersive.css";
 import "./studio.css";
+import "./feel.css";
 createRoot(document.getElementById("root")!).render(<App />);

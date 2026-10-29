@@ -1,4 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import {
   ArrowUpRight,
   ArrowLeft,
@@ -34,6 +41,19 @@ type State = {
   ready: boolean;
   night: boolean;
 };
+// Keeps a closing element mounted long enough to play its exit.
+function usePresence(open: boolean, ms = 220) {
+  const [mounted, setMounted] = useState(open);
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      return;
+    }
+    const id = setTimeout(() => setMounted(false), ms);
+    return () => clearTimeout(id);
+  }, [open, ms]);
+  return { mounted: open || mounted, leaving: !open && mounted };
+}
 declare global {
   interface Window {
     __STUDIO__?: Studio;
@@ -48,7 +68,13 @@ export default function App() {
     [guide, setGuide] = useState(false),
     [sound, setSound] = useState(false),
     [page, setPage] = useState<"about" | "resume" | null>(null),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [toast, setToast] = useState<{ id: Spot; count: number } | null>(null),
+    [lastPage, setLastPage] = useState<"about" | "resume">("about");
+  const pagePresence = usePresence(!!page, 200),
+    guidePresence = usePresence(guide, 200),
+    welcomePresence = usePresence(!entered, 450),
+    seen = useRef(0);
   const [state, setState] = useState<State>({
     view: "room",
     busy: false,
@@ -87,11 +113,24 @@ export default function App() {
   }, []);
   useEffect(() => {
     world?.setPaused(!!page);
-    if (page)
-      (
-        document.querySelector(".studio-page") as HTMLDialogElement
-      )?.showModal();
+    if (page) {
+      setLastPage(page);
+      const dialog = document.querySelector(
+        ".studio-page",
+      ) as HTMLDialogElement | null;
+      if (dialog && !dialog.open) dialog.showModal();
+    }
   }, [world, page]);
+  useEffect(() => {
+    const count = state.visited.length;
+    if (count > seen.current && entered) {
+      setToast({ id: state.visited[count - 1], count });
+      const id = setTimeout(() => setToast(null), 2900);
+      seen.current = count;
+      return () => clearTimeout(id);
+    }
+    seen.current = count;
+  }, [state.visited, entered]);
   const visit = (id: Spot) => {
     world?.visit(id);
     setGuide(false);
@@ -159,8 +198,11 @@ export default function App() {
           </button>
         </div>
       </header>
-      {!entered && (
-        <section className="studio-welcome">
+      {welcomePresence.mounted && (
+        <section
+          className="studio-welcome"
+          data-leaving={welcomePresence.leaving || undefined}
+        >
           <span className="studio-kicker">
             <i /> HELLO, I’M SEHAL.
           </span>
@@ -199,9 +241,24 @@ export default function App() {
         <>
           <div className="studio-caption" aria-live="polite">
             <span className={state.busy ? "is-acting" : ""} />
-            {state.label}
+            <b className="caption-text" key={state.label}>
+              {state.label}
+            </b>
           </div>
-          <nav className="studio-actions" aria-label="Room interactions">
+          {toast && (
+            <div className="discovery-toast" key={toast.id} role="status">
+              <span className="studio-kicker">✳ NEW DISCOVERY</span>
+              <strong>{SPOTS[toast.id].name}</strong>
+              <small>
+                {toast.count} of {Object.keys(SPOTS).length} found
+              </small>
+            </div>
+          )}
+          <nav
+            className="studio-actions"
+            aria-label="Room interactions"
+            key={`${state.view}`}
+          >
             {!room && (
               <button className="action-back" onClick={() => world?.back()}>
                 <ArrowLeft size={17} />
@@ -272,6 +329,7 @@ export default function App() {
           )}
           {room && state.focus && !state.busy && (
             <button
+              key={state.focus}
               className="nearby-object"
               onClick={() => state.focus && visit(state.focus)}
             >
@@ -316,12 +374,17 @@ export default function App() {
           </a>
         </div>
         <span className="discovery-count">
-          {String(state.visited.length).padStart(2, "0")}{" "}
-          <span>/ 13 little discoveries</span>
+          <b key={state.visited.length}>
+            {String(state.visited.length).padStart(2, "0")}
+          </b>{" "}
+          <span>/ {Object.keys(SPOTS).length} little discoveries</span>
         </span>
       </footer>
-      {guide && (
-        <aside className="studio-guide">
+      {guidePresence.mounted && (
+        <aside
+          className="studio-guide"
+          data-leaving={guidePresence.leaving || undefined}
+        >
           <header>
             <span className="studio-kicker">FOLLOW YOUR CURIOSITY</span>
             <button
@@ -340,6 +403,8 @@ export default function App() {
             {(Object.keys(SPOTS) as Spot[]).map((id, i) => (
               <button
                 key={id}
+                style={{ "--i": i } as CSSProperties}
+                data-found={state.visited.includes(id) || undefined}
                 onClick={() => {
                   if (!entered) enter();
                   visit(id);
@@ -361,15 +426,19 @@ export default function App() {
           </div>
         </aside>
       )}
-      {page && (
+      {pagePresence.mounted && (
         <dialog
           className="studio-page"
+          data-leaving={pagePresence.leaving || undefined}
           onCancel={(e) => {
             e.preventDefault();
             setPage(null);
           }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPage(null);
+          }}
           aria-modal="true"
-          aria-label={page === "about" ? "About Sehal" : "Résumé"}
+          aria-label={(page ?? lastPage) === "about" ? "About Sehal" : "Résumé"}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               e.stopPropagation();
@@ -377,15 +446,15 @@ export default function App() {
             }
           }}
         >
-          <button
-            className="page-close"
-            autoFocus
-            onClick={() => setPage(null)}
-          >
-            <ArrowLeft size={17} /> Back to the room
-          </button>
-          <div>
-            {page === "resume" ? (
+          <div className="page-sheet">
+            <button
+              className="page-close"
+              autoFocus
+              onClick={() => setPage(null)}
+            >
+              <ArrowLeft size={17} /> Back to the room
+            </button>
+            {(page ?? lastPage) === "resume" ? (
               <Suspense fallback={<p>Opening the page…</p>}>
                 <Resume />
               </Suspense>

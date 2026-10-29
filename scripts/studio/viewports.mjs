@@ -82,7 +82,10 @@ try {
   await p.getByRole("button", { name: "About me", exact: true }).click();
   assert.equal(await p.locator("dialog[open]").count(), 1);
   await p.keyboard.press("Escape");
-  assert.equal(await p.locator("dialog[open]").count(), 0);
+  // The sheet plays a short exit before the dialog leaves the top layer.
+  await p.waitForFunction(() => !document.querySelector("dialog[open]"), null, {
+    timeout: 1000,
+  });
   assert.deepEqual(errors, []);
   console.log(
     "PASS: portrait monitor, touch UI, editable notes, Escape in a text field, resize, safe bed cancellation, native quick-page dialog.",

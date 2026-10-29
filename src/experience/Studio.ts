@@ -12,7 +12,18 @@ import {
   type Point,
   OBSTACLES,
 } from "./navigation";
-import { between, ease, angle, arc, type Action } from "./motion";
+import {
+  between,
+  angle,
+  arc,
+  smoother,
+  easeOut,
+  back,
+  wobble,
+  window01,
+  Spring,
+  type Action,
+} from "./motion";
 import { WorldSurfaces, type SurfaceId } from "./surfaces";
 import { consolidateGeometry } from "./optimize";
 import { planCameraPath, type TravelPath, type KeepOut } from "./camera";
@@ -97,6 +108,36 @@ export class Studio {
   private viewShift = 1;
   private reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   private surfaceElements = new Map<SurfaceId, HTMLElement>();
+  // Feel layer: everything below is secondary motion and feedback.
+  private hover: Spot | null = null;
+  private hoverActor = false;
+  private glow = new Map<
+    Spot,
+    { spring: Spring; materials: T.MeshStandardMaterial[] }
+  >();
+  private tag = document.createElement("div");
+  private tagPos = new T.Vector2(-999, -999);
+  private pointer = new T.Vector2();
+  private pointerSeen = false;
+  private parallax = { x: new Spring(0, 30, 10), y: new Spring(0, 30, 10) };
+  private yawVelocity = 0;
+  private zoomTarget = 1;
+  private lastDrag = 0;
+  private gaze: T.Vector3 | null = null;
+  private glance: { target: T.Vector3 | null; until: number } = {
+    target: null,
+    until: 2,
+  };
+  private ripple: T.Mesh;
+  private rippleTime = -1;
+  private emotes: { sprite: T.Sprite; t: number }[] = [];
+  private emoteCache = new Map<string, T.SpriteMaterial>();
+  private bumps = new Map<
+    T.Object3D,
+    { base: T.Vector3; t: number; strength: number }
+  >();
+  private jacket = 0;
+  private pokes = 0;
   constructor(
     private host: HTMLElement,
     private emit: (state: State) => void,
@@ -137,6 +178,22 @@ export class Studio {
     this.stars = this.makeDream();
     this.scene.add(this.dream);
     this.dream.visible = false;
+    this.ripple = new T.Mesh(
+      new T.RingGeometry(0.07, 0.095, 40),
+      new T.MeshBasicMaterial({
+        color: "#fff4dc",
+        transparent: true,
+        depthWrite: false,
+        opacity: 0,
+      }),
+    );
+    this.ripple.rotation.x = -Math.PI / 2;
+    this.ripple.renderOrder = 2;
+    this.ripple.visible = false;
+    this.scene.add(this.ripple);
+    this.tag.className = "hover-tag";
+    this.tag.setAttribute("aria-hidden", "true");
+    host.append(this.tag);
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(host);
     this.resize();
@@ -240,6 +297,7 @@ export class Studio {
     this.room.updateMatrixWorld(true);
     this.paintScreen("ComputerSurface", false);
     this.paintScreen("TVSurface", true);
+    this.prepareGlow();
     this.actor.root.position.set(-0.4, 0, 0.76);
     this.actor.root.rotation.y = -0.3;
     this.actor.reset(0);
@@ -301,8 +359,19 @@ export class Studio {
       duration: this.reduced ? 0.22 : duration,
     };
   }
+  // The room camera leans a third of the way toward the character, so the
+  // frame follows them around instead of staring at the centre of the rug.
+  private follow() {
+    const p = this.actor.root.position;
+    return v(
+      T.MathUtils.clamp(p.x, -2, 2) * 0.3,
+      0,
+      T.MathUtils.clamp(p.z, -2, 2) * 0.22,
+    );
+  }
   private roomCamera(duration = 0.85) {
-    this.cameraTo(this.overview(), v(0, 0.86, 0), duration, 40);
+    const f = this.follow();
+    this.cameraTo(this.overview().add(f), v(0, 0.86, 0).add(f), duration, 40);
   }
   private deskCamera() {
     this.cameraTo(v(0.92, 1.4, -1.0), v(0.91, 1.2, -1.94), 0.78, 58);
@@ -356,6 +425,7 @@ export class Studio {
       elapsed: 0,
       finish: () => {
         this.action = null;
+        this.gaze = null;
         this.notify({ busy: false });
         finish?.();
         if (this.queueBack) {
@@ -418,6 +488,7 @@ export class Studio {
       this.notify({ visited: [...this.state.visited, id] });
   }
   private arrive(id: Spot) {
+    this.gaze = v(...SPOTS[id].anchor);
     this.pending = null;
     this.speed = 0;
     this.actor.resetGait();
@@ -654,6 +725,8 @@ export class Studio {
       },
       () => {
         this.detach();
+        this.bump(mug, 0.12);
+        this.emote("☕");
         this.notify({ label: "That’s better." });
         this.deskCamera();
       },
@@ -1000,11 +1073,13 @@ export class Studio {
           a.setFirstPerson(true);
         }
       },
-      () =>
+      () => {
+        this.emote("🎮");
         this.notify({
           view: "tv",
           label: "Choose a channel. Stay for a game.",
-        }),
+        });
+      },
     );
   }
   private controllerPose() {
@@ -1152,6 +1227,8 @@ export class Studio {
           d.geometry.dispose();
           (d.material as T.Material).dispose();
         });
+        this.bump(this.node("CarePlant"), 0.16);
+        this.emote("🌱");
         this.roomCamera();
         this.notify({ label: "A happy little plant." });
       },
@@ -1191,6 +1268,7 @@ export class Studio {
         if (t >= 0.4 && !attached) {
           this.attach(o, side);
           attached = true;
+          this.emote(id === "books" ? "✏️" : "🚀");
         }
         if (attached)
           this.heldAt(
@@ -1224,55 +1302,72 @@ export class Studio {
     const a = this.actor,
       fromYaw = a.root.rotation.y;
     const anchor = v(...SPOTS[id].anchor);
+    if (id === "wardrobe") anchor.y = 1.0;
     const targetYaw = Math.atan2(
       anchor.x - a.root.position.x,
       anchor.z - a.root.position.z,
     );
     let toggled = false;
+    const wardrobe = id === "wardrobe";
     this.play(
-      0.95,
+      wardrobe ? 1.7 : 0.95,
       SPOTS[id].verb,
       (t) => {
         a.root.rotation.y = angle(fromYaw, targetYaw, between(t, 0, 0.3));
         const hand = anchor.clone().setY(Math.min(1.2, anchor.y));
-        const w = between(t, 0.1, 0.38) * (1 - between(t, 0.61, 0.9));
+        const w = wardrobe
+          ? between(t, 0.35, 0.65) * (1 - between(t, 0.85, 1.25))
+          : between(t, 0.1, 0.38) * (1 - between(t, 0.61, 0.9));
         a.spine.position.z = w * 0.12;
         a.spine.rotation.x = w * 0.08;
         if (id === "window")
           hand.y -= Math.sin(between(t, 0.25, 0.8) * Math.PI) * 0.12;
         a.hand(0, hand, w);
-        if (t > 0.46 && !toggled) {
+        if (t > (wardrobe ? 0.7 : 0.46) && !toggled) {
           toggled = true;
-          if (id === "lamp") this.lampOn = !this.lampOn;
+          if (id === "lamp") {
+            this.lampOn = !this.lampOn;
+            this.bump(this.node("Lamp"), 0.09);
+            this.emote(this.lampOn ? "💡" : "🌙");
+          }
           if (id === "window") {
             this.curtain = 1 - this.curtain;
+            this.emote(this.curtain ? "🌤️" : "☁️");
           }
           if (id === "wardrobe") {
             this.actor.model.traverse((o) => {
               if (o instanceof T.Mesh && o.name.includes("Burnt")) {
                 const m = o.material as T.MeshStandardMaterial;
-                m.color.set(
-                  ["#b86143", "#507c79", "#b89a59"][Math.floor(this.time) % 3],
-                );
+                m.color.set(["#507c79", "#b89a59", "#b86143"][this.jacket % 3]);
               }
             });
+            this.jacket++;
+            this.emote("✨");
           }
         }
-        if (id === "wardrobe") {
-          const w = Math.sin(between(t, 0, 0.95) * Math.PI);
-          this.node("Door-1").rotation.y = -w * 0.65;
-          this.node("Door1").rotation.y = w * 0.65;
+        if (wardrobe) {
+          // Doors swing past open, then thud shut with a little rebound.
+          const w =
+            back((t - 0.05) / 0.45, 2.2) * (1 - smoother((t - 1.0) / 0.38)) +
+            (t > 1.38 ? wobble(t - 1.38, 4, 9) * 0.06 : 0);
+          this.node("Door-1").rotation.y = -w * 0.7;
+          this.node("Door1").rotation.y = w * 0.7;
+          a.pelvis.position.y -= window01(t, 0.55, 0.95) * 0.05;
         }
       },
-      () =>
+      () => {
+        if (wardrobe) this.bump(this.node("Wardrobe"), 0.025);
         this.notify({
           label:
             id === "lamp"
               ? "A softer light."
               : id === "plant"
                 ? "A little care goes a long way."
-                : "Make yourself at home.",
-        }),
+                : id === "wardrobe"
+                  ? "Looking sharp."
+                  : "Make yourself at home.",
+        });
+      },
     );
   }
   back() {
@@ -1320,7 +1415,9 @@ export class Studio {
           else if (this.hold) this.detach();
         },
         () => {
+          const o = h.object;
           this.detach();
+          this.bump(o, 0.1);
           this.notify({ view: "room" });
         },
       );
@@ -1342,7 +1439,8 @@ export class Studio {
   }
   resetCamera() {
     this.yaw = 0.63;
-    this.zoom = 1;
+    this.zoomTarget = 1;
+    this.yawVelocity = 0;
     if (this.state.view === "room") this.roomCamera();
   }
   private surfaceSpec(id: SurfaceId) {
@@ -1405,7 +1503,8 @@ export class Studio {
     this.frame = requestAnimationFrame(this.tick);
     const dt = Math.min(0.04, (now - this.last) / 1000 || 0.016);
     this.last = now;
-    if (this.paused || document.hidden) return;
+    // Pages over the room only block input; the room keeps living behind them.
+    if (document.hidden) return;
     this.time += dt;
     const a = this.actor;
     a.reset(this.time);
@@ -1441,15 +1540,36 @@ export class Studio {
     if (this.lens) {
       const l = this.lens;
       l.t += dt;
-      const t = ease(l.t / l.duration);
+      const t = smoother(l.t / l.duration);
       this.camera.position.copy(l.path.at(t));
       this.lensTarget.lerpVectors(l.from, l.to, t);
       this.camera.fov = T.MathUtils.lerp(l.fov, l.targetFov, t);
       if (t === 1) this.lens = null;
       this.camera.updateProjectionMatrix();
     } else if (this.state.view === "room" && !this.state.busy) {
-      this.camera.position.lerp(this.overview(), 1 - Math.exp(-dt * 6));
-      this.lensTarget.lerp(v(0, 0.86, 0), 1 - Math.exp(-dt * 6));
+      // Flick-to-orbit keeps its momentum; the cursor adds a little parallax
+      // and the frame breathes so the room never sits perfectly still.
+      if (!this.down?.drag) {
+        this.yaw += this.yawVelocity * dt;
+        this.yawVelocity *= Math.exp(-dt * 4.5);
+      }
+      const clamped = T.MathUtils.clamp(this.yaw, -0.1, 1.48);
+      if (clamped !== this.yaw) {
+        this.yaw = T.MathUtils.damp(this.yaw, clamped, 10, dt);
+        this.yawVelocity = 0;
+      }
+      this.zoom = T.MathUtils.damp(this.zoom, this.zoomTarget, 7, dt);
+      const px = this.parallax.x.step(this.reduced ? 0 : this.pointer.x, dt),
+        py = this.parallax.y.step(this.reduced ? 0 : this.pointer.y, dt);
+      const f = this.follow(),
+        yaw = this.yaw;
+      this.yaw += px * 0.04;
+      const goal = this.overview().add(f);
+      this.yaw = yaw;
+      goal.y += py * 0.22 + Math.sin(this.time * 0.21) * 0.04;
+      goal.x += Math.sin(this.time * 0.13) * 0.05;
+      this.camera.position.lerp(goal, 1 - Math.exp(-dt * 4));
+      this.lensTarget.lerp(v(0, 0.86, 0).add(f), 1 - Math.exp(-dt * 4));
     }
     this.viewShift = T.MathUtils.damp(
       this.viewShift,
@@ -1468,7 +1588,10 @@ export class Studio {
     this.camera.lookAt(this.lensTarget);
     this.camera.updateMatrixWorld();
     a.updateLens(this.camera.position);
+    a.lookTarget = this.lookTarget();
+    a.life(dt, !this.action && view === "room" && !this.hold);
     a.sync();
+    this.feel(dt);
     if (this.bubble.visible)
       this.bubble.position.y = 1.4 + Math.sin(this.time * 2) * 0.025;
     if (this.dream.visible) {
@@ -1663,43 +1786,327 @@ export class Studio {
       c.setPointerCapture(e.pointerId);
     });
     on(c, "pointermove", (e) => {
+      const rect = c.getBoundingClientRect();
+      this.pointer.set(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        (-(e.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      this.pointerSeen = true;
       if (!this.entered || !this.state.ready) return;
       if (this.down && this.state.view === "room" && !this.state.busy) {
         const dx = e.clientX - this.down.x;
         if (Math.abs(dx) > 3) this.down.drag = true;
         if (this.down.drag) {
-          this.yaw = T.MathUtils.clamp(this.yaw - dx * 0.004, -0.1, 1.48);
+          const now = performance.now(),
+            step = -dx * 0.004;
+          this.yaw = T.MathUtils.clamp(this.yaw + step, -0.25, 1.63);
+          this.yawVelocity =
+            T.MathUtils.lerp(
+              this.yawVelocity,
+              step / Math.max(0.008, (now - this.lastDrag) / 1000),
+              0.5,
+            ) || 0;
+          this.lastDrag = now;
           this.down.x = e.clientX;
+          this.setHover(null, false);
         }
       } else {
         const id = this.pick(e);
-        c.style.cursor = id ? "pointer" : "grab";
+        const actor = !id && this.hitsActor();
+        this.setHover(id, actor);
+        c.style.cursor = id || actor ? "pointer" : "grab";
       }
+    });
+    on(c, "pointerleave", () => {
+      this.pointer.set(0, 0);
+      this.setHover(null, false);
     });
     on(c, "pointerup", (e) => {
       if (!this.down) return;
       if (!this.down.drag) {
+        this.yawVelocity = 0;
         const id = this.pick(e);
-        if (id) this.visit(id);
+        if (id) {
+          // Only hand-sized things squash on a tap; furniture stays solid.
+          const o = this.node(SPOTS[id].root),
+            size = new T.Box3().setFromObject(o).getSize(v());
+          if (Math.max(size.x, size.y, size.z) < 0.9) this.bump(o, 0.06);
+          this.visit(id);
+        } else if (this.hitsActor()) this.poke();
         else if (this.state.view === "room" && !this.state.busy) {
           const p = this.raycaster.ray.intersectPlane(new T.Plane(up, 0), v());
           if (p && canStand(p)) {
             this.path = findPath(this.actor.root.position, p);
             this.pending = null;
+            if (this.path.length) {
+              this.ripple.position.set(p.x, 0.012, p.z);
+              this.rippleTime = 0;
+            }
           }
         }
-      }
+      } else if (performance.now() - this.lastDrag > 80) this.yawVelocity = 0;
       this.down = null;
     });
     on(c, "wheel", (e) => {
       if (this.state.view === "room") {
-        this.zoom = T.MathUtils.clamp(
-          this.zoom + e.deltaY * 0.0005,
+        this.zoomTarget = T.MathUtils.clamp(
+          this.zoomTarget + e.deltaY * 0.0007,
           0.74,
           1.35,
         );
       }
     });
+  }
+  // ---- Feel layer -------------------------------------------------------
+  private prepareGlow() {
+    const roots = new Map<string, Spot>();
+    for (const id of Object.keys(SPOTS) as Spot[])
+      if (!roots.has(SPOTS[id].root)) roots.set(SPOTS[id].root, id);
+    for (const [name, id] of roots) {
+      const materials: T.MeshStandardMaterial[] = [];
+      this.nodes.get(name)?.traverse((o) => {
+        if (!(o instanceof T.Mesh) || Array.isArray(o.material)) return;
+        const m = o.material as T.MeshStandardMaterial;
+        if (!m.isMeshStandardMaterial) return;
+        // Per-object copies so a highlight never lights every oak surface.
+        const copy = m.clone();
+        copy.onBeforeCompile = m.onBeforeCompile;
+        copy.customProgramCacheKey = m.customProgramCacheKey;
+        copy.userData.emissive = m.emissive.clone();
+        copy.userData.intensity = m.emissiveIntensity;
+        o.material = copy;
+        materials.push(copy);
+      });
+      this.glow.set(id, { spring: new Spring(0, 160, 18), materials });
+    }
+  }
+  private setHover(id: Spot | null, actor: boolean) {
+    const interactive =
+      !this.state.busy &&
+      (this.state.view === "room" || this.state.view === "desk");
+    if (!interactive) ((id = null), (actor = false));
+    if (id !== this.hover) {
+      this.hover = id;
+      if (id) {
+        this.tag.innerHTML = `<b>${SPOTS[id].name}</b><span>${SPOTS[id].verb}</span>`;
+        this.glow.get(id)?.spring.kick(4);
+      }
+    }
+    if (actor && !this.hoverActor)
+      this.tag.innerHTML = `<b>That’s me</b><span>Say hi</span>`;
+    this.hoverActor = actor;
+    this.tag.classList.toggle("is-on", !!id || actor);
+  }
+  private hitsActor() {
+    if (this.state.view !== "room" || this.state.busy) return false;
+    const r = this.actor.root.position;
+    const d = this.raycaster.ray.distanceSqToSegment(
+      v(r.x, 0.1, r.z),
+      v(r.x, 1.65, r.z),
+    );
+    return d < 0.22 * 0.22;
+  }
+  private lookTarget(): T.Vector3 | null {
+    const view = this.state.view;
+    if (this.action) {
+      if (this.hold) return this.hold.object.getWorldPosition(v());
+      return this.gaze;
+    }
+    if (view !== "room") return null;
+    if (this.hoverActor) return this.camera.position;
+    if (this.hover) return v(...SPOTS[this.hover].anchor);
+    if (this.pending) return v(...SPOTS[this.pending].anchor);
+    if (this.state.focus) return v(...SPOTS[this.state.focus].anchor);
+    if (this.time > this.glance.until) {
+      // Idle curiosity: a glance at you, at something nearby, or nowhere.
+      const roll = Math.random(),
+        spots = Object.keys(SPOTS) as Spot[];
+      this.glance = {
+        target:
+          roll < 0.3
+            ? this.camera.position
+            : roll < 0.75
+              ? v(
+                  ...SPOTS[spots[Math.floor(Math.random() * spots.length)]]
+                    .anchor,
+                )
+              : null,
+        until: this.time + 2.2 + Math.random() * 3.5,
+      };
+    }
+    return this.speed > 0.4 ? null : this.glance.target;
+  }
+  private poke() {
+    const a = this.actor,
+      hop = this.pokes++ % 3 === 2,
+      fromYaw = a.root.rotation.y,
+      toCamera = Math.atan2(
+        this.camera.position.x - a.root.position.x,
+        this.camera.position.z - a.root.position.z,
+      );
+    this.path = [];
+    this.pending = null;
+    this.gaze = this.camera.position.clone();
+    this.emote(hop ? "✨" : "👋");
+    if (hop) {
+      this.play(
+        1.05,
+        "Boing.",
+        (t) => {
+          a.root.rotation.y = angle(fromYaw, toCamera, easeOut(t / 0.3));
+          const crouch =
+            window01(t, 0, 0.36) * (t < 0.25 ? 1 : 0.6) +
+            window01(t, 0.62, 0.9) * 0.8;
+          const air =
+            t > 0.26 && t < 0.66 ? Math.sin(((t - 0.26) / 0.4) * Math.PI) : 0;
+          a.root.position.y = air * 0.2;
+          a.pelvis.position.y -= crouch * 0.09 - air * 0.02;
+          a.spine.rotation.x += crouch * 0.18;
+          a.arms.forEach((arm, i) => {
+            arm.rotation.x = -air * 0.5 + crouch * 0.4;
+            arm.rotation.z += (i ? 1 : -1) * air * 0.6;
+          });
+          for (let i = 0; i < 2; i++)
+            a.foot(
+              i,
+              a.root
+                .localToWorld(v(i ? 0.1 : -0.1, 0.11, 0.02))
+                .setY(0.11 + air * 0.14),
+            );
+        },
+        () => {
+          a.root.position.y = 0;
+          a.resetGait();
+        },
+      );
+      return;
+    }
+    this.play(1.75, "Oh, hi!", (t) => {
+      a.root.rotation.y = angle(fromYaw, toCamera, easeOut(t / 0.35));
+      const w = between(t, 0.1, 0.38) * (1 - between(t, 1.3, 1.7));
+      const hand = a.root.localToWorld(
+        v(0.4 + Math.sin(t * 15) * 0.07 * w, 1.46, 0.14),
+      );
+      a.hand(1, hand, w);
+      a.head.rotation.z += Math.sin(t * 7.5) * 0.05 * w;
+      a.spine.rotation.z += -0.05 * w;
+      a.pelvis.position.y -= window01(t, 0, 0.3) * 0.02;
+    });
+  }
+  emote(glyph: string) {
+    let material = this.emoteCache.get(glyph);
+    if (!material) {
+      const c = document.createElement("canvas");
+      c.width = c.height = 192;
+      const x = c.getContext("2d")!;
+      x.fillStyle = "#6b4a2a33";
+      x.beginPath();
+      x.arc(96, 102, 76, 0, Math.PI * 2);
+      x.fill();
+      x.fillStyle = "#fff6e6";
+      x.beginPath();
+      x.arc(96, 94, 76, 0, Math.PI * 2);
+      x.fill();
+      x.font =
+        '84px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+      x.textAlign = "center";
+      x.textBaseline = "middle";
+      x.fillText(glyph, 96, 100);
+      const tex = new T.CanvasTexture(c);
+      tex.colorSpace = T.SRGBColorSpace;
+      material = new T.SpriteMaterial({
+        map: tex,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+      });
+      this.emoteCache.set(glyph, material);
+    }
+    const sprite = new T.Sprite(material.clone());
+    sprite.renderOrder = 10;
+    sprite.scale.setScalar(0.001);
+    this.scene.add(sprite);
+    this.emotes.push({ sprite, t: 0 });
+  }
+  private bump(o: T.Object3D, strength: number) {
+    if (this.reduced) return;
+    const current = this.bumps.get(o);
+    this.bumps.set(o, {
+      base: current?.base ?? o.scale.clone(),
+      t: 0,
+      strength,
+    });
+  }
+  private feel(dt: number) {
+    // Hover glow: sprung so it swells in and eases out instead of blinking.
+    for (const [id, g] of this.glow) {
+      const on = this.hover === id ? 1 : 0;
+      const k = Math.max(0, g.spring.step(on, dt));
+      for (const m of g.materials) {
+        if (k < 0.002) {
+          m.emissive.copy(m.userData.emissive);
+          m.emissiveIntensity = m.userData.intensity;
+          continue;
+        }
+        m.emissive.set("#ffb873");
+        m.emissiveIntensity = k * (0.2 + Math.sin(this.time * 4) * 0.04);
+      }
+    }
+    // Tag trails the cursor on a short spring.
+    if (this.pointerSeen) {
+      const goal = new T.Vector2(
+        ((this.pointer.x + 1) / 2) * this.host.clientWidth,
+        ((1 - this.pointer.y) / 2) * this.host.clientHeight,
+      );
+      if (this.tagPos.x < -900) this.tagPos.copy(goal);
+      this.tagPos.lerp(goal, 1 - Math.exp(-dt * 18));
+      this.tag.style.transform = `translate3d(${this.tagPos.x + 18}px, ${this.tagPos.y + 14}px, 0)`;
+    }
+    if (this.rippleTime >= 0) {
+      this.rippleTime += dt;
+      const t = this.rippleTime / 0.65;
+      this.ripple.visible = t < 1;
+      this.ripple.scale.setScalar(0.6 + easeOut(t) * 2.4);
+      (this.ripple.material as T.MeshBasicMaterial).opacity = (1 - t) * 0.85;
+      if (t >= 1) this.rippleTime = -1;
+    }
+    const head = this.actor.head.getWorldPosition(v()),
+      // Emotes keep a readable on-screen size from the overview and up close.
+      size = T.MathUtils.clamp(
+        head.distanceTo(this.camera.position) * 0.055,
+        0.14,
+        0.6,
+      );
+    this.emotes = this.emotes.filter((e, i) => {
+      e.t += dt;
+      const t = e.t / 1.9,
+        m = e.sprite.material as T.SpriteMaterial;
+      e.sprite.position
+        .copy(head)
+        .add(
+          v(0, 0.25 + size * 0.6 + easeOut(t) * size * 0.8 + i * size * 0.4, 0),
+        );
+      e.sprite.scale.setScalar(back(e.t / 0.32, 2.4) * size);
+      m.opacity = 1 - smoother((t - 0.7) / 0.3);
+      m.rotation = Math.sin(e.t * 5) * 0.08 * (1 - t);
+      if (t < 1) return true;
+      e.sprite.removeFromParent();
+      m.dispose();
+      return false;
+    });
+    for (const [o, b] of this.bumps) {
+      b.t += dt;
+      const w = wobble(b.t, 2.4, 4.5) * b.strength;
+      o.scale.set(
+        b.base.x * (1 - w * 0.5),
+        b.base.y * (1 + w),
+        b.base.z * (1 - w * 0.5),
+      );
+      if (b.t > 1.4) {
+        o.scale.copy(b.base);
+        this.bumps.delete(o);
+      }
+    }
   }
   private resize() {
     const w = this.host.clientWidth,
