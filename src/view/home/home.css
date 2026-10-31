@@ -513,7 +513,7 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	margin-top: 46px;
 	display: grid;
 	grid-template-columns: repeat(12, minmax(0, 1fr));
-	grid-template-rows: 420px 360px 320px 280px;
+	grid-template-rows: 380px 420px 360px 320px 280px;
 	gap: 1px;
 	border: 1px solid var(--readme-panel-rule);
 	background: var(--readme-panel-rule);
@@ -530,6 +530,11 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	background: var(--readme-panel);
 	text-decoration: none !important;
 	isolation: isolate;
+}
+
+.readme-lab-card.is-strata,
+.readme-lab-card.is-finn {
+	grid-column: span 6;
 }
 
 .readme-lab-card.is-racer {
@@ -977,6 +982,142 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	margin-right: 6px;
 	color: #9d3929;
 	font-style: normal;
+}
+
+/* Strata — a dark "continue watching" shelf. */
+.readme-visual-strata {
+	padding: 22px 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	color: #f4f1ea;
+	background:
+		radial-gradient(circle at 78% 18%, rgba(120, 140, 255, 0.28), transparent 46%),
+		linear-gradient(160deg, #1a1d2b, #0c0d12);
+}
+
+.readme-strata-label {
+	margin-top: 18px;
+	color: rgba(244, 241, 234, 0.55);
+	font-size: 0.55rem;
+	letter-spacing: 0.14em;
+}
+
+.readme-strata-hero {
+	flex: 1;
+	min-height: 0;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	gap: 4px;
+	padding: 16px;
+	border-radius: 10px;
+	background:
+		linear-gradient(transparent 30%, rgba(0, 0, 0, 0.65)),
+		linear-gradient(120deg, #3b4a8f, #8a4f7d 60%, #d08a5a);
+}
+
+.readme-strata-hero strong {
+	font-size: 1.5rem;
+	letter-spacing: -0.03em;
+}
+
+.readme-strata-hero span {
+	color: rgba(244, 241, 234, 0.75);
+	font-size: 0.58rem;
+}
+
+.readme-strata-hero i {
+	height: 3px;
+	margin-top: 8px;
+	border-radius: 2px;
+	background: linear-gradient(90deg, #f4f1ea 64%, rgba(244, 241, 234, 0.25) 64%);
+}
+
+.readme-strata-row {
+	height: 58px;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 10px;
+}
+
+.readme-strata-row b {
+	border-radius: 7px;
+	background: linear-gradient(150deg, #2b3350, #1a1d2b);
+}
+
+.readme-strata-row b:nth-child(2) {
+	background: linear-gradient(150deg, #4c3a5e, #221a2b);
+}
+
+.readme-strata-row b:nth-child(3) {
+	background: linear-gradient(150deg, #5a4a33, #2a2218);
+}
+
+/* Finn — a small daily timeline card. */
+.readme-visual-finn {
+	display: grid;
+	place-items: center;
+	background:
+		radial-gradient(circle at 20% 80%, rgba(255, 196, 140, 0.45), transparent 50%),
+		#f6ecdc;
+}
+
+.readme-finn-phone {
+	width: min(72%, 260px);
+	padding: 16px;
+	border: 1px solid rgba(70, 50, 30, 0.14);
+	border-radius: 18px;
+	color: #3b2c1f;
+	background: #fffaf2;
+	box-shadow: 0 18px 40px rgba(90, 60, 30, 0.14);
+}
+
+.readme-finn-phone header {
+	margin-bottom: 10px;
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+}
+
+.readme-finn-phone header strong {
+	font-size: 1.15rem;
+}
+
+.readme-finn-phone header span,
+.readme-finn-phone em {
+	color: #9a8068;
+	font-size: 0.56rem;
+	font-style: normal;
+}
+
+.readme-finn-phone > div {
+	padding: 8px 0;
+	display: grid;
+	grid-template-columns: 10px 1fr auto;
+	align-items: center;
+	gap: 10px;
+	border-top: 1px solid rgba(70, 50, 30, 0.08);
+	font-size: 0.75rem;
+}
+
+.readme-finn-phone > div i {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+}
+
+.readme-finn-phone .is-feed {
+	background: #e8945a;
+}
+
+.readme-finn-phone .is-nap {
+	background: #7d8ed6;
+}
+
+.readme-finn-phone .is-diaper {
+	background: #7fb38a;
 }
 
 /* sehalOS — uses the existing wallpaper and a simplified real window. */
@@ -1472,7 +1613,7 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 	}
 
 	.readme-lab-grid {
-		grid-template-rows: 380px 340px 300px 250px;
+		grid-template-rows: 340px 380px 340px 300px 250px;
 	}
 
 	.readme-lab-card.is-racer,
@@ -1562,6 +1703,8 @@ html[data-home-layout="sketch"] .home-readme[data-layout-pending="true"] {
 		grid-auto-rows: auto;
 	}
 
+	.readme-lab-card.is-strata,
+	.readme-lab-card.is-finn,
 	.readme-lab-card.is-racer,
 	.readme-lab-card.is-doom,
 	.readme-lab-card.is-adventure,

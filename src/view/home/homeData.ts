@@ -24,6 +24,22 @@ export const WORK = [
 
 export const EXPERIMENTS = [
 	{
+		href: "https://strata.sehalsein.com",
+		name: "strata",
+		category: "apple app",
+		description:
+			"Turns the movies and shows you already own into a personal streaming service on iPhone, iPad, Mac, and Apple TV.",
+		visual: "strata",
+	},
+	{
+		href: "https://finn.sehalsein.com",
+		name: "finn",
+		category: "family app",
+		description:
+			"A baby tracker the whole family can share, so feeds, naps, and diapers live in one place.",
+		visual: "finn",
+	},
+	{
 		href: "/racer",
 		name: "racer",
 		category: "physics playground",

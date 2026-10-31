@@ -10,9 +10,17 @@ type AppLinkProps = PropsWithChildren<
 /**
  * Small compatibility wrapper for links shared by the portfolio experiences.
  * Routes remain client-side while individual experiences can keep a plain
- * `href`-shaped API.
+ * `href`-shaped API. Absolute URLs open in a new tab.
  */
 export default function AppLink({ href, children, ...props }: AppLinkProps) {
+	if (/^https?:\/\//.test(href)) {
+		return (
+			<a href={href} target="_blank" rel="noreferrer" {...props}>
+				{children}
+			</a>
+		);
+	}
+
 	return (
 		<RouterLink to={href} {...props}>
 			{children}

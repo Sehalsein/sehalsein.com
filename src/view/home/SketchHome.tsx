@@ -207,8 +207,8 @@ function SketchExperiments() {
 				id="sketch-experiments-title"
 			/>
 			<p className="sketch-experiments-intro" data-sketch-reveal>
-				Side projects are where I learn without a roadmap. Some became games,
-				some became interfaces, and one became an entire tiny operating system.
+				Side projects are where I learn without a roadmap. Some became real
+				apps, some became games, and one became an entire tiny operating system.
 			</p>
 			<div className="sketch-project-board">
 				{EXPERIMENTS.map((experiment, index) => (
@@ -309,6 +309,32 @@ function SketchSectionTitle({
 }
 
 function SketchDoodle({ visual }: { visual: ExperimentVisualName }) {
+	if (visual === "strata") {
+		return (
+			<svg className="sketch-doodle" viewBox="0 0 320 180" aria-hidden="true">
+				<rect x="40" y="18" width="240" height="132" rx="6" />
+				<path pathLength="1" d="M130 160h60m-30-10v10" />
+				<path pathLength="1" d="m146 62 34 22-34 22Z" />
+				<path pathLength="1" d="M58 128h204m-204 0h118" />
+				<circle cx="176" cy="128" r="4" />
+				<path pathLength="1" d="M18 40c4 30-3 70 4 104M300 36c-5 34 3 72-3 108" />
+			</svg>
+		);
+	}
+
+	if (visual === "finn") {
+		return (
+			<svg className="sketch-doodle" viewBox="0 0 320 180" aria-hidden="true">
+				<path pathLength="1" d="M62 22h28v14H62Zm-4 14h36l6 18v96a10 10 0 0 1-10 10H62a10 10 0 0 1-10-10V54Z" />
+				<path pathLength="1" d="M56 84h14m-14 20h14m-14 20h14" />
+				<path pathLength="1" d="M140 36v124" />
+				<circle cx="140" cy="54" r="5" /><circle cx="140" cy="98" r="5" /><circle cx="140" cy="142" r="5" />
+				<path pathLength="1" d="M158 54h74m-74 44h104m-74 44h58" />
+				<path pathLength="1" d="M286 20a16 16 0 1 0 18 22 19 19 0 0 1-18-22Z" />
+			</svg>
+		);
+	}
+
 	if (visual === "racer") {
 		return (
 			<svg className="sketch-doodle" viewBox="0 0 320 180" aria-hidden="true">

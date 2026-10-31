@@ -323,8 +323,9 @@ function Experiments() {
 			<div className="readme-wrap">
 				<SectionHeading path="~/experiments" title="Things I made for fun" />
 				<p className="readme-experiment-note" data-reveal>
-					I use side projects to learn by making. Every one of these runs here
-					in the browser—nothing is a static case study.
+					I use side projects to learn by making. A couple grew into real apps
+					people use; the rest run right here in the browser—nothing is a
+					static case study.
 				</p>
 				<div className="readme-lab-grid">
 					{EXPERIMENTS.map((experiment, index) => (
@@ -362,6 +363,41 @@ function ExperimentVisual({
 }: {
 	visual: ExperimentVisualName;
 }) {
+	if (visual === "strata") {
+		return (
+			<div className="readme-visual readme-visual-strata" aria-hidden="true">
+				<span className="readme-strata-label readme-mono">CONTINUE WATCHING</span>
+				<div className="readme-strata-hero">
+					<strong>Strata</strong>
+					<span className="readme-mono">S2 · E4 &nbsp;·&nbsp; 24 min left</span>
+					<i />
+				</div>
+				<div className="readme-strata-row">
+					<b />
+					<b />
+					<b />
+					<b />
+				</div>
+			</div>
+		);
+	}
+
+	if (visual === "finn") {
+		return (
+			<div className="readme-visual readme-visual-finn" aria-hidden="true">
+				<div className="readme-finn-phone">
+					<header>
+						<strong>Finn</strong>
+						<span className="readme-mono">today</span>
+					</header>
+					<div><i className="is-feed" /><span>Feed</span><em className="readme-mono">7:40 · 120 ml</em></div>
+					<div><i className="is-nap" /><span>Nap</span><em className="readme-mono">1h 20m</em></div>
+					<div><i className="is-diaper" /><span>Diaper</span><em className="readme-mono">10:05</em></div>
+				</div>
+			</div>
+		);
+	}
+
 	if (visual === "racer") {
 		return (
 			<div className="readme-visual readme-visual-racer" aria-hidden="true">

@@ -640,6 +640,17 @@ html:has(.sketch-home) {
 	transform: rotate(0deg) translateY(-7px);
 }
 
+.sketch-project-card--strata {
+	--project-tilt: 0.5deg;
+	grid-column: 1 / span 6;
+}
+
+.sketch-project-card--finn {
+	--project-tilt: -0.8deg;
+	grid-column: 7 / span 6;
+	margin-top: 26px;
+}
+
 .sketch-project-card--racer {
 	--project-tilt: -0.75deg;
 	grid-column: 1 / span 7;
@@ -742,6 +753,16 @@ html:has(.sketch-home) {
 .sketch-project-card:hover .sketch-project-copy > i,
 .sketch-project-card:focus-visible .sketch-project-copy > i {
 	transform: rotate(-3deg) translate(3px, -3px);
+}
+
+.sketch-project-card--strata .sketch-project-art {
+	color: #3d4f7a;
+	background-color: #dfe0e4;
+}
+
+.sketch-project-card--finn .sketch-project-art {
+	color: #8a5a2b;
+	background-color: #f0e4cf;
 }
 
 .sketch-project-card--doom .sketch-project-art {
@@ -1192,6 +1213,8 @@ html:has(.sketch-home) {
 		gap: 38px;
 	}
 
+	.sketch-project-card--strata,
+	.sketch-project-card--finn,
 	.sketch-project-card--racer,
 	.sketch-project-card--doom,
 	.sketch-project-card--adventure,
