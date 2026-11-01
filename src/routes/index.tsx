@@ -8,7 +8,7 @@ export const Route = createFileRoute("/")({
 			{
 				name: "description",
 				content:
-					"Engineering lead at Planned, co-founder of DGymBook, and maker of small browser experiments.",
+					"Engineer in Montreal. I build Strata, Finn, and DGymBook, plus a drawer full of browser experiments.",
 			},
 		],
 	}),
