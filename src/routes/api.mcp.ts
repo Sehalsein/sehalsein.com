@@ -1,10 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { isAPIError } from "better-auth/api";
-import {
-	requestToResourceInput,
-	verifyAccessTokenRequest,
-} from "better-auth/oauth2";
+import { verifyBearerToken } from "better-auth/oauth2";
 import { createMcpHandler } from "mcp-handler";
+import { getAuthBaseUrl } from "@/src/lib/auth";
 import { registerTools } from "@/src/lib/mcp/server";
 
 export const Route = createFileRoute("/api/mcp")({
@@ -18,11 +16,17 @@ export const Route = createFileRoute("/api/mcp")({
 });
 
 async function handleMcp({ request }: { request: Request }) {
-	const baseUrl = process.env.BETTER_AUTH_URL ?? new URL(request.url).origin;
+	const baseUrl = getAuthBaseUrl();
+	const authorization = request.headers.get("authorization") ?? "";
+	const token = authorization.startsWith("Bearer ")
+		? authorization.slice("Bearer ".length)
+		: "";
 
-	let jwt: Awaited<ReturnType<typeof verifyAccessTokenRequest>>;
+	let jwt: Awaited<ReturnType<typeof verifyBearerToken>>;
 	try {
-		jwt = await verifyAccessTokenRequest(requestToResourceInput(request), {
+		// Bearer only: DPoP-bound tokens are rejected rather than accepted
+		// without a shared replay store across Worker instances.
+		jwt = await verifyBearerToken(token, {
 			jwksUrl: `${baseUrl}/api/auth/jwks`,
 			verifyOptions: {
 				issuer: `${baseUrl}/api/auth`,

@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getAuthBaseUrl } from "@/src/lib/auth";
 import { getServerClient } from "@/src/lib/serverClient";
 
 export const Route = createFileRoute("/.well-known/oauth-protected-resource/api/mcp")({
 	server: { handlers: { GET: protectedResourceMetadata } },
 });
 
-async function protectedResourceMetadata({ request }: { request: Request }) {
-	const origin = process.env.BETTER_AUTH_URL ?? new URL(request.url).origin;
+async function protectedResourceMetadata() {
+	const origin = getAuthBaseUrl();
 	const metadata = await getServerClient().getProtectedResourceMetadata({
 		resource: `${origin}/api/mcp`,
 		authorization_servers: [`${origin}/api/auth`],
