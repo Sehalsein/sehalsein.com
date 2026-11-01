@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "@/src/components/AppLink";
-import { Download, Github, Linkedin, Mail, Smartphone } from "lucide-react";
+import { Download, Mail, Smartphone } from "lucide-react";
+import { GithubIcon, LinkedinIcon } from "@/src/components/icons/BrandIcons";
 import { RESUME_DATA } from "@/src/data/resume";
 
 function formatDuration(from: number, to?: number): string {
@@ -281,9 +282,9 @@ function ContactLink({
 function socialIcon(name: string): React.ReactNode {
 	switch (name.toLowerCase()) {
 		case "linkedin":
-			return <Linkedin size={13} />;
+			return <LinkedinIcon size={13} />;
 		case "github":
-			return <Github size={13} />;
+			return <GithubIcon size={13} />;
 		default:
 			return null;
 	}
