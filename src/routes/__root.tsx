@@ -14,9 +14,8 @@ const restorePreferences = `
 try {
   var palette = localStorage.getItem('terminal-palette') || 'default';
   document.documentElement.dataset.palette = palette;
-  var homeLayout = localStorage.getItem('home-layout') || 'readme';
-  if (homeLayout === 'readme' || homeLayout === 'sketch') {
-    document.documentElement.dataset.homeLayout = homeLayout;
+  if (sessionStorage.getItem('home-intro-seen')) {
+    document.documentElement.dataset.introSeen = '';
   }
 } catch (_) {}
 `;
@@ -30,12 +29,12 @@ export const Route = createRootRoute({
 				content: "width=device-width, initial-scale=1, viewport-fit=cover",
 			},
 			{
-				title: "Sehal Sein — Engineering Lead & Builder",
+				title: "Sehal Sein — engineer in Montreal",
 			},
 			{
 				name: "description",
 				content:
-					"Engineering lead building ambitious products, scalable systems, and occasionally entire worlds in the browser.",
+					"Engineer in Montreal building Strata, Finn, and DGymBook, plus a drawer full of browser experiments.",
 			},
 			{ name: "theme-color", content: "#0b0d0c" },
 		],
@@ -50,7 +49,7 @@ export const Route = createRootRoute({
 			},
 			{
 				rel: "stylesheet",
-				href: "https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700&family=Patrick+Hand&family=Pirata+One&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap",
+				href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Caveat:wght@500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700&family=Patrick+Hand&family=Pirata+One&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap",
 			},
 		],
 	}),

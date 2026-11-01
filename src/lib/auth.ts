@@ -5,8 +5,16 @@ import { oauthProvider } from "@better-auth/oauth-provider";
 import { dash } from "@better-auth/infra";
 import { getDb, schema } from "@/src/lib/db";
 
+/**
+ * The origin tokens are issued for. Always comes from config, never from the
+ * incoming request, so a spoofed Host header can't redirect token verification.
+ */
+export function getAuthBaseUrl() {
+	return process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+}
+
 function createAuth() {
-	const baseURL = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+	const baseURL = getAuthBaseUrl();
 	return betterAuth({
 		appName: "sehalsein.com",
 		database: drizzleAdapter(getDb(), {

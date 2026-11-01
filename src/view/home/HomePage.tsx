@@ -1,557 +1,501 @@
 import Link from "@/src/components/AppLink";
 import { RESUME_DATA } from "@/src/data/resume";
+import { type CSSProperties, Fragment, useEffect, useRef } from "react";
 import {
-	type CSSProperties,
-	lazy,
-	startTransition,
-	Suspense,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-} from "react";
-import HomeStyleToggle, {
-	type HomeLayout,
-} from "@/src/view/home/HomeStyleToggle";
-import {
-	EXPERIMENTS,
-	type ExperimentVisualName,
-	WORK,
+	APP_LINKS,
+	FINN_LOG,
+	GYM_CHECKINS,
+	MARQUEE_WORDS,
+	POSTER_COLORS,
+	POSTER_TITLES,
+	TOYS,
+	type ToyArt,
 } from "@/src/view/home/homeData";
+import { startHomeMotion } from "@/src/view/home/homeMotion";
 import "./home.css";
 
-const SketchHome = lazy(() => import("@/src/view/home/SketchHome"));
-const HOME_LAYOUT_KEY = "home-layout";
-
-const revealDelay = (index: number) =>
-	({ "--reveal-delay": `${index * 50}ms` }) as CSSProperties;
-
-export default function HomePage() {
-	const [layout, setLayout] = useState<HomeLayout>("readme");
-	const [preferencesReady, setPreferencesReady] = useState(false);
-
-	useEffect(() => {
-		const restored = document.documentElement.dataset.homeLayout;
-		if (restored === "sketch") setLayout("sketch");
-		setPreferencesReady(true);
-	}, []);
-
-	const changeLayout = useCallback((nextLayout: HomeLayout) => {
-		document.documentElement.dataset.homeLayout = nextLayout;
-		try {
-			window.localStorage.setItem(HOME_LAYOUT_KEY, nextLayout);
-		} catch {
-			// Storage can be unavailable in strict privacy modes; the toggle still works.
-		}
-		startTransition(() => setLayout(nextLayout));
-	}, []);
-
-	if (layout === "sketch") {
-		return (
-			<Suspense fallback={<div className="home-sketch-loading" aria-hidden="true" />}>
-				<SketchHome layout={layout} onLayoutChange={changeLayout} />
-			</Suspense>
-		);
-	}
-
-	return (
-		<ReadmeHome
-			layout={layout}
-			onLayoutChange={changeLayout}
-			preferencesReady={preferencesReady}
-		/>
-	);
-}
-
-type HomeLayoutProps = {
-	layout: HomeLayout;
-	onLayoutChange: (layout: HomeLayout) => void;
+/** Deterministic scatter so server and client render the same stars. */
+const scatter = (i: number, salt: number) => {
+	const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453;
+	return x - Math.floor(x);
 };
 
-function ReadmeHome({
-	layout,
-	onLayoutChange,
-	preferencesReady,
-}: HomeLayoutProps & { preferencesReady: boolean }) {
-	const pageRef = useRef<HTMLElement>(null);
+export default function HomePage() {
+	const rootRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		const page = pageRef.current;
-		if (!page) return;
-
-		const revealElements = Array.from(
-			page.querySelectorAll<HTMLElement>("[data-reveal]"),
-		);
-		const reducedMotion = window.matchMedia(
-			"(prefers-reduced-motion: reduce)",
-		).matches;
-
-		if (reducedMotion) {
-			for (const element of revealElements) element.classList.add("is-visible");
-		} else {
-			for (const element of revealElements) {
-				if (element.getBoundingClientRect().top < window.innerHeight * 0.92) {
-					element.classList.add("is-visible");
-				}
-			}
-			page.classList.add("has-reveal-motion");
-		}
-
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (!entry.isIntersecting) continue;
-					entry.target.classList.add("is-visible");
-					observer.unobserve(entry.target);
-				}
-			},
-			{ rootMargin: "0px 0px -8%", threshold: 0.08 },
-		);
-
-		for (const element of revealElements) {
-			if (!reducedMotion && !element.classList.contains("is-visible")) {
-				observer.observe(element);
-			}
-		}
-
-		const portrait = page.querySelector<HTMLElement>("[data-parallax]");
-		const navLinks = Array.from(
-			page.querySelectorAll<HTMLAnchorElement>("[data-section-link]"),
-		);
-		const navSections = navLinks.flatMap((link) => {
-			const id = link.hash.slice(1);
-			const section = document.getElementById(id);
-			return section ? [{ id, link, section }] : [];
-		});
-		let animationFrame = 0;
-		let activeSection = "";
-
-		const updateScrollEffects = () => {
-			animationFrame = 0;
-			const scrollTop = window.scrollY;
-			const scrollRange = Math.max(
-				1,
-				document.documentElement.scrollHeight - window.innerHeight,
-			);
-			page.style.setProperty(
-				"--scroll-progress",
-				Math.min(1, scrollTop / scrollRange).toFixed(4),
-			);
-			page.classList.toggle("is-scrolled", scrollTop > 18);
-
-			if (!reducedMotion && portrait) {
-				const rect = portrait.getBoundingClientRect();
-				const distance = rect.top + rect.height / 2 - window.innerHeight / 2;
-				const shift = Math.max(
-					-24,
-					Math.min(24, (-distance / window.innerHeight) * 38),
-				);
-				page.style.setProperty("--portrait-shift", `${shift.toFixed(2)}px`);
-			}
-
-			let nextActiveSection = "";
-			for (const item of navSections) {
-				if (item.section.getBoundingClientRect().top <= window.innerHeight * 0.38) {
-					nextActiveSection = item.id;
-				}
-			}
-
-			if (nextActiveSection !== activeSection) {
-				activeSection = nextActiveSection;
-				for (const item of navSections) {
-					const isActive = item.id === activeSection;
-					item.link.classList.toggle("is-active", isActive);
-					if (isActive) item.link.setAttribute("aria-current", "location");
-					else item.link.removeAttribute("aria-current");
-				}
-			}
-		};
-
-		const requestScrollUpdate = () => {
-			if (animationFrame) return;
-			animationFrame = window.requestAnimationFrame(updateScrollEffects);
-		};
-
-		requestScrollUpdate();
-		window.addEventListener("scroll", requestScrollUpdate, { passive: true });
-		window.addEventListener("resize", requestScrollUpdate);
-
-		return () => {
-			observer.disconnect();
-			window.removeEventListener("scroll", requestScrollUpdate);
-			window.removeEventListener("resize", requestScrollUpdate);
-			if (animationFrame) window.cancelAnimationFrame(animationFrame);
-		};
+		if (!rootRef.current) return;
+		return startHomeMotion(rootRef.current);
 	}, []);
 
 	return (
-		<main
-			className="home-readme"
-			data-layout-pending={!preferencesReady}
-			ref={pageRef}
-		>
-			<Header layout={layout} onLayoutChange={onLayoutChange} />
-			<Hero />
-			<Work />
-			<Experiments />
-			<Notes />
+		<div className="home" data-intro="playing" ref={rootRef}>
+			<Intro />
+			<div className="home-cursor" data-cursor-dot aria-hidden="true">
+				<span />
+			</div>
+			<ChapterBadge />
+			<Nav />
+			<main>
+				<Hero />
+				<Marquee />
+				<StrataScene />
+				<FinnScene />
+				<GymScene />
+				<Drawer />
+			</main>
 			<Footer />
-		</main>
-	);
-}
-
-function Header({ layout, onLayoutChange }: HomeLayoutProps) {
-	return (
-		<div className="readme-header-shell">
-			<header className="readme-header readme-wrap readme-mono">
-				<Link href="/" className="readme-name" aria-label="Sehal Sein, home">
-					<span aria-hidden="true">●</span> sehal sein
-				</Link>
-				<span className="readme-location">montreal, canada</span>
-				<nav aria-label="Primary navigation">
-					<a href="#work" data-section-link>work</a>
-					<a href="#experiments" data-section-link>experiments</a>
-					<a href="#notes" data-section-link>notes</a>
-					<Link href="/resume">resume</Link>
-					<HomeStyleToggle
-						layout={layout}
-						onChange={onLayoutChange}
-						tone="clean"
-					/>
-				</nav>
-			</header>
 		</div>
 	);
 }
+
+function Intro() {
+	return (
+		<div className="home-intro" data-intro-curtain aria-hidden="true">
+			<div className="home-intro-copy">
+				<div className="home-intro-count" data-intro-count>
+					0
+				</div>
+				<div className="home-intro-line" data-intro-line>
+					finding the coffee…
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function ChapterBadge() {
+	return (
+		<div className="home-chapter" aria-hidden="true">
+			<svg viewBox="0 0 34 34">
+				<circle cx="17" cy="17" r="14" />
+				<circle
+					cx="17"
+					cy="17"
+					r="14"
+					className="home-chapter-fill"
+					transform="rotate(-90 17 17)"
+					data-chapter-ring
+				/>
+			</svg>
+			<div>
+				<b data-chapter-no>CH. 01</b>
+				<span data-chapter-name>hello</span>
+			</div>
+		</div>
+	);
+}
+
+function Nav() {
+	return (
+		<nav className="home-nav" aria-label="Primary navigation">
+			<a className="home-nav-logo" href="#top">
+				sehal
+			</a>
+			<a href="#strata">strata</a>
+			<a href="#finn">finn</a>
+			<a href="#gym">dgymbook</a>
+			<a href="#drawer">toys</a>
+			<a href="#hi">say hi</a>
+		</nav>
+	);
+}
+
+const Squiggle = ({ color, d }: { color: string; d: string }) => (
+	<svg viewBox="0 0 300 16" preserveAspectRatio="none" aria-hidden="true">
+		<path d={d} stroke={color} />
+	</svg>
+);
 
 function Hero() {
-	const github = RESUME_DATA.social.find((item) => item.name === "Github")?.url;
-	const linkedin = RESUME_DATA.social.find(
-		(item) => item.name === "LinkedIn",
-	)?.url;
-
 	return (
-		<section className="readme-hero readme-wrap" aria-labelledby="home-title">
-			<div className="readme-hero-copy">
-				<p className="readme-path readme-mono">/home/sehal</p>
-				<div className="readme-title-clip">
-					<h1 id="home-title">Hi, I&apos;m Sehal.</h1>
-				</div>
-				<p className="readme-lede">
-					I&apos;m an engineer in Montreal. These days I lead engineering at
-					Planned and work on DGymBook, a company I co-founded.
-				</p>
-				<p className="readme-about">
-					I started building software professionally in 2018 and still like the
-					part where a blank file becomes something another person can use. Most
-					of my work lives somewhere between product decisions, architecture,
-					and helping a team ship. I make small browser games on the side.
-				</p>
-				<div className="readme-links readme-mono">
-					<a href={`mailto:${RESUME_DATA.email}`}>email</a>
-					{github ? (
-						<a href={github} target="_blank" rel="noreferrer">
-							github
-						</a>
-					) : null}
-					{linkedin ? (
-						<a href={linkedin} target="_blank" rel="noreferrer">
-							linkedin
-						</a>
-					) : null}
-				</div>
-			</div>
-
-			<div className="readme-aside">
-				<figure className="readme-photo" data-parallax>
-					<div className="readme-photo-frame">
-						<img
-							src={RESUME_DATA.photo}
-							alt="Sehal smiling at his desk, surrounded by computer monitors"
-							width="960"
-							height="643"
-						/>
-					</div>
-					<figcaption className="readme-mono">
-						<span aria-hidden="true">↳</span> this is me.
-					</figcaption>
-				</figure>
-				<div className="readme-now readme-mono">
-					<p>right now:</p>
-					<ul>
-						<li>building at Planned</li>
-						<li>working on DGymBook</li>
-						<li>making small games</li>
-					</ul>
-				</div>
-			</div>
-		</section>
-	);
-}
-
-function Work() {
-	return (
-		<section className="readme-section readme-wrap" id="work">
-			<SectionHeading path="work.txt" title="Where I’ve worked" />
-			<div className="readme-work-list">
-				{WORK.map((item, index) => (
-					<article
-						className="readme-work-row"
-						data-reveal
-						style={revealDelay(index)}
-						key={item.company}
-					>
-						<time className="readme-mono">{item.period}</time>
-						<h3>
-							{item.company}
-							<span>{item.role}</span>
-						</h3>
-						<p>{item.description}</p>
-					</article>
-				))}
-			</div>
-			<p className="readme-older-work readme-mono">
-				There&apos;s more in the <Link href="/resume">full resume →</Link>
-			</p>
-		</section>
-	);
-}
-
-function Experiments() {
-	return (
-		<section className="readme-section readme-experiments" id="experiments">
-			<div className="readme-wrap">
-				<SectionHeading path="~/experiments" title="Things I made for fun" />
-				<p className="readme-experiment-note" data-reveal>
-					I use side projects to learn by making. A couple grew into real apps
-					people use; the rest run right here in the browser—nothing is a
-					static case study.
-				</p>
-				<div className="readme-lab-grid">
-					{EXPERIMENTS.map((experiment, index) => (
-						<Link
-							className={`readme-lab-card is-${experiment.visual}`}
-							data-reveal
-							href={experiment.href}
-							key={experiment.name}
-							style={revealDelay(index)}
-						>
-							<div className="readme-lab-preview">
-								<span className="readme-lab-index readme-mono">
-									{String(index + 1).padStart(2, "0")}
-								</span>
-								<ExperimentVisual visual={experiment.visual} />
-							</div>
-							<div className="readme-lab-copy">
-								<div>
-									<span className="readme-mono">{experiment.category}</span>
-									<h3>{experiment.name}</h3>
-								</div>
-								<p>{experiment.description}</p>
-								<i aria-hidden="true">↗</i>
-							</div>
-						</Link>
+		<section className="home-hero" id="top">
+			<div className="home-hero-copy">
+				<span className="home-hey">hey there, I&apos;m</span>
+				<h1 className="home-name" aria-label="Sehal">
+					{"Sehal".split("").map((letter, index) => (
+						<span aria-hidden="true" data-letter key={index}>
+							{letter}
+						</span>
 					))}
+				</h1>
+				<p className="home-tagline">
+					By day, I&apos;m a lead engineer at Planned. After hours, I make
+					little apps for{" "}
+					<b>
+						movie nights
+						<Squiggle color="#ff5b36" d="M4 10 Q 80 2 150 9 T 296 6" />
+					</b>
+					,{" "}
+					<b>
+						3am feeds
+						<Squiggle color="#3b5bff" d="M4 8 Q 90 14 160 6 T 296 9" />
+					</b>
+					, and{" "}
+					<b>
+						leg day
+						<Squiggle color="#6fb800" d="M4 9 Q 70 3 150 10 T 296 5" />
+					</b>
+					, plus a few toys just for fun.
+				</p>
+			</div>
+
+			<div
+				className="home-sticker home-polaroid"
+				data-drag
+				data-cursor="drag me"
+				data-depth="1.2"
+				data-speed="-.25"
+				style={{ left: "6%", top: "18%", rotate: "-8deg" }}
+			>
+				<img src={RESUME_DATA.photo} alt="Sehal at his desk" width="960" height="643" />
+				<p>this is me!</p>
+			</div>
+			<div
+				className="home-sticker home-badge"
+				data-drag
+				data-cursor="drag me"
+				data-depth="-1"
+				data-speed=".2"
+				style={{ right: "9%", top: "20%", rotate: "10deg" }}
+			>
+				MTL<small>MONTREAL, QC</small>
+			</div>
+			<div
+				className="home-sticker"
+				data-drag
+				data-cursor="drag me"
+				data-depth="1.6"
+				data-speed="-.4"
+				style={{ right: "6%", bottom: "8%" }}
+			>
+				<div className="home-star">
+					shipping
+					<br />
+					since
+					<br />
+					2018
 				</div>
 			</div>
+			<div
+				className="home-sticker home-note"
+				data-drag
+				data-cursor="drag me"
+				data-depth="-1.4"
+				data-speed=".35"
+				style={{ left: "4%", bottom: "10%", rotate: "4deg" }}
+			>
+				powered by coffee &amp; boxes-and-arrows
+			</div>
+
+			<div className="home-scroll-hint">scroll, the fun&apos;s down here ↓</div>
 		</section>
 	);
 }
 
-function ExperimentVisual({
-	visual,
-}: {
-	visual: ExperimentVisualName;
-}) {
-	if (visual === "strata") {
-		return (
-			<div className="readme-visual readme-visual-strata" aria-hidden="true">
-				<span className="readme-strata-label readme-mono">CONTINUE WATCHING</span>
-				<div className="readme-strata-hero">
-					<strong>Strata</strong>
-					<span className="readme-mono">S2 · E4 &nbsp;·&nbsp; 24 min left</span>
-					<i />
-				</div>
-				<div className="readme-strata-row">
-					<b />
-					<b />
-					<b />
-					<b />
-				</div>
-			</div>
-		);
-	}
-
-	if (visual === "finn") {
-		return (
-			<div className="readme-visual readme-visual-finn" aria-hidden="true">
-				<div className="readme-finn-phone">
-					<header>
-						<strong>Finn</strong>
-						<span className="readme-mono">today</span>
-					</header>
-					<div><i className="is-feed" /><span>Feed</span><em className="readme-mono">7:40 · 120 ml</em></div>
-					<div><i className="is-nap" /><span>Nap</span><em className="readme-mono">1h 20m</em></div>
-					<div><i className="is-diaper" /><span>Diaper</span><em className="readme-mono">10:05</em></div>
-				</div>
-			</div>
-		);
-	}
-
-	if (visual === "racer") {
-		return (
-			<div className="readme-visual readme-visual-racer" aria-hidden="true">
-				<div className="readme-racer-track">
-					<i />
-					<i />
-				</div>
-				<img src="/car/f1.png" alt="" width="500" height="500" />
-				<div className="readme-racer-speed readme-mono">
-					<strong>184</strong> km/h
-				</div>
-				<span className="readme-racer-lap readme-mono">P2 · LAP 2/3</span>
-			</div>
-		);
-	}
-
-	if (visual === "doom") {
-		return (
-			<div className="readme-visual readme-visual-doom" aria-hidden="true">
-				<div className="readme-doom-corridor">
-					<i className="readme-doom-wall-left" />
-					<i className="readme-doom-wall-right" />
-					<span className="readme-doom-crosshair" />
-				</div>
-				<div className="readme-doom-hud readme-mono">
-					<strong>100%</strong>
-					<span>ARMOR 50</span>
-					<span>AMMO 24</span>
-				</div>
-			</div>
-		);
-	}
-
-	if (visual === "adventure") {
-		return (
-			<div className="readme-visual readme-visual-adventure" aria-hidden="true">
-				<div className="readme-adventure-sheet">
-					<span className="readme-mono">THE WHISPERING WOODS</span>
-					<strong>Hollowreach</strong>
-					<p>A path forks beneath the black pines. Something watches.</p>
-					<div><i>1</i> enter the cave</div>
-					<div><i>2</i> follow the river</div>
-				</div>
-			</div>
-		);
-	}
-
-	if (visual === "os") {
-		return (
-			<div className="readme-visual readme-visual-os" aria-hidden="true">
-				<div className="readme-os-menu readme-mono">
-					<span>◆ &nbsp; sehalOS</span>
-					<span>10:24</span>
-				</div>
-				<div className="readme-os-window">
-					<header><i /><i /><i /><span className="readme-mono">projects/</span></header>
-					<div><b /><b /><b /><b /></div>
-				</div>
-				<div className="readme-os-dock"><i /><i /><i /><i /><i /></div>
-			</div>
-		);
-	}
-
-	if (visual === "editor") {
-		return (
-			<div className="readme-visual readme-visual-editor" aria-hidden="true">
-				<div className="readme-editor-rail">
-					<strong>DR</strong>
-					<i />
-					<i />
-					<i />
-				</div>
-				<div className="readme-editor-paper">
-					<div className="readme-editor-meta readme-mono">
-						<span>FIELD NOTE / 06</span>
-						<i />
-					</div>
-					<strong>Draft something worth keeping.</strong>
-					<div className="readme-editor-lines">
-						<span />
-						<span />
-						<span />
-					</div>
-					<div className="readme-editor-toolbar readme-mono">
-						<b>B</b>
-						<em>I</em>
-						<span>H1</span>
-						<i>+</i>
-					</div>
-				</div>
-			</div>
-		);
-	}
-
+function Marquee() {
 	return (
-		<div className="readme-visual readme-visual-terminal readme-mono" aria-hidden="true">
-			<div className="readme-terminal-bar"><i /><i /><i /><span>~/sehal</span></div>
-			<div className="readme-terminal-lines">
-				<p><b>›</b> whoami</p>
-				<p>sehal sein — engineer / builder / occasional game maker</p>
-				<p><b>›</b> ls experiments/</p>
-				<p><span>racer</span>&nbsp; doom &nbsp;<span>hollowreach</span>&nbsp; sehalOS</p>
-				<p><b>›</b> <i /></p>
+		<div className="home-marquee" aria-hidden="true">
+			<div className="home-marquee-track" data-marquee>
+				{Array.from({ length: 6 }, (_, index) =>
+					MARQUEE_WORDS.map((word) => (
+						<Fragment key={`${index}-${word}`}>
+							<span>{word}</span>
+							<i>✦</i>
+						</Fragment>
+					)),
+				)}
 			</div>
 		</div>
 	);
 }
 
-function Notes() {
+function PosterRow({ direction }: { direction: 1 | -1 }) {
+	const offset = direction > 0 ? 0 : 1;
 	return (
-		<section className="readme-section readme-wrap" id="notes">
-			<SectionHeading path="notes/" title="A little more about me" />
-			<div className="readme-notes-grid" data-reveal>
-				<div>
-					<h3 className="readme-mono">things I care about</h3>
-					<ul>
-						<li>software that is useful before it is impressive</li>
-						<li>systems people can understand and change</li>
-						<li>teams that can move quickly without burning out</li>
-					</ul>
-				</div>
-				<div>
-					<h3 className="readme-mono">usually on my desk</h3>
-					<ul>
-						<li>TypeScript, Go, React, and PostgreSQL</li>
-						<li>a notebook full of boxes and arrows</li>
-						<li>one side project that got out of hand</li>
-					</ul>
+		<div
+			className={`home-posters ${direction > 0 ? "is-top" : "is-bottom"}`}
+			data-poster-row={direction}
+			aria-hidden="true"
+		>
+			{Array.from({ length: 24 }, (_, index) => {
+				const [from, to] = POSTER_COLORS[(index + offset * 3) % POSTER_COLORS.length];
+				return (
+					<div
+						className="home-poster"
+						key={index}
+						style={{ background: `linear-gradient(160deg, ${from}, ${to})` }}
+					>
+						{POSTER_TITLES[(index + offset * 5) % POSTER_TITLES.length]}
+					</div>
+				);
+			})}
+		</div>
+	);
+}
+
+function StrataScene() {
+	return (
+		<section className="home-scene home-strata" id="strata" data-scene="strata">
+			<div className="home-scene-pin">
+				<div className="home-beam" data-beam />
+				<PosterRow direction={1} />
+				<PosterRow direction={-1} />
+				<div className="home-scene-grid">
+					<div className="home-scene-copy">
+						<div className="home-eyebrow">app no. 1 — for the couch</div>
+						<h2>Strata</h2>
+						<p className="home-lede">
+							The movies and shows you already own, turned into your own
+							streaming service. Posters, continue watching, the whole cozy
+							thing.
+						</p>
+						<div className="home-pills">
+							<span>iPhone</span>
+							<span>iPad</span>
+							<span>Mac</span>
+							<span>Apple TV</span>
+						</div>
+						<a className="home-cta" href={APP_LINKS.strata} target="_blank" rel="noreferrer" data-cursor="open">
+							Meet Strata ↗
+						</a>
+					</div>
+					<div className="home-tv" data-tv aria-hidden="true">
+						<div className="home-tv-screen">
+							<span className="home-mono">CONTINUE WATCHING</span>
+							<strong>The Long Quiet</strong>
+							<span className="home-mono home-tv-meta">
+								S2 · E4 &nbsp;·&nbsp; <span data-minutes-left>32</span> min left
+							</span>
+							<div className="home-tv-progress">
+								<i data-tv-progress />
+							</div>
+							<div className="home-tv-row">
+								{["#ff8a5c", "#4fd1a5", "#a99cff", "#ffc940", "#ff8fb8"].map((color) => (
+									<b key={color} style={{ background: color }} />
+								))}
+							</div>
+						</div>
+						<div className="home-tv-stand" />
+					</div>
 				</div>
 			</div>
 		</section>
 	);
 }
+
+function FinnScene() {
+	return (
+		<section className="home-scene home-finn" id="finn" data-scene="finn">
+			<div className="home-scene-pin" data-sky>
+				<div className="home-stars" data-stars aria-hidden="true">
+					{Array.from({ length: 70 }, (_, index) => (
+						<i
+							key={index}
+							style={{
+								left: `${scatter(index, 1) * 100}%`,
+								top: `${scatter(index, 2) * 70}%`,
+								animationDelay: `${scatter(index, 3) * 2.4}s`,
+								scale: `${0.5 + scatter(index, 4)}`,
+							}}
+						/>
+					))}
+				</div>
+				<div className="home-sky-body is-moon" data-moon aria-hidden="true" />
+				<div className="home-sky-body is-sun" data-sun aria-hidden="true" />
+				<div className="home-clock" data-daylight aria-hidden="true">
+					<span data-clock>3:00</span>
+					<small data-clock-note>am. again.</small>
+				</div>
+				<div className="home-scene-grid" data-daylight>
+					<div className="home-scene-copy">
+						<div className="home-eyebrow">app no. 2 — for the nursery</div>
+						<h2>Finn</h2>
+						<p className="home-lede">
+							A baby tracker the whole family shares. Feeds, naps, and diapers
+							land in one log, so whoever&apos;s on the 3am shift knows what
+							happened at 1.
+						</p>
+						<div className="home-pills">
+							<span>iPhone</span>
+							<span>shared with family</span>
+						</div>
+						<a className="home-cta" href={APP_LINKS.finn} target="_blank" rel="noreferrer" data-cursor="open">
+							Meet Finn ↗
+						</a>
+					</div>
+					<div className="home-phone" data-phone aria-hidden="true">
+						<header>
+							<strong>Finn</strong>
+							<span className="home-mono">tonight</span>
+						</header>
+						<div className="home-log">
+							{FINN_LOG.map((entry) => (
+								<div className="home-log-entry" data-log-entry key={entry.time}>
+									<i style={{ background: entry.tint }}>{entry.icon}</i>
+									<span>
+										{entry.label}
+										{"who" in entry ? <span className="home-who"> — {entry.who}</span> : null}
+									</span>
+									<em>{entry.time}</em>
+								</div>
+							))}
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	);
+}
+
+function GymScene() {
+	return (
+		<section className="home-scene home-gym" id="gym" data-scene="gym">
+			<div className="home-scene-pin">
+				<div className="home-gym-stripes" data-stripes aria-hidden="true" />
+				<div className="home-scene-grid">
+					<div className="home-scene-copy">
+						<div className="home-eyebrow">app no. 3 — for the gym</div>
+						<h2>DGymBook</h2>
+						<p className="home-lede">
+							The one I co-founded in 2022. Members book classes and check in,
+							and gym owners run the whole place from one dashboard. It grew a
+							lot bigger than we planned.
+						</p>
+						<div className="home-pills">
+							<span>members</span>
+							<span>gym owners</span>
+							<span>web + mobile</span>
+						</div>
+						<a className="home-cta" href={APP_LINKS.dgymbook} target="_blank" rel="noreferrer" data-cursor="open">
+							Meet DGymBook ↗
+						</a>
+					</div>
+					<div className="home-rig">
+						<div className="home-members" data-members>
+							0
+						</div>
+						<div className="home-members-label">people training with it</div>
+						<div className="home-barbell" data-barbell aria-hidden="true">
+							<div className="home-bar" />
+							<div className="home-grip" />
+							<div className="home-pr" data-pr>
+								new
+								<br />
+								PR!
+							</div>
+						</div>
+						<div className="home-checkins" aria-hidden="true">
+							{GYM_CHECKINS.map((checkin) => (
+								<span data-checkin key={checkin}>
+									✓ {checkin}
+								</span>
+							))}
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	);
+}
+
+function ToyArtwork({ art }: { art: ToyArt }) {
+	switch (art) {
+		case "racer":
+			return (
+				<div className="home-toy-art" style={{ background: "#2b2d42" }}>
+					<img src="/car/f1.png" alt="" width="500" height="500" draggable={false} />
+				</div>
+			);
+		case "doom":
+			return (
+				<div className="home-toy-art is-doom">+</div>
+			);
+		case "adventure":
+			return <div className="home-toy-art is-adventure">d20 → 17</div>;
+		case "os":
+			return (
+				<div className="home-toy-art is-os">
+					<div />
+				</div>
+			);
+		case "editor":
+			return <div className="home-toy-art is-editor">draft something…</div>;
+		case "terminal":
+			return (
+				<div className="home-toy-art is-terminal">
+					› whoami
+					<br />
+					sehal_
+					<br />› ls toys/
+				</div>
+			);
+	}
+}
+
+function Drawer() {
+	return (
+		<section className="home-drawer-section" id="drawer">
+			<div className="home-drawer-head">
+				<h2>
+					the junk
+					<br />
+					drawer
+				</h2>
+				<p>not apps. just toys I build to learn stuff. throw them around ↓</p>
+			</div>
+			<div className="home-drawer" data-drawer>
+				{TOYS.map((toy, index) => (
+					<Link
+						className="home-toy home-sticker"
+						data-drag
+						data-cursor="drag / click"
+						href={toy.href}
+						key={toy.name}
+						style={
+							{
+								left: `${toy.x}%`,
+								top: `${toy.y}%`,
+								rotate: `${toy.tilt}deg`,
+								transitionDelay: `${index * 0.08}s`,
+							} as CSSProperties
+						}
+					>
+						<ToyArtwork art={toy.art} />
+						<h3>{toy.name}</h3>
+						<p>{toy.note}</p>
+					</Link>
+				))}
+			</div>
+		</section>
+	);
+}
+
 
 function Footer() {
 	return (
-		<footer className="readme-footer readme-wrap" data-reveal>
-			<p>If something here made you curious, send me a note.</p>
-			<a className="readme-email readme-mono" href={`mailto:${RESUME_DATA.email}`}>
+		<footer className="home-footer" id="hi">
+			<h2 aria-label="say hi">
+				{"say hi!".split("").map((letter, index) =>
+					letter === " " ? (
+						" "
+					) : (
+						<span aria-hidden="true" key={index}>
+							{letter}
+						</span>
+					),
+				)}
+			</h2>
+			<button type="button" className="home-mail" data-mail data-cursor="copy">
 				{RESUME_DATA.email}
-			</a>
-			<div className="readme-footer-line readme-mono">
-				<span>last updated: 2026-08-23</span>
-				<span>built in montreal</span>
+			</button>
+			<p className="home-resume">
+				or read <Link href="/resume" data-cursor="open">the boring version →</Link>
+			</p>
+			<div className="home-footer-line home-mono">
+				<span>made in montreal, with too many tabs open</span>
+				<span>© {new Date().getFullYear()}</span>
 			</div>
 		</footer>
-	);
-}
-
-function SectionHeading({ path, title }: { path: string; title: string }) {
-	return (
-		<header className="readme-section-head" data-reveal>
-			<span className="readme-mono">{path}</span>
-			<h2>{title}</h2>
-		</header>
 	);
 }

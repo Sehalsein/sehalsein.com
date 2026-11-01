@@ -42,7 +42,7 @@ export class Renderer {
 		// at this art style but roughly halves fragment work
 		this.gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 		this.gl.shadowMap.enabled = true;
-		this.gl.shadowMap.type = THREE.PCFSoftShadowMap;
+		this.gl.shadowMap.type = THREE.PCFShadowMap; // three r187 removed PCFSoftShadowMap
 		this.gl.outputColorSpace = THREE.SRGBColorSpace;
 		this.gl.toneMapping = THREE.ACESFilmicToneMapping;
 		this.gl.toneMappingExposure = 1.1;
