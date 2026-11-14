@@ -1,12 +1,12 @@
-import { CHAPTERS, GYM_PLATES, INTRO_LINES } from "@/src/view/home/homeData";
+import { CHAPTERS, INTRO_LINES } from "@/src/view/home/homeData";
 
 const INTRO_SEEN_KEY = "home-intro-seen";
 const CONFETTI_COLORS = ["#ffc940", "#3b5bff", "#4fd1a5", "#ff8fb8", "#1b1530", "#fff6e9"];
 
 type RGB = [number, number, number];
-const NIGHT: RGB = [29, 37, 71];
-const SUNRISE: RGB = [255, 150, 120];
-const MORNING: RGB = [255, 228, 204];
+const NIGHT: RGB = [26, 24, 64];
+const SUNRISE: RGB = [196, 178, 240];
+const MORNING: RGB = [242, 242, 247];
 
 const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
@@ -14,7 +14,6 @@ const mixRgb = (from: RGB, to: RGB, t: number) =>
 	`rgb(${from.map((channel, i) => Math.round(lerp(channel, to[i], t))).join(",")})`;
 
 type ParallaxElement = HTMLElement & { scrollShift?: number };
-type Plate = { el: HTMLElement; x: number; side: number; at: number };
 
 /**
  * Wires every interaction on the homepage: the intro curtain, cursor, draggable
@@ -97,6 +96,7 @@ export function startHomeMotion(root: HTMLElement) {
 	listen(window, "pointermove", (event) => {
 		mouseX = event.clientX;
 		mouseY = event.clientY;
+		syncCursorScene();
 		if (reducedMotion) return;
 		for (const letter of letters) {
 			const rect = letter.getBoundingClientRect();
@@ -118,6 +118,16 @@ export function startHomeMotion(root: HTMLElement) {
 		cursor.classList.toggle("is-big", Boolean(target));
 		cursorLabel.textContent = target?.dataset.cursor ?? "";
 	});
+	// Each app scene dresses the cursor in that app's colours (see .home-cursor[data-scene]).
+	let cursorScene = "";
+	const syncCursorScene = () => {
+		const hit = document.elementFromPoint(mouseX, mouseY)?.closest<HTMLElement>("[data-scene]");
+		const scene = hit?.dataset.scene ?? "";
+		if (scene === cursorScene) return;
+		cursorScene = scene;
+		if (scene) cursor.dataset.scene = scene;
+		else delete cursor.dataset.scene;
+	};
 
 	/* ── draggable stickers ───────────────────────────────── */
 	for (const el of $$("[data-drag]")) {
@@ -188,23 +198,15 @@ export function startHomeMotion(root: HTMLElement) {
 
 	const gym = $('[data-scene="gym"]');
 	const members = $("[data-members]");
-	const barbell = $("[data-barbell]");
-	const pr = $("[data-pr]");
+	const trend = $("[data-trend]");
+	const rigCard = $("[data-rig-card]");
+	const gymFloats = $$("[data-float]");
+	const gymGlow = $("[data-gym-glow]");
+	const checkinStack = $("[data-checkins]");
+	const stats = $$("[data-stat]");
+	const bars = $$("[data-bar]");
 	const stripes = $("[data-stripes]");
 	const checkins = $$("[data-checkin]");
-	const plates: Plate[] = [];
-	const plateReach = Math.min(170, barbell.offsetWidth * 0.3);
-	GYM_PLATES.forEach(({ height, color }, i) => {
-		for (const side of [-1, 1]) {
-			const el = document.createElement("div");
-			el.className = "home-plate";
-			el.style.height = `${height}px`;
-			el.style.background = color;
-			barbell.appendChild(el);
-			plates.push({ el, side, x: side * (plateReach + i * 30), at: 0.1 + i * 0.17 });
-		}
-	});
-	cleanups.push(() => plates.forEach(({ el }) => el.remove()));
 
 	const chapterRing = $$<SVGCircleElement>("[data-chapter-ring]")[0];
 	const chapterNo = $("[data-chapter-no]");
@@ -244,6 +246,7 @@ export function startHomeMotion(root: HTMLElement) {
 				? mixRgb(NIGHT, SUNRISE, clamp((f - 0.15) / 0.45))
 				: mixRgb(SUNRISE, MORNING, (f - 0.6) / 0.4);
 		for (const el of daylightEls) el.classList.toggle("is-day", f > 0.5);
+		sky.classList.toggle("is-day", f > 0.5);
 		moon.style.transform = `translateY(${f * 120}vh)`;
 		sun.style.transform = `translateY(${lerp(110, 0, clamp((f - 0.35) * 1.8))}vh)`;
 		stars.style.opacity = String(1 - clamp(f * 1.8));
@@ -253,20 +256,35 @@ export function startHomeMotion(root: HTMLElement) {
 		logEntries.forEach((entry, i) => entry.classList.toggle("is-on", f > i / (logEntries.length + 1)));
 		phone.style.transform = `rotate(${lerp(6, -2, f)}deg) translateY(${lerp(40, -10, f)}px)`;
 
-		// DGymBook: load the bar, count the members, lift.
+		// DGymBook: the owner's dashboard fills in as the day gets going.
 		const g = sceneProgress(gym);
-		for (const plate of plates) {
-			const on = g > plate.at;
-			plate.el.classList.toggle("is-on", on);
-			plate.el.style.transform = `translate(${on ? plate.x : plate.x + plate.side * 400}px, -50%)`;
+		const fill = clamp(g / 0.8);
+		// The dashboard tips up off the desk and settles, like Strata's TV turning to face you.
+		const rise = clamp(g * 1.7);
+		rigCard.style.transform = `perspective(1400px) rotateX(${lerp(18, 0, rise)}deg) rotateY(${lerp(-12, 0, rise)}deg) translateY(${lerp(90, 0, rise)}px) scale(${lerp(0.88, 1, rise)})`;
+		checkinStack.style.transform = `translateY(${lerp(140, 0, clamp(g * 1.4))}px)`;
+		// Side cards sit at different depths, so they drift past at different speeds.
+		for (const el of gymFloats) {
+			const depth = Number(el.dataset.float);
+			el.style.transform = `translateY(${(0.5 - g) * depth * 320}px) rotate(${(g - 0.5) * depth * 10}deg)`;
+			el.style.opacity = String(clamp((g - 0.06) * 5));
 		}
-		const count = Math.round(lerp(0, 50000, clamp(g / 0.8)) / 50) * 50;
+		gymGlow.style.transform = `translate(${g * 90}px, ${g * -140}px)`;
+		const count = Math.round(lerp(0, 50000, fill) / 50) * 50;
 		members.textContent = count >= 50000 ? "50,000+" : count.toLocaleString("en-US");
-		barbell.classList.toggle("is-lifted", g > 0.82);
-		pr.classList.toggle("is-on", g > 0.86);
+		trend.classList.toggle("is-on", fill >= 1);
+		for (const stat of stats) {
+			stat.textContent = String(Math.round(Number(stat.dataset.stat) * fill));
+		}
+		bars.forEach((bar, i) => {
+			const grow = clamp((g - 0.05 - i * 0.07) / 0.35);
+			bar.style.transform = `scaleY(${Number(bar.dataset.bar) * grow})`;
+		});
 		checkins.forEach((checkin, i) => checkin.classList.toggle("is-on", g > 0.15 + i * 0.17));
-		// One stripe period measured horizontally is 120·√2; shifting within it keeps the pattern seamless.
-		stripes.style.transform = `translateX(${(g * 600) % (120 * Math.SQRT2)}px)`;
+		// The dot grid repeats every 28px, so shifting within one period keeps it seamless.
+		stripes.style.transform = `translate(${(g * 600) % 28}px, ${(g * 300) % 28}px)`;
+
+		syncCursorScene();
 
 		// Chapter badge.
 		const scrollable = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);

@@ -49,7 +49,7 @@ export const Route = createRootRoute({
 			},
 			{
 				rel: "stylesheet",
-				href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Caveat:wght@500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700&family=Patrick+Hand&family=Pirata+One&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap",
+				href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Caveat:wght@500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700&family=Patrick+Hand&family=Pirata+One&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap",
 			},
 		],
 	}),
