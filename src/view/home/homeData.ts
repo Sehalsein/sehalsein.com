@@ -38,37 +38,52 @@ export const POSTER_TITLES = [
 	"Wildfire Season",
 ];
 
+/** Strata's library wall: dim, warm, a little cinematic. */
 export const POSTER_COLORS = [
-	["#ff8a5c", "#7a2b8f"],
-	["#4fd1a5", "#1b3a6b"],
-	["#ffc940", "#b8432e"],
-	["#a99cff", "#211a55"],
-	["#ff8fb8", "#3b5bff"],
-	["#89e0ff", "#0e3b46"],
+	["#3a2a22", "#121316"],
+	["#24303a", "#0e1013"],
+	["#4a2f1f", "#16120f"],
+	["#2b2838", "#0f0f14"],
+	["#3d3424", "#14130f"],
+	["#1f3330", "#0d1112"],
 ] as const;
 
+/** Finn's own category colours (bottle, diaper, sleep…), straight from the app. */
 export const FINN_LOG = [
-	{ icon: "🍼", tint: "#ffd9c2", label: "Feed", time: "3:12 · 120 ml" },
-	{ icon: "🧷", tint: "#d6e4ff", label: "Diaper", who: "mom", time: "3:40" },
-	{ icon: "🌙", tint: "#e4dcff", label: "Back asleep", time: "4:05" },
-	{ icon: "🍼", tint: "#ffd9c2", label: "Feed", who: "dad", time: "5:30 · 90 ml" },
-	{ icon: "😴", tint: "#d5f5e8", label: "Nap", time: "5:55 · 1h 05m" },
-	{ icon: "☀️", tint: "#fff0b8", label: "Good morning", time: "7:00" },
+	{ kind: "bottle", color: "#0088ff", label: "Bottle", time: "3:12 · 120 ml" },
+	{ kind: "diaper", color: "#00c3d0", label: "Diaper", who: "mom", time: "3:40" },
+	{ kind: "sleep", color: "#6155f5", label: "Back asleep", time: "4:05" },
+	{ kind: "bottle", color: "#0088ff", label: "Bottle", who: "dad", time: "5:30 · 90 ml" },
+	{ kind: "sleep", color: "#6155f5", label: "Nap", time: "5:55 · 1h 05m" },
+	{ kind: "sun", color: "#ff8d28", label: "Good morning", time: "7:00" },
 ] as const;
 
-export const GYM_CHECKINS = [
-	"6:02 checked in",
-	"spin class full",
-	"membership renewed",
-	"leg day booked",
-];
+export type FinnKind = (typeof FINN_LOG)[number]["kind"];
 
-export const GYM_PLATES = [
-	{ height: 150, color: "#ff5b36" },
-	{ height: 130, color: "#3b5bff" },
-	{ height: 110, color: "#ffc940" },
-	{ height: 86, color: "#4fd1a5" },
-];
+/** Notifications in the style of DGymBook's owner app. */
+export const GYM_CHECKINS = [
+	{ title: "Checked in", detail: "Priya S. · #DGYM118", meta: "6:02 am", tone: "blue" },
+	{ title: "Spin class full", detail: "20 of 20 booked", meta: "7:00 am", tone: "amber" },
+	{ title: "Membership renewed", detail: "Ali O. · 12 months", meta: "₹18,000", tone: "green" },
+	{ title: "Leg day booked", detail: "Rahul K. · 6:30 pm", meta: "2m ago", tone: "blue" },
+] as const;
+
+export const GYM_STATS = [
+	{ label: "Checked in today", to: 186, tone: "blue" },
+	{ label: "Expiring in 10 days", to: 52, tone: "red" },
+	{ label: "Classes booked", to: 34, tone: "blue" },
+] as const;
+
+/** Attendance per day, as a share of the busiest day. */
+export const GYM_WEEK = [
+	{ day: "M", value: 0.86 },
+	{ day: "T", value: 0.68 },
+	{ day: "W", value: 0.94 },
+	{ day: "T", value: 0.72 },
+	{ day: "F", value: 1 },
+	{ day: "S", value: 0.58 },
+	{ day: "S", value: 0.4 },
+] as const;
 
 export const TOYS = [
 	{ href: "/racer", name: "racer", note: "procedural tracks, rude AI drivers", art: "racer", x: 3, y: 8, tilt: -5 },
